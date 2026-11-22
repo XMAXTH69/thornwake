@@ -1,0 +1,53 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>kiosk preload test</title>
+<style>html,body{margin:0;background:#000;overflow:hidden}video{position:fixed;inset:0;width:100vw;height:100vh;object-fit:cover;opacity:0}video.on{opacity:1}
+#ld{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#05080a}#ld i{width:9vh;height:9vh;border-radius:50%;border:1.1vh solid rgba(255,190,90,.18);border-top-color:#ffbe5a;animation:r .8s linear infinite}@keyframes r{to{transform:rotate(360deg)}}
+#dbg{position:fixed;left:1.5vh;top:1.5vh;font:bold 3.2vh monospace;color:#ffbe5a;background:rgba(0,0,0,.6);padding:.4vh 1vh;z-index:9}</style></head>
+<body><div id="ld"><i></i></div><div id="dbg"></div>
+<script>
+// Glintline kiosk PRELOAD TEST (22 Nov 2026, owner: no stills, test preload). Separate from play.html (live kiosk untouched).
+// GlintKiosk ('Preload test page' ON) sends play_preload.html?pal=<pal>&lf=<s>&lt=<s>#p=<page>&n=<next1,next2,..>
+// The query never changes between clicks, only the #fragment -> if Sansar keeps the page, 'hashchange' swaps to a video that is
+// already buffered (instant); if Sansar reloads anyway, the browser cache still makes it faster.
+// Debug corner: L = full page loads this session, S = in-page switches, ms = click -> video playing.
+var q = new URLSearchParams(location.search), pal = q.get('pal') || 'e';
+var lf = parseFloat(q.get('lf')), lt = parseFloat(q.get('lt')), loopIn = !isNaN(lf) && !isNaN(lt);
+var vids = {}, order = [], cur = null, loads = 0, switches = 0, t0 = performance.now(), ms = '-';
+try { loads = +(sessionStorage.getItem('kL') || 0) + 1; sessionStorage.setItem('kL', loads); } catch (e) { loads = '?'; }
+var dbg = document.getElementById('dbg');
+function show() { dbg.textContent = 'L' + loads + ' S' + switches + ' ' + ms + 'ms ' + (cur || ''); }
+
+function vid(pg) {                                   // one <video> per page, kept buffered (max 6, oldest dropped)
+  if (vids[pg]) return vids[pg];
+  var v = document.createElement('video'); v.muted = true; v.playsInline = true; v.preload = 'auto'; v.loop = !loopIn;
+  v.src = pal + '/' + pg + '.mp4'; document.body.insertBefore(v, document.getElementById('ld'));
+  if (loopIn) {
+    v.addEventListener('ended', function () { v.currentTime = lf; v.play(); });
+    v.addEventListener('timeupdate', function () { if (v.currentTime >= lt - 0.05) { v.currentTime = lf; v.play(); } });
+  }
+  vids[pg] = v; order.push(pg);
+  while (order.length > 6) { var old = order.find(function (k) { return k !== cur; }); order.splice(order.indexOf(old), 1); vids[old].removeAttribute('src'); vids[old].load(); vids[old].remove(); delete vids[old]; }
+  return v;
+}
+
+function go() {
+  var h = new URLSearchParams(location.hash.slice(1)), pg = h.get('p') || 'attract';
+  var nx = (h.get('n') || '').split(',').filter(Boolean);
+  if (pg !== cur) {
+    var t = performance.now(), v = vid(pg), was = cur && vids[cur];
+    if (cur) switches++;
+    cur = pg; v.currentTime = 0;
+    var on = function () {
+      v.classList.add('on'); if (was && was !== v) { was.classList.remove('on'); was.pause(); }
+      document.getElementById('ld').style.display = 'none';
+      ms = Math.round(performance.now() - (switches ? t : t0)); show();
+    };
+    if (v.readyState >= 3) { v.play(); on(); } else v.addEventListener('playing', on, { once: true });
+    v.play();
+  }
+  nx.forEach(function (p) { if (p !== cur) vid(p); });          // preload the likely next pages
+  show();
+}
+window.addEventListener('hashchange', go);
+go();
+</script></body></html>
