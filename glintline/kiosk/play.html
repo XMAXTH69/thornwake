@@ -1,0 +1,18 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>kiosk</title>
+<style>html,body{margin:0;background:#000;overflow:hidden}video{width:100vw;height:100vh;object-fit:cover}</style></head>
+<body><video id="v" autoplay muted playsinline></video>
+<script>
+// Glintline kiosk player (22 Nov 2026): Sansar's media browser refuses data: URLs (whitelist), so GlintKiosk sends
+// play.html?v=<mp4 link>&lf=<loop from s>&lt=<loop to s>. No lf/lt = plain loop of the whole clip.
+var q = new URLSearchParams(location.search), v = document.getElementById('v');
+var lf = parseFloat(q.get('lf')), lt = parseFloat(q.get('lt'));
+v.src = q.get('v') || 'e/attract.mp4';
+if (isNaN(lf) || isNaN(lt)) v.loop = true;
+else {
+  var j = function () { v.currentTime = lf; v.play(); };
+  v.addEventListener('ended', j);
+  (function f() { if (v.currentTime >= lt - 0.05) j(); requestAnimationFrame(f); })();
+}
+v.play();
+</script></body></html>
