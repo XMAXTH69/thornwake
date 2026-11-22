@@ -1,40 +1,58 @@
 <!doctype html>
-<html><head><meta charset="utf-8"><title>kiosk preload test</title>
+<html><head><meta charset="utf-8"><title>kiosk player (preload)</title>
 <style>html,body{margin:0;background:#000;overflow:hidden}video{position:fixed;inset:0;width:100vw;height:100vh;object-fit:cover;opacity:0}video.on{opacity:1}
 #ld{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#05080a}#ld i{width:9vh;height:9vh;border-radius:50%;border:1.1vh solid rgba(255,190,90,.18);border-top-color:#ffbe5a;animation:r .8s linear infinite}@keyframes r{to{transform:rotate(360deg)}}
 #dbg{position:fixed;left:1.5vh;top:1.5vh;font:bold 3.2vh monospace;color:#ffbe5a;background:rgba(0,0,0,.6);padding:.4vh 1vh;z-index:9}</style></head>
 <body><div id="ld"><i></i></div><div id="dbg"></div>
 <script>
-// Glintline kiosk PRELOAD TEST (22 Nov 2026, owner: no stills, test preload). Separate from play.html (live kiosk untouched).
-// GlintKiosk ('Preload test page' ON) sends play_preload.html?pal=<pal>&lf=<s>&lt=<s>#p=<page>&n=<next1,next2,..>
-// The query never changes between clicks, only the #fragment -> if Sansar keeps the page, 'hashchange' swaps to a video that is
-// already buffered (instant); if Sansar reloads anyway, the browser cache still makes it faster.
-// Debug corner: L = full page loads this session, S = in-page switches, ms = click -> video playing.
-var q = new URLSearchParams(location.search), pal = q.get('pal') || 'e';
+// Glintline kiosk PRELOAD player (22 Nov 2026). GlintKiosk ('Preload test page' ON) sends play_preload.html?pal=<pal>&lf=<s>&lt=<s>#p=<page>&n=<next1,next2,..>
+// The query never changes between clicks, only the #fragment -> Sansar keeps the page and 'hashchange' swaps to a buffered video.
+// Owner test 22 Nov: L1 S22 4 ms (1 full load, 22 in-page switches, 4 ms click -> playing).
+// 22 Nov 'preload more': keeps up to 20 pages; hints come most-likely-first and load ONE AT A TIME (the shown page never waits
+// behind them); pages not in the newest hints are dropped first. Debug corner only with &dbg=1.
+var q = new URLSearchParams(location.search), pal = q.get('pal') || 'e', DBG = q.get('dbg') === '1', KEEP = 20;
 var lf = parseFloat(q.get('lf')), lt = parseFloat(q.get('lt')), loopIn = !isNaN(lf) && !isNaN(lt);
-var vids = {}, order = [], cur = null, loads = 0, switches = 0, t0 = performance.now(), ms = '-';
+var vids = {}, order = [], cur = null, want = [], queue = [], busy = null, loads = 0, switches = 0, t0 = performance.now(), ms = '-';
 try { loads = +(sessionStorage.getItem('kL') || 0) + 1; sessionStorage.setItem('kL', loads); } catch (e) { loads = '?'; }
-var dbg = document.getElementById('dbg');
-function show() { dbg.textContent = 'L' + loads + ' S' + switches + ' ' + ms + 'ms ' + (cur || ''); }
+var dbg = document.getElementById('dbg'); if (!DBG) dbg.style.display = 'none';
+function show() { if (DBG) dbg.textContent = 'L' + loads + ' S' + switches + ' ' + ms + 'ms ' + order.length + '/' + KEEP + ' ' + (cur || ''); }
 
-function vid(pg) {                                   // one <video> per page, kept buffered (max 6, oldest dropped)
-  if (vids[pg]) return vids[pg];
+function drop() {                                    // over KEEP: drop pages that are neither shown nor wanted, oldest first
+  while (order.length > KEEP) {
+    var old = order.find(function (k) { return k !== cur && want.indexOf(k) < 0; }) || order.find(function (k) { return k !== cur; });
+    if (!old) return;
+    order.splice(order.indexOf(old), 1); vids[old].removeAttribute('src'); vids[old].load(); vids[old].remove(); delete vids[old];
+  }
+}
+function vid(pg, now) {                              // one <video> per page; now = start loading at once (the page to show)
+  if (vids[pg]) { if (now && !vids[pg].src) vids[pg].src = pal + '/' + pg + '.mp4'; return vids[pg]; }
   var v = document.createElement('video'); v.muted = true; v.playsInline = true; v.preload = 'auto'; v.loop = !loopIn;
-  v.src = pal + '/' + pg + '.mp4'; document.body.insertBefore(v, document.getElementById('ld'));
+  if (now) v.src = pal + '/' + pg + '.mp4';
+  document.body.insertBefore(v, document.getElementById('ld'));
   if (loopIn) {
     v.addEventListener('ended', function () { v.currentTime = lf; v.play(); });
     v.addEventListener('timeupdate', function () { if (v.currentTime >= lt - 0.05) { v.currentTime = lf; v.play(); } });
   }
-  vids[pg] = v; order.push(pg);
-  while (order.length > 6) { var old = order.find(function (k) { return k !== cur; }); order.splice(order.indexOf(old), 1); vids[old].removeAttribute('src'); vids[old].load(); vids[old].remove(); delete vids[old]; }
+  vids[pg] = v; order.push(pg); drop();
   return v;
+}
+function next() {                                    // preload queue: one video at a time
+  if (busy) return;
+  while (queue.length) {
+    var pg = queue.shift(); if (pg === cur || (vids[pg] && vids[pg].src)) continue;
+    var v = vid(pg, false); busy = pg;
+    var done = function () { if (busy === pg) { busy = null; show(); next(); } };
+    v.addEventListener('canplaythrough', done, { once: true }); v.addEventListener('error', done, { once: true });
+    setTimeout(done, 8000);                          // a slow or missing page never blocks the queue
+    v.src = pal + '/' + pg + '.mp4'; v.load(); return;
+  }
 }
 
 function go() {
   var h = new URLSearchParams(location.hash.slice(1)), pg = h.get('p') || 'attract';
-  var nx = (h.get('n') || '').split(',').filter(Boolean);
+  want = (h.get('n') || '').split(',').filter(Boolean).slice(0, KEEP - 1);
   if (pg !== cur) {
-    var t = performance.now(), v = vid(pg), was = cur && vids[cur];
+    var t = performance.now(), v = vid(pg, true), was = cur && vids[cur];
     if (cur) switches++;
     cur = pg; v.currentTime = 0;
     var on = function () {
@@ -45,8 +63,7 @@ function go() {
     if (v.readyState >= 3) { v.play(); on(); } else v.addEventListener('playing', on, { once: true });
     v.play();
   }
-  nx.forEach(function (p) { if (p !== cur) vid(p); });          // preload the likely next pages
-  show();
+  queue = want.slice(); next(); show();
 }
 window.addEventListener('hashchange', go);
 go();
