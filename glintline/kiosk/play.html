@@ -1,7 +1,7 @@
 <!doctype html>
 <html><head><meta charset="utf-8"><title>kiosk</title>
-<style>html,body{margin:0;background:#000;overflow:hidden}video{width:100vw;height:100vh;object-fit:cover}</style></head>
-<body><video id="v" autoplay muted playsinline></video>
+<style>html,body{margin:0;background:#000;overflow:hidden}video{width:100vw;height:100vh;object-fit:cover}#ld{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#05080a}#ld i{width:9vh;height:9vh;border-radius:50%;border:1.1vh solid rgba(255,190,90,.18);border-top-color:#ffbe5a;animation:r .8s linear infinite}@keyframes r{to{transform:rotate(360deg)}}</style></head>
+<body><video id="v" autoplay muted playsinline></video><div id="ld"><i></i></div>
 <script>
 // Glintline kiosk player (22 Nov 2026): Sansar's media browser refuses data: URLs (whitelist), so GlintKiosk sends
 // play.html?v=<mp4 link>&lf=<loop from s>&lt=<loop to s>. No lf/lt = plain loop of the whole clip.
@@ -14,5 +14,7 @@ else {
   v.addEventListener('ended', j);
   (function f() { if (v.currentTime >= lt - 0.05) j(); requestAnimationFrame(f); })();
 }
+// 22 Nov owner: LOADING spinner from page load until the video really plays (each viewer's screen = own browser)
+v.addEventListener('playing', function () { document.getElementById('ld').style.display = 'none'; });
 v.play();
 </script></body></html>
