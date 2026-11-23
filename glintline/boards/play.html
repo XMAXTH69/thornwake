@@ -1,0 +1,10 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>boards</title>
+<style>html,body{margin:0;background:#000;overflow:hidden}video{width:100vw;height:100vh;object-fit:fill;display:block}</style></head>
+<body><video id="v" autoplay muted loop playsinline></video>
+<script>
+// Glintline Hall of Boards player (23 Nov 2026): GlintHallScreen sends play.html?v=<mp4>; plain loop, no spinner
+// (the page is split into 4 board cells, a centred spinner would cut into 4 board corners). Black until the first frame.
+var v = document.getElementById('v'), q = new URLSearchParams(location.search);
+v.src = q.get('v') || 'board_bg_atlas.mp4'; v.play();
+</script></body></html>
