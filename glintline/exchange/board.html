@@ -11,7 +11,7 @@ html,body{margin:0;height:100%;background:#000;overflow:hidden;font-family:'Cinz
 .hd{position:absolute;left:40px;right:40px;top:24px;height:110px;display:flex;align-items:center;justify-content:space-between;border-bottom:4px solid var(--amb)}
 .hd h1{margin:0;font-size:78px;letter-spacing:10px;color:var(--amb);font-weight:700}
 .hd .sub{font-size:34px;color:var(--gold);letter-spacing:4px;text-align:right;line-height:1.25}
-#demo{display:none;position:absolute;left:760px;top:34px;font:700 44px 'Cinzel',serif;color:var(--bg);background:var(--amb);padding:4px 26px;border-radius:6px;letter-spacing:8px;z-index:5;animation:bl 1.6s steps(2) infinite}
+#demo{display:none;position:absolute;left:980px;top:34px;font:700 44px 'Cinzel',serif;color:var(--bg);background:var(--amb);padding:4px 26px;border-radius:6px;letter-spacing:8px;z-index:5;animation:bl 1.6s steps(2) infinite}
 .grid{position:absolute;left:40px;top:150px;width:1300px;display:grid;grid-template-columns:1fr 1fr;gap:10px 16px}
 .row{position:relative;height:100px;background:var(--pan);border:2px solid var(--line);border-radius:10px;display:grid;grid-template-columns:130px 120px 50px 130px 1fr;align-items:center;padding:0 12px;font-size:40px}
 .nm{color:var(--gold);font-weight:700;letter-spacing:3px}.pr{color:var(--txt);text-align:right;font-variant-numeric:tabular-nums}
@@ -28,9 +28,9 @@ html,body{margin:0;height:100%;background:#000;overflow:hidden;font-family:'Cinz
 .note{font-size:26px;color:var(--dim);letter-spacing:1px;line-height:1.3}
 .key{font-size:28px;line-height:1.6}.key i{display:inline-block;width:22px;height:22px;border-radius:4px;margin-right:12px;vertical-align:-3px}
 .tick{box-sizing:border-box;position:absolute;left:0;right:0;bottom:0;height:120px;background:var(--tickbg);border-top:4px solid var(--amb);overflow:hidden;white-space:nowrap}
-.tick .in{display:inline-block;padding-left:100%;animation:sc 60s linear infinite;line-height:120px;font-size:56px;font-weight:700}
+.tick .in{display:inline-block;animation:sc 60s linear infinite;line-height:120px;font-size:56px;font-weight:700}
 .tick span{margin-right:70px;color:var(--gold)}.tick em{font-style:normal;margin-left:14px}
-@keyframes sc{to{transform:translateX(-100%)}}
+@keyframes sc{to{transform:translateX(-50%)}}  /* content is doubled (tk + tk): -50 % = seamless loop, full strip from the first frame */
 </style></head>
 <body><div id="stage">
 <div class="hd"><h1>GLINT EXCHANGE</h1><div class="sub">BROKER BOARD<br><span id="asof"></span></div></div>
@@ -50,7 +50,7 @@ html,body{margin:0;height:100%;background:#000;overflow:hidden;font-family:'Cinz
 // URL fragment: #t=<unix seconds>&p=NAME:price:change%:rating,NAME:...&e=today:week:alltime&l=NAME~profit,NAME~profit,... (top 5)
 // rating = BROKER RATING 0-100 (GLINT-EXCHANGE.md s2): 80+ CALM, 50-79 BUMPY, below 50 WILD. l = all-time traders by CURRENT net profit (equity - glint moved in), may be negative.
 // No fragment -> DEMO with a visible DEMO tag. The page only draws what it is given. Sparklines are decoration drawn from name, change and t only.
-var DEMO_P = 'TYRE:6.15:+1.2:38,GLNT:8.40:+0.6:65,WRNC:9.10:-0.8:52,VOLT:12.30:+2.1:29,NITE:14.10:-0.4:70,GLTV:15.20:+0.2:56,MEDX:18.00:-1.5:45,SAFE:20.10:+0.1:88,KERB:22.40:+0.9:62,ECHO:25.30:-2.2:52,PETR:35.00:+0.3:75,NULL:40.60:-1.1:58,AURM:45.20:+1.8:66,HALO:60.10:+0.5:80';
+var DEMO_P = 'TYRE:6.15:+1.2:38,GLNT:8.40:+0.6:65,WRNC:9.10:-0.8:52,VOLT:12.30:+2.1:29,NITE:14.10:-0.4:70,GLTV:15.20:+0.2:56,PNTW:17.40:+0.4:60,SAFE:20.10:+0.1:88,KERB:22.40:+0.9:62,ECHO:25.30:-2.2:52,PETR:35.00:+0.3:75,NULL:40.60:-1.1:58,AURM:45.20:+1.8:66,HALO:60.10:+0.5:80';
 var DEMO_E = '4210:31800:155200';
 var DEMO_L = 'Wheelwright~18420,NightOwl~9310,Kerbside~4075,AurumFan~-1200,Lucky7~-6800';
 function parse() {
