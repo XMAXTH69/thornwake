@@ -114,7 +114,7 @@ function base(title, dots, extra) {
       '<div class="abs title" id="ttl">GRAND PRIX<svg class="dm" width="16" height="16" viewBox="0 0 16 16"><polygon points="8,0 16,8 8,16 0,8" fill="var(--tt)"/></svg>' + esc(title) + '</div>'
     : '<div class="abs top"></div><div class="abs stripe"></div>' + star(70, 52, 26, 'var(--tt)') + '<div class="abs title" id="ttl">' + esc(title) + '</div>';
   if (dots) for (var i = 0; i < dots[1]; i++) { var on = i === dots[0]; h += star(W - 70 - (dots[1] - 1 - i) * 44, 52, on ? 17 : 10, on ? 'var(--tt)' : 'rgba(var(--ttRGB),.47)', .4); }
-  if (extra && extra.vonly) h += '<div class="abs vonly" id="vonly">FOR THIS VEHICLE ONLY &nbsp;·&nbsp; OTHER VEHICLES BUY THEIR OWN</div>';
+  // 25 Nov owner: no 'FOR THIS VEHICLE ONLY · OTHER VEHICLES BUY THEIR OWN' line any more (extra.vonly ignored)
   return h;
 }
 function card() { return '<div class="abs card' + (curVip ? ' vipc' : '') + ' rise"></div>' + (curVip ? '<svg class="abs rise" style="left:0;top:0;pointer-events:none" width="1920" height="1080"><polygon fill="var(--hi)" points="' + [0, 1].map(function (j) { var cx = 960, cy = j ? CARD[3] : CARD[1]; return cx + ',' + (cy - 12) + ' ' + (cx + 12) + ',' + cy + ' ' + cx + ',' + (cy + 12) + ' ' + (cx - 12) + ',' + cy; }).join('"/><polygon fill="var(--hi)" points="') + '"/></svg>' : '') + '<svg id="streak" class="abs rise" width="1920" height="1080">' + streak() + '</svg>'; }
@@ -307,7 +307,7 @@ function demo() {
         else if (b === 'back') go(details());
         else if (b === 'select') {
           var t = CAT.menu[menu][0];
-          if (t === 'PAINT') { if (paints() > 1) { sub = 0; go('paint_' + c() + '_0'); } else toast('This ride keeps its signature paint'); }
+          if (t === 'PAINT') { if (paints() > 1) { sub = 0; go('paint_' + c() + '_0'); } }   // 25 Nov owner: every car gets paints, no 'signature paint' message
           else if (t === 'FAVOURITE') toast('DEMO: ' + CAT.vehicles[c()].name + ' is now your favourite');
           else { kind = { UPGRADES: 'upg', 'LIGHT LINE': 'trail', RIMS: 'rims', SHIELD: 'shield', UNDERGLOW: 'ug' }[t]; sub = 0; if (kind) go(SUBS[kind](0)); }
         }

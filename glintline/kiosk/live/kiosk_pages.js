@@ -44,8 +44,8 @@ function pageUpg(kind, mk, f) {
   var h = base('UPGRADES', dots(idx, L.length), { vonly: 1 }) + card() + pool('part_' + kind, [C[0] + 40, C[1] + 110, C[0] + 540, C[1] + 470]);
   h += T(x, C[1] + 130, esc(U.names[kind]) + '<span style="letter-spacing:0">&nbsp;&nbsp;·&nbsp;&nbsp;' + esc(U.mk_name[mk - 1]) + '</span>', 66, 'brand', mw);
   h += T(x, C[1] + 236, esc(U.effect[kind][mk - 1]), 46, 'hi', mw);
-  ['' + U.mk_who[mk - 1], own ? 'Yours for this vehicle' : 'Unlock for this vehicle: +' + U.unlock[kind][mk - 1] + ' glint', 'Starter rides pay half', 'Drops down the tube · throw it on'].forEach(function (ln, k) { h += T(x, C[1] + 312 + 50 * k, esc(ln), 34, 'soft', mw); });
-  h += ownedTag(own, U.copy[kind][mk - 1] + ' glint', true);
+  // 25 Nov owner: the 4 small info lines (garage / unlock / starter half / tube) removed - name, effect and ONE price only
+  h += ownedTag(own, (U.unlock[kind][mk - 1] + U.copy[kind][mk - 1]).toLocaleString('en-US') + ' glint', true);   // one plain number: unlock + first part
   var cw = 176, gap = 16, n = U.kinds.length, x0 = C[0] + (C[2] - C[0] - n * cw - (n - 1) * gap) / 2, y = C[3] - 110;
   U.kinds.forEach(function (k, j) { h += chip(x0 + j * (cw + gap), y, cw, 76, k === kind, '<span style="font-size:34px;color:' + (k === kind ? 'var(--text)' : 'var(--soft)') + '">' + esc(U.names[k]) + '</span>'); });
   return h + buttons(own ? 'CHOOSE' : 'BUY', true, 'BACK', true);
@@ -127,7 +127,7 @@ function pageRims(key, f) {
   var R = CAT.rims, i = R.findIndex(function (r) { return r.key === key; }), r = R[i], C = CARD, x = C[0] + 570, mw = C[2] - x - 40, kind = key === 'none' ? 'none' : (key === 'aurum' || key === 'null') ? 'faction' : 'shop', own = owned(f);
   var h = base('RIMS & SPINNER', dots(i, R.length), { vonly: 1 }) + card() + pool('rim_' + key, [C[0] + 40, C[1] + 100, C[0] + 520, C[1] + 470]);
   h += T(x, C[1] + 150, esc(r.name), 70, 'brand', mw) + T(x, C[1] + 250, esc(r.line), 34, 'hi', mw);
-  r.hints.forEach(function (ln, k) { h += T(x, C[1] + 320 + 46 * k, esc(ln), 34, 'soft', mw); });
+  // 25 Nov owner: rim hint lines removed (name, effect, price only)
   h += ownedTag(own, r.price, kind === 'shop');
   var cw = 124, gap = 12, n = R.length, x0 = C[0] + (C[2] - C[0] - n * cw - (n - 1) * gap) / 2, y = C[3] - 110;
   R.forEach(function (q, j) { h += chip(x0 + j * (cw + gap), y, cw, 84, q.key === key, imgFit0('rim_' + q.key, cw - 24, 64, q.key === key ? 1 : .5)); });
@@ -181,7 +181,7 @@ function pageUg(spec, f) {
   var free = price === 0;
   var h = base('UNDERGLOW', null, { vonly: 1 }) + card() + ugGlyph(k, kind, tone, [C[0] + 40, C[1] + 80, C[0] + 520, C[1] + 450]);
   h += T(x, C[1] + 96, esc(nm), 70, 'brand', mw) + T(x, C[1] + 196, esc(line), 38, 'hi', mw);
-  [free ? 'Free · changes nothing else' : own ? 'Yours for this vehicle · pick any time' : 'Bought for this vehicle only', 'Game flashes still show over it', 'Never red, amber or white'].forEach(function (ln, j) { h += T(x, C[1] + 270 + 46 * j, esc(ln), 34, 'soft', mw); });
+  // 25 Nov owner: small info lines removed (name, effect, price only)
   h += tag(C[2] - 30, C[1] + 30, free ? 'FREE' : own ? 'YOURS' : money(price) + ' glint', !free && !own);
   var cw = 118, gap = 10, y = C[3] - 200, n = G.pats.length, x0 = C[0] + (C[2] - C[0] - n * cw - (n - 1) * gap) / 2;
   G.pats.forEach(function (p, j) { var on = kind === 'p' && p[0] === k; h += chip(x0 + j * (cw + gap), y, cw, 64, on, '<span style="font-size:26px;white-space:nowrap;color:' + (on ? 'var(--text)' : 'var(--soft)') + '" data-fit="' + (cw - 12) + '">' + esc(p[1]) + '</span>', 14); });
