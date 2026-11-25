@@ -161,7 +161,7 @@ var OPT = (function () {
   function pTicket(S) {
     var o = parseO(S), t = ticket(S, o), h = head(S, o, 'ORDER TICKET');
     h += T(100, 150, 30, 'lab', EXP[o.e] + ' · strike <span style="color:#fff">' + f2(t.K) + '</span> · ' + endText(o.end));
-    h += pill(100, 196, 220, t.call, 'CALL', 'bet it goes UP', 'up') + pill(330, 196, 220, !t.call, 'PUT', 'bet it goes DOWN', 'dn');
+    h += pill(100, 196, 220, t.call, 'CALL', '', 'up') + pill(330, 196, 220, !t.call, 'PUT', '', 'dn');
     var tb = ticket(S, Object.assign({}, o, { bs: 'b' })), ts = ticket(S, Object.assign({}, o, { bs: 's' }));
     h += pill(580, 196, 220, !t.sell, 'LONG', (tb.px ? 'you pay ' + g(Math.abs(tb.net)) : 'no ask'), 'up') + pill(810, 196, 220, t.sell, 'SHORT', (ts.px ? 'you get ' + g(Math.abs(ts.net)) : 'no bid'), 'dn');
     h += helpChip(780, 336);
@@ -301,7 +301,7 @@ var OPT = (function () {
   showDlg = function () {
     if (!D || ['oreview', 'oclose'].indexOf(D.p) < 0) return baseDlg();
     var d = document.getElementById('dlg'), msg;
-    if (D.p === 'oreview') { var t = curT(); msg = (t.sell ? 'Sell ' : 'Buy ') + t.q + ' ' + (t.call ? 'call' : 'put') + (t.q > 1 ? 's' : '') + ' ' + f2(t.K) + ' ' + EXP[D.oe] + '?<br>' + (t.sell ? 'You get ' : 'You pay ') + fmt(Math.abs(t.net)) + ' glint.'; }
+    if (D.p === 'oreview') { var t = curT(); msg = (t.sell ? 'SHORT ' : 'LONG ') + t.q + ' ' + (t.call ? 'call' : 'put') + (t.q > 1 ? 's' : '') + ' ' + f2(t.K) + ' ' + EXP[D.oe] + '?<br>' + (t.sell ? 'you get ' : 'you pay ') + fmt(Math.abs(t.net)) + ' ◆ premium now'; }
     else { var p = D.pos[Math.min(D.sel, D.pos.length - 1)]; msg = 'Close ' + kind(p.cp, p.bs).toLowerCase() + ' ' + f2(p.K) + ' now?'; }
     d.innerHTML = '<b>' + msg + '</b><i style="left:120px;background:var(--acc);color:#04070F" data-yn="y">Yes</i><i style="right:120px;background:#3A4050;color:#fff" data-yn="n">No</i>';
     d.style.display = 'block'; pendingYes = true;
