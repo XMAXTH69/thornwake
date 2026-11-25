@@ -1,0 +1,1048 @@
+{
+ "_note": "build_kiosk_live.py vip - read by kiosk_live.html; do not edit by hand",
+ "pal": "vip",
+ "colors": {
+  "bg": [
+   6,
+   6,
+   8
+  ],
+  "tab": [
+   18,
+   14,
+   8
+  ],
+  "accent": [
+   214,
+   182,
+   112
+  ],
+  "hi": [
+   248,
+   228,
+   172
+  ],
+  "text": [
+   246,
+   239,
+   222
+  ],
+  "soft": [
+   176,
+   164,
+   136
+  ],
+  "card": [
+   13,
+   12,
+   12
+  ],
+  "btn_text": [
+   26,
+   17,
+   6
+  ],
+  "tab_text": [
+   30,
+   20,
+   8
+  ],
+  "style": "vip",
+  "chip_text": [
+   248,
+   228,
+   172
+  ],
+  "glow": [
+   214,
+   182,
+   112
+  ],
+  "card_top": [
+   32,
+   29,
+   24
+  ],
+  "glow_a": 150
+ },
+ "order": [
+  "heavy",
+  "bike",
+  "classic",
+  "sharp",
+  "drift",
+  "kart",
+  "rocket"
+ ],
+ "stat_names": [
+  "SPEED",
+  "GRIP",
+  "STEERING",
+  "ACCELERATION",
+  "RAM POWER"
+ ],
+ "vehicles": {
+  "heavy": {
+   "name": "GLINT CAR",
+   "kind": "car",
+   "line": "Steady and safe. Hard to spin.",
+   "price": 0,
+   "stats": [
+    3,
+    3,
+    2,
+    2,
+    4
+   ],
+   "render": "car_heavy"
+  },
+  "bike": {
+   "name": "GLINT BIKE",
+   "kind": "bike",
+   "line": "Light and quick. Leans into turns.",
+   "price": 0,
+   "stats": [
+    3,
+    3,
+    3,
+    2,
+    2
+   ],
+   "render": "bike_std"
+  },
+  "classic": {
+   "name": "CLASSIC",
+   "kind": "car",
+   "line": "Even all round.",
+   "price": 400,
+   "stats": [
+    3,
+    3,
+    3,
+    3,
+    3
+   ],
+   "render": "car_orig"
+  },
+  "sharp": {
+   "name": "SHARP",
+   "kind": "car",
+   "line": "Quick steering. Holds the line.",
+   "price": 1500,
+   "stats": [
+    3,
+    4,
+    5,
+    2,
+    3
+   ],
+   "render": "car_sharp"
+  },
+  "drift": {
+   "name": "DRIFT",
+   "kind": "car",
+   "line": "Loose grip. Slides through turns.",
+   "price": 1500,
+   "stats": [
+    3,
+    1,
+    4,
+    2,
+    3
+   ],
+   "render": "car_drift"
+  },
+  "kart": {
+   "name": "KART",
+   "kind": "car",
+   "line": "Tightest turns. Lower top speed.",
+   "price": 500,
+   "stats": [
+    2,
+    5,
+    5,
+    5,
+    4
+   ],
+   "render": "car_kart"
+  },
+  "rocket": {
+   "name": "ROCKET",
+   "kind": "car",
+   "line": "Fastest car. Wide in turns.",
+   "price": 5000,
+   "stats": [
+    5,
+    2,
+    1,
+    4,
+    1
+   ],
+   "render": "car_rocket"
+  }
+ },
+ "menu": [
+  [
+   "PAINT",
+   "Colours"
+  ],
+  [
+   "UPGRADES",
+   "Speed · grip"
+  ],
+  [
+   "LIGHT LINE",
+   "Line glow"
+  ],
+  [
+   "RIMS",
+   "Spinners"
+  ],
+  [
+   "SHIELD",
+   "10 min safe"
+  ],
+  [
+   "UNDERGLOW",
+   "Glow below"
+  ],
+  [
+   "FAVOURITE",
+   "First at the kiosk"
+  ],
+  [
+   "DRIVE",
+   "Go now"
+  ]
+ ],
+ "paints": {
+  "classic": [
+   {
+    "key": "signature",
+    "name": "Club White",
+    "who": "Comes with the car",
+    "img": "car_orig",
+    "price": 0,
+    "tag": "INCLUDED"
+   },
+   {
+    "key": "shop_a",
+    "name": "Ink Blue",
+    "who": "Shop paint",
+    "img": "paint_classic_shop_a",
+    "price": 250,
+    "tag": "250 glint"
+   },
+   {
+    "key": "shop_b",
+    "name": "Cream Petrol",
+    "who": "Shop paint",
+    "img": "paint_classic_shop_b",
+    "price": 250,
+    "tag": "250 glint"
+   },
+   {
+    "key": "vip",
+    "name": "Podium",
+    "who": "This week's top 3 only",
+    "img": "paint_classic_vip",
+    "price": 0,
+    "tag": "GRAND PRIX"
+   }
+  ],
+  "sharp": [
+   {
+    "key": "signature",
+    "name": "Petrol Edge",
+    "who": "Comes with the car",
+    "img": "car_sharp",
+    "price": 0,
+    "tag": "INCLUDED"
+   },
+   {
+    "key": "shop_a",
+    "name": "Silver Ink",
+    "who": "Shop paint",
+    "img": "paint_sharp_shop_a",
+    "price": 250,
+    "tag": "250 glint"
+   },
+   {
+    "key": "shop_b",
+    "name": "Copper Fade",
+    "who": "Shop paint",
+    "img": "paint_sharp_shop_b",
+    "price": 250,
+    "tag": "250 glint"
+   },
+   {
+    "key": "vip",
+    "name": "Podium",
+    "who": "This week's top 3 only",
+    "img": "paint_sharp_vip",
+    "price": 0,
+    "tag": "GRAND PRIX"
+   }
+  ],
+  "drift": [
+   {
+    "key": "signature",
+    "name": "Bronze Works",
+    "who": "Comes with the car",
+    "img": "car_drift",
+    "price": 0,
+    "tag": "INCLUDED"
+   },
+   {
+    "key": "shop_a",
+    "name": "Racing Green",
+    "who": "Shop paint",
+    "img": "paint_drift_shop_a",
+    "price": 250,
+    "tag": "250 glint"
+   },
+   {
+    "key": "shop_b",
+    "name": "Gunmetal Bronze",
+    "who": "Shop paint",
+    "img": "paint_drift_shop_b",
+    "price": 250,
+    "tag": "250 glint"
+   },
+   {
+    "key": "vip",
+    "name": "Podium",
+    "who": "This week's top 3 only",
+    "img": "paint_drift_vip",
+    "price": 0,
+    "tag": "GRAND PRIX"
+   }
+  ],
+  "kart": [
+   {
+    "key": "signature",
+    "name": "Gold Plate",
+    "who": "Comes with the car",
+    "img": "car_kart",
+    "price": 0,
+    "tag": "INCLUDED"
+   },
+   {
+    "key": "shop_a",
+    "name": "Cream Petrol",
+    "who": "Shop paint",
+    "img": "paint_kart_shop_a",
+    "price": 250,
+    "tag": "250 glint"
+   },
+   {
+    "key": "shop_b",
+    "name": "Teal Gold",
+    "who": "Shop paint",
+    "img": "paint_kart_shop_b",
+    "price": 250,
+    "tag": "250 glint"
+   },
+   {
+    "key": "vip",
+    "name": "Podium",
+    "who": "This week's top 3 only",
+    "img": "paint_kart_vip",
+    "price": 0,
+    "tag": "GRAND PRIX"
+   }
+  ],
+  "rocket": [
+   {
+    "key": "signature",
+    "name": "Long Arrow",
+    "who": "Comes with the car",
+    "img": "car_rocket",
+    "price": 0,
+    "tag": "INCLUDED"
+   },
+   {
+    "key": "shop_a",
+    "name": "White Arrow",
+    "who": "Shop paint",
+    "img": "paint_rocket_shop_a",
+    "price": 250,
+    "tag": "250 glint"
+   },
+   {
+    "key": "shop_b",
+    "name": "Petrol Arrow",
+    "who": "Shop paint",
+    "img": "paint_rocket_shop_b",
+    "price": 250,
+    "tag": "250 glint"
+   },
+   {
+    "key": "vip",
+    "name": "Podium",
+    "who": "This week's top 3 only",
+    "img": "paint_rocket_vip",
+    "price": 0,
+    "tag": "GRAND PRIX"
+   }
+  ]
+ },
+ "hits": {
+  "left": [
+   0.036458333333333336,
+   0.3333333333333333,
+   0.171875,
+   0.5740740740740741
+  ],
+  "right": [
+   0.828125,
+   0.3333333333333333,
+   0.9635416666666666,
+   0.5740740740740741
+  ],
+  "select": [
+   0.34375,
+   0.8055555555555556,
+   0.65625,
+   0.9351851851851852
+  ],
+  "back": [
+   0.04,
+   0.8055555555555556,
+   0.26,
+   0.9351851851851852
+  ],
+  "drive": [
+   0.74,
+   0.8055555555555556,
+   0.96,
+   0.9351851851851852
+  ]
+ },
+ "sub_title": {
+  "paint": "PAINT",
+  "upg": "UPGRADES",
+  "trail": "LIGHT LINE",
+  "rims": "RIMS & SPINNER",
+  "shield": "SHIELD",
+  "ug": "UNDERGLOW"
+ },
+ "shield": {
+  "price": "150",
+  "line1": "Rams and walls can't hurt you for 10 min",
+  "line2": "Light lines still can  ·  switch it on when you need it"
+ },
+ "rims": [
+  {
+   "key": "none",
+   "name": "NO SPINNER",
+   "line": "Plain wheels",
+   "price": "FREE",
+   "hints": [
+    "No spinner on the wheels",
+    "One per car or bike · change free"
+   ]
+  },
+  {
+   "key": "blade5",
+   "name": "BLADE",
+   "line": "Five curved blades",
+   "price": "12 000 glint",
+   "hints": [
+    "Bought for this car or bike only",
+    "Keeps turning after you stop",
+    "One per car or bike · change free"
+   ]
+  },
+  {
+   "key": "prop3",
+   "name": "PROPELLER",
+   "line": "Three paddles",
+   "price": "12 000 glint",
+   "hints": [
+    "Bought for this car or bike only",
+    "Keeps turning after you stop",
+    "One per car or bike · change free"
+   ]
+  },
+  {
+   "key": "star",
+   "name": "STAR",
+   "line": "The glint star",
+   "price": "12 000 glint",
+   "hints": [
+    "Bought for this car or bike only",
+    "Keeps turning after you stop",
+    "One per car or bike · change free"
+   ]
+  },
+  {
+   "key": "turbine",
+   "name": "JET FAN",
+   "line": "Sixteen vanes",
+   "price": "12 000 glint",
+   "hints": [
+    "Bought for this car or bike only",
+    "Keeps turning after you stop",
+    "One per car or bike · change free"
+   ]
+  },
+  {
+   "key": "aurum",
+   "name": "AURUM LAUREL",
+   "line": "Gold laurel wreath",
+   "price": "AURUM members - monument L2",
+   "hints": [
+    "Free · monument level 2",
+    "Keeps turning after you stop",
+    "One per car or bike · change free"
+   ]
+  },
+  {
+   "key": "null",
+   "name": "NULL WAKE CRESCENT",
+   "line": "Violet crescents",
+   "price": "NULL WAKE members - monument L2",
+   "hints": [
+    "Free · monument level 2",
+    "Keeps turning after you stop",
+    "One per car or bike · change free"
+   ]
+  }
+ ],
+ "ug": {
+  "pats": [
+   [
+    "steady",
+    "STEADY",
+    "One calm glow",
+    0
+   ],
+   [
+    "breathe",
+    "BREATHE",
+    "Slow swell, 4 s",
+    1500
+   ],
+   [
+    "twin",
+    "TWIN BLINK",
+    "Two quick blinks",
+    2500
+   ],
+   [
+    "brake",
+    "BRAKE GLOW",
+    "Flares warm when you brake",
+    3000
+   ],
+   [
+    "beat",
+    "BEAT 120",
+    "Pulses at 120 BPM",
+    4000
+   ],
+   [
+    "velocity",
+    "VELOCITY",
+    "The glow widens with speed",
+    7500
+   ],
+   [
+    "aurora",
+    "AURORA",
+    "Teal, violet and green drift",
+    18000
+   ],
+   [
+    "prism",
+    "PRISM CHASE",
+    "Colours chase round and back",
+    25000
+   ]
+  ],
+  "tones": [
+   [
+    "none",
+    "AUTO COLOUR",
+    null
+   ],
+   [
+    "cyan",
+    "CYAN",
+    [
+     0,
+     229,
+     255
+    ]
+   ],
+   [
+    "magenta",
+    "MAGENTA",
+    [
+     255,
+     51,
+     216
+    ]
+   ],
+   [
+    "lime",
+    "LIME",
+    [
+     140,
+     255,
+     38
+    ]
+   ],
+   [
+    "ice",
+    "ICE",
+    [
+     178,
+     229,
+     255
+    ]
+   ],
+   [
+    "violet",
+    "VIOLET",
+    [
+     153,
+     76,
+     255
+    ]
+   ],
+   [
+    "lilac",
+    "LILAC",
+    [
+     204,
+     153,
+     255
+    ]
+   ],
+   [
+    "rose",
+    "ROSE",
+    [
+     255,
+     114,
+     165
+    ]
+   ],
+   [
+    "sky",
+    "SKY",
+    [
+     140,
+     204,
+     255
+    ]
+   ],
+   [
+    "indigo",
+    "INDIGO",
+    [
+     63,
+     63,
+     255
+    ]
+   ],
+   [
+    "mint",
+    "MINT",
+    [
+     76,
+     255,
+     165
+    ]
+   ],
+   [
+    "orchid",
+    "ORCHID",
+    [
+     216,
+     102,
+     255
+    ]
+   ],
+   [
+    "teal",
+    "TEAL",
+    [
+     0,
+     191,
+     165
+    ]
+   ]
+  ],
+  "tone_price": 500,
+  "hues8": [
+   [
+    0,
+    229,
+    255
+   ],
+   [
+    255,
+    51,
+    216
+   ],
+   [
+    140,
+    255,
+    38
+   ],
+   [
+    255,
+    127,
+    12
+   ],
+   [
+    153,
+    76,
+    255
+   ],
+   [
+    255,
+    204,
+    51
+   ],
+   [
+    255,
+    114,
+    165
+   ],
+   [
+    140,
+    204,
+    255
+   ]
+  ]
+ },
+ "trail_consts": {
+  "CYAN": [
+   0.0,
+   0.93,
+   1.0
+  ],
+  "MAGENTA": [
+   1.0,
+   0.3,
+   0.93
+  ],
+  "WHITE": [
+   1.0,
+   1.0,
+   1.0
+  ],
+  "PEARL": [
+   0.9490196078431372,
+   0.9333333333333333,
+   0.9019607843137255
+  ],
+  "GOLD": [
+   0.788235294117647,
+   0.6352941176470588,
+   0.2901960784313726
+  ],
+  "UV": [
+   0.4823529411764706,
+   0.17254901960784313,
+   1.0
+  ],
+  "ICE": [
+   0.2235294117647059,
+   0.9019607843137255,
+   1.0
+  ],
+  "CHAMP": [
+   0.9529411764705882,
+   0.8666666666666667,
+   0.6509803921568628
+  ],
+  "PRISM": [
+   [
+    0.0,
+    0.9019607843137255,
+    1.0
+   ],
+   [
+    0.5411764705882353,
+    0.23529411764705882,
+    1.0
+   ],
+   [
+    1.0,
+    0.23529411764705882,
+    0.8235294117647058
+   ],
+   [
+    1.0,
+    0.47843137254901963,
+    0.6588235294117647
+   ],
+   [
+    0.9490196078431372,
+    0.7568627450980392,
+    0.3058823529411765
+   ]
+  ],
+  "RAINBOW": [
+   [
+    1.0,
+    0.12549019607843137,
+    0.12549019607843137
+   ],
+   [
+    1.0,
+    0.47843137254901963,
+    0.0
+   ],
+   [
+    1.0,
+    0.8470588235294118,
+    0.0
+   ],
+   [
+    0.18823529411764706,
+    1.0,
+    0.18823529411764706
+   ],
+   [
+    0.0,
+    0.7529411764705882,
+    1.0
+   ],
+   [
+    0.18823529411764706,
+    0.25098039215686274,
+    1.0
+   ],
+   [
+    0.6039215686274509,
+    0.12549019607843137,
+    1.0
+   ]
+  ]
+ },
+ "trail_styles": {
+  "STEADY": [
+   "FREE",
+   "One clean, even light"
+  ],
+  "BREATHE": [
+   "FREE",
+   "Glows brighter and softer, slow"
+  ],
+  "CHASE": [
+   "FREE",
+   "Light runs from your car to the tail"
+  ],
+  "BRAKE FLASH": [
+   "FREE",
+   "Flashes white, fades out slow"
+  ],
+  "BOOST SURGE": [
+   "FREE",
+   "A wave runs down the whole line"
+  ],
+  "DUAL-TONE": [
+   "FREE",
+   "Two colours, top and bottom"
+  ],
+  "AURUM": [
+   "AURUM",
+   "Pearl and gold, slow gold glints"
+  ],
+  "NULL WAKE": [
+   "NULL",
+   "Violet with a cold cyan edge"
+  ],
+  "PODIUM": [
+   "VIP",
+   "Champagne with star sparkles"
+  ],
+  "PRISM": [
+   "VIP",
+   "Colours flow along the line"
+  ],
+  "RAINBOW": [
+   "KITTY",
+   "Seven colours, one per piece"
+  ]
+ },
+ "trail_who": {
+  "FREE": "Free for every rider",
+  "AURUM": "Aurum members only",
+  "NULL": "Null Wake members only",
+  "VIP": "This week's top 3 only",
+  "KITTY": "Comet Kitty only"
+ },
+ "upg": {
+  "_note": "s64: upg_<kind>_<mk>; prices = GlintShop.cs Unlock/Copy (DESIGN N5b.7), effects = DESIGN N5b; garage tier = highest Mk sold (GlintShop refuses higher)",
+  "kinds": [
+   "motor",
+   "wheel",
+   "brake",
+   "fins",
+   "cell"
+  ],
+  "names": {
+   "motor": "MOTOR",
+   "wheel": "TYRES",
+   "brake": "BRAKES",
+   "fins": "FINS",
+   "cell": "CELL"
+  },
+  "effect": {
+   "motor": [
+    "+2 % top speed · +4 % acceleration",
+    "+4 % top speed · +8 % acceleration",
+    "+6 % top speed · +12 % acceleration"
+   ],
+   "wheel": [
+    "+5 % grip",
+    "+10 % grip",
+    "+16 % grip"
+   ],
+   "brake": [
+    "+5 % stopping",
+    "+10 % stopping",
+    "+15 % stopping"
+   ],
+   "fins": [
+    "+3 % turning",
+    "+6 % turning",
+    "+9 % turning"
+   ],
+   "cell": [
+    "Light line 9 s · refill x1",
+    "Light line 10.5 s · refill x1.1",
+    "Light line 12 s · refill x1.2"
+   ]
+  },
+  "unlock": {
+   "motor": [
+    350,
+    1400,
+    5000
+   ],
+   "wheel": [
+    300,
+    1200,
+    4000
+   ],
+   "brake": [
+    300,
+    1200,
+    4000
+   ],
+   "fins": [
+    300,
+    1200,
+    4000
+   ],
+   "cell": [
+    400,
+    1600,
+    5500
+   ]
+  },
+  "copy": {
+   "motor": [
+    35,
+    115,
+    250
+   ],
+   "wheel": [
+    30,
+    100,
+    200
+   ],
+   "brake": [
+    30,
+    100,
+    200
+   ],
+   "fins": [
+    30,
+    100,
+    200
+   ],
+   "cell": [
+    40,
+    130,
+    275
+   ]
+  },
+  "tier": {
+   "e": 1,
+   "vip": 2,
+   "aurum": 3,
+   "null": 3
+  },
+  "mk_name": [
+   "Mk I",
+   "Mk II",
+   "Mk III"
+  ],
+  "mk_who": [
+   "Paddock garage part",
+   "Grand Prix garage part",
+   "Faction garage part"
+  ],
+  "list": [
+   [
+    "motor",
+    1
+   ],
+   [
+    "motor",
+    2
+   ],
+   [
+    "wheel",
+    1
+   ],
+   [
+    "wheel",
+    2
+   ],
+   [
+    "brake",
+    1
+   ],
+   [
+    "brake",
+    2
+   ],
+   [
+    "fins",
+    1
+   ],
+   [
+    "fins",
+    2
+   ],
+   [
+    "cell",
+    1
+   ],
+   [
+    "cell",
+    2
+   ]
+  ]
+ },
+ "trails": [
+  "STEADY",
+  "BREATHE",
+  "CHASE",
+  "BRAKE FLASH",
+  "BOOST SURGE",
+  "DUAL-TONE",
+  "PODIUM",
+  "PRISM"
+ ]
+}
