@@ -298,7 +298,10 @@ function pShares(S) {
     if (n === S.sel) h += A(80, y - 4, 1760, 54, '', '', 'background:#7FD4FF33;border-left:8px solid var(--acc);box-sizing:border-box');
     h += T(120, y, 32, '', esc(NAMES[i])) + TR(900, y, 32, 'lab', fmt(S.h[i])) + TR(1200, y, 32, '', fmt(val) + ' ◆') + TR(1480, y, 32, 'lab', fmt(cost) + ' ◆') + TR(1780, y, 32, pl >= 0 ? 'up' : 'dn', sg(pl, 1) + ' %');
   });
-  if (L.length) { var tp = tc ? (tv - tc) / tc * 100 : 0; h += A(100, 800, 1700, 2, '', '', 'background:var(--line)') + T(100, 818, 34, '', 'Total') + TR(1200, 818, 34, '', fmt(tv) + ' ◆') + TR(1480, 818, 34, 'lab', fmt(tc) + ' ◆') + TR(1780, 818, 34, tp >= 0 ? 'up' : 'dn', sg(tp, 1) + ' %'); }
+  if (L.length) { var tp = tc ? (tv - tc) / tc * 100 : 0; h += A(100, 784, 1700, 2, '', '', 'background:var(--line)') + T(100, 796, 34, '', 'Total') + TR(1200, 796, 34, '', fmt(tv) + ' ◆') + TR(1480, 796, 34, 'lab', fmt(tc) + ' ◆') + TR(1780, 796, 34, tp >= 0 ? 'up' : 'dn', sg(tp, 1) + ' %');
+    // owner 25 Nov: the NET glint a sale of everything gives now (sell price after spread, fee per order taken off)
+    var sn = 0; L.forEach(function (i) { sn += Math.floor(S.h[i] * fillSell(S.px[i], i) / 100) - S.f; });
+    h += T(100, 842, 22, 'dim', 'Sell all now: ' + sg(sn) + ' ◆ to you, after spread + ' + S.f + ' fee per stock already taken off'); }
   return h;
 }
 function pMove(S) {

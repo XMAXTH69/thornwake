@@ -187,7 +187,11 @@ var OPT = (function () {
       h += T(X[1], y, 30, p.bs === 's' ? 'amb' : 'acc', kind(p.cp, p.bs) + ' ' + f2(p.K)) + TR(X[3], y, 30, 'lab', fmt(p.q)) + TR(X[4], y, 30, 'lab', f2(p.open)) + TR(X[5], y, 30, '', f2(p.mark));
       h += TR(X[6], y, 30, v >= 0 ? 'up' : 'dn', sg(v) + ' ◆') + TR(X[7], y + 4, 22, 'dim', EXP[p.e] + ' · ' + (MODE[p.m] || 'LONG').split(' ')[0]);
     });
-    h += A(100, 800, 1720, 2, '', '', 'background:var(--line)') + T(120, 816, 32, '', 'Total if closed now (before fees)') + TR(X[6], 816, 34, tot >= 0 ? 'up' : 'dn', sg(tot) + ' ◆');
+    // owner 25 Nov: show the NET glint that moves if every position is closed now (buy-back / sell-back AND the fee already in it)
+    var net = 0, gross = 0, nq = 0;
+    L.forEach(function (p) { var c = p.mark * p.q; gross += c; nq += p.q; net += (p.bs === 's' ? -c : c) - o.fee * p.q; });
+    h += A(100, 790, 1720, 2, '', '', 'background:var(--line)') + T(120, 804, 32, '', 'If you close all now') + TR(X[6], 804, 34, net >= 0 ? 'up' : 'dn', sg(net) + ' ◆');
+    h += T(120, 848, 22, 'dim', 'buy-back / sell-back ' + g(gross) + ' and fee ' + o.fee + ' × ' + fmt(nq) + ' contracts already in it  ·  let it run to the end: no fee');
     return h;
   }
   function pClose(S) {
