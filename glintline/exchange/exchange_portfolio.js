@@ -1,0 +1,234 @@
+// Glint Exchange - MY PORTFOLIO + MY RESULTS pages (26 Nov 2026; design Glintline/design/GLINT-EXCHANGE.md sec 16b, 18, 24, 27, 28, 29).
+// ONE job: read the fragment and draw the two account pages on the broker screen. Loaded AFTER exchange_options.js and exchange_charts.js;
+// it adds pages to PAGES/BARS like exchange_options.js does. Demo wiring lives in exchange_portfolio_demo.js. The game sends every number.
+// MECHANIC: let the player see what they hold (shares + options per stock, the wheel pair) and what the Exchange earned them over time.
+//
+// DATA RULE: the screen gets its state ONLY from the #fragment sent by GlintBroker (media URL). Compact aggregates, never daily data.
+//   Pages          p=portfolio   p=results
+// Re-used core keys (already sent on every page):  c free glint   px 50 prices   h 50 FREE shares   cb 50 cost x100 of the FREE shares   sel selected row/slice
+// Re-used option key (same text as MY OPTIONS):     mo  'stock:c|p:b|s:strike:oe:qty:open:mark:mode:endUnix' joined by '~'  (cents per share)
+// NEW keys, all optional (missing = 0 / empty):
+//   hk   shares locked by covered calls (the desk moves them OUT of h):  'stock:shares:costx100' joined '~'          <= 8 entries (8 positions)
+//   pl   glint locked now: cash-secured puts + naked margin (int)         pd  result today in glint (signed int, GlintExchangeDesk day net)
+//   rv   results view 0 overview | 1 sectors | 2 top earners             ri  line chart 1 = VALUE (default) | 0 = INCOME added up
+//   rm   monthly history, OLDEST first, up to 13 rows joined '~':  'ym:puts:calls:div:gains:value:inv:disc:dte'
+//        ym = YYMM (2611 = Nov 2026)   puts calls div gains = glint earned that month (signed int)   value = account value at month end (glint)
+//        inv = % of the account invested at month end (0-100)   disc = average put discount, strike below price, in 0.1 % (34 = 3.4 %)
+//        dte = average days to expiry of the contracts opened that month, in 0.1 day (45 = 4.5 d)   0 = nothing that month
+//   rt   top earners, best total first, max 10, joined '~':  'stock:puts:calls:div:gains'  (glint, signed, all time)
+//   rtt  all-time total result of ALL stocks in glint (signed) - lets the page show 'other stocks' and the share of performance %
+// Sunburst, KPI cards and the table need NO extra keys: they come from h, hk, px, cb, mo, c.
+// Estimated MAX LENGTH of the new keys: rm 13 x ~52 = 680 + rt 10 x ~36 = 360 + hk ~150 + pl pd rtt rv ri ~50 = about 1,250 chars.
+//   With the core keys (about 1.3 k) the results page is about 2.6 k; the options chain page already sends about 2.2 k (measured in demo).
+var PF = (function () {
+  'use strict';
+  var EXPD = [1, 3, 7, 28], PG = 9, VIEWS = ['OVERVIEW', 'SECTORS', 'TOP EARNERS'], WD = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'], MN = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  var STRAT = { SH: ['SHARES', '#DCE3EE'], SC: ['SHORT CALL', '#FFB02E'], SP: ['SHORT PUT', '#7FD4FF'], LC: ['LONG CALL', '#2EE59D'], LP: ['LONG PUT', '#FF4F64'] };
+  var GLASS = 'background:linear-gradient(180deg,#7FD4FF12,#04070F66 40%);border:2px solid var(--line);border-radius:14px;box-sizing:border-box';
+
+  // ---------------- fragment
+  function parseP(S) {
+    var h = location.hash.replace(/^#/, ''), Q = {};
+    h.split('&').forEach(function (kv) { var i = kv.indexOf('='); if (i > 0) Q[kv.slice(0, i)] = kv.slice(i + 1); });
+    function list(key, n) { return Q[key] ? decodeURIComponent(Q[key]).split('~').map(function (t) { return t.split(':').map(Number); }).filter(function (f) { return f.length >= n; }) : []; }
+    var P = { pos: [], lock: {}, pl: parseInt(Q.pl) || 0, hasPl: Q.pl !== undefined, pd: parseInt(Q.pd) || 0, rtt: parseInt(Q.rtt) || 0,
+      view: Math.max(0, Math.min(2, parseInt(Q.rv) || 0)), val: Q.ri !== '0', mon: [], top: [] };
+    if (Q.mo) decodeURIComponent(Q.mo).split('~').forEach(function (t) {
+      var f = t.split(':'); if (f.length < 10) return;
+      P.pos.push({ k: +f[0], cp: f[1], bs: f[2], K: +f[3], e: +f[4], q: +f[5], open: +f[6], mark: +f[7], m: f[8], end: +f[9] });
+    });
+    list('hk', 3).forEach(function (f) { P.lock[f[0]] = { sh: f[1], cost: f[2] }; });
+    list('rm', 9).forEach(function (f) { P.mon.push({ ym: f[0], v: [f[1], f[2], f[3], f[4]], value: f[5], inv: f[6], disc: f[7], dte: f[8] }); });
+    list('rt', 5).forEach(function (f) { P.top.push({ k: f[0], v: [f[1], f[2], f[3], f[4]] }); });
+    P.mon = P.mon.slice(-13); P.top = P.top.slice(0, 10);
+    return P;
+  }
+  function total(S, P, k) { return { sh: S.h[k] + (P.lock[k] ? P.lock[k].sh : 0), cost: S.cb[k] + (P.lock[k] ? P.lock[k].cost : 0) }; }   // free + locked shares, cost x100
+
+  // ---------------- small helpers
+  function dstr(t) { var d = new Date(t); return WD[d.getUTCDay()] + ' ' + d.getUTCDate() + ' ' + MN[d.getUTCMonth()]; }
+  function inH(t) { var hrs = Math.max(0, Math.floor((t - Date.now()) / 3600000)); return hrs < 48 ? 'in ' + hrs + ' h' : 'in ' + Math.floor(hrs / 24) + ' days'; }
+  function soon(t) { return t - Date.now() <= 48 * 3600000; }
+  function g(v) { return fmt(v) + ' ◆'; }
+  function pc(v, d) { return sg(v, d === undefined ? 1 : d) + ' %'; }
+  function card(x, y, w, h) { return A(x, y, w, h, '', '', GLASS); }
+  function title(S, text) { return frame(S, '') + T(100, 108, 30, 'dim', text) + TR(1820, 110, 24, 'dim', clockHtml()); }
+  function chipTxt(x, y, w, hh, col, label, size) { return A(x, y, w, hh, 'c', label, 'font-size:' + size + 'px;line-height:' + hh + 'px;border-radius:7px;background:' + col + ';color:#04070F'); }
+
+  // ---------------- table model: groups per stock (shares row first, option rows under it), pages that never split a group
+  function build(S, P) {
+    var by = {}, ks = [], i;
+    function grp(k) { if (!by[k]) { by[k] = { k: k, rows: [], exp: 0 }; ks.push(k); } return by[k]; }
+    for (i = 0; i < STOCKS; i++) { var t = total(S, P, i); if (t.sh > 0) { var gg = grp(i), val = t.sh * S.px[i] / 100; gg.exp += val; gg.rows.push({ st: 'SH', k: i, sh: t.sh, open: t.cost / t.sh, mark: S.px[i], val: val, pl: val - t.cost / 100, pct: t.cost ? (val - t.cost / 100) / (t.cost / 100) * 100 : 0 }); } }
+    P.pos.forEach(function (p) {
+      var gg = grp(p.k), short = p.bs === 's', st = (short ? 'S' : 'L') + (p.cp === 'c' ? 'C' : 'P'), spot = S.px[p.k], q = p.q;
+      var plv = (short ? p.open - p.mark : p.mark - p.open) * q, itm = short && (p.cp === 'c' ? spot > p.K : spot < p.K);
+      gg.exp += p.K * q; gg.rows.push({ st: st, k: p.k, p: p, q: q, open: p.open, mark: p.mark, val: (short ? -1 : 1) * p.mark * q, pl: plv, pct: p.open ? plv / (p.open * q) * 100 : 0, itm: itm,
+        ret: short ? p.open / p.K * 365 / (EXPD[p.e] || 7) * 100 : null });
+    });
+    ks.sort(function (a, b) { return by[b].exp - by[a].exp; });
+    var groups = ks.map(function (k) { return by[k]; }), flat = [], pages = [], a = 0, n = 0;
+    groups.forEach(function (gr) {
+      if (n && n + gr.rows.length > PG) { pages.push([a, flat.length]); a = flat.length; n = 0; }
+      gr.rows.forEach(function (r, j) { r.first = j === 0; r.last = j === gr.rows.length - 1; r.n = gr.rows.length; r.wheel = gr.rows.some(function (x) { return x.st === 'SH'; }) && gr.rows.some(function (x) { return x.st === 'SC'; }); flat.push(r); });
+      n += gr.rows.length;
+    });
+    if (flat.length > a) pages.push([a, flat.length]);
+    return { groups: groups, flat: flat, pages: pages };
+  }
+  function hint(r) {                                                  // small action hint: ITM > ALERT (report within 48 h) > CLOSE (80 % of the premium kept)
+    var t = nextDay(CO.report_day[r.k], 12 * 3600000), opt = r.st !== 'SH';
+    if (opt && r.st[0] === 'S' && r.itm) return ['ITM', 'var(--dn)'];
+    if (soon(t) && (opt || r.hasOpt)) return ['ALERT', 'var(--amb)'];
+    if (opt && r.st[0] === 'S' && r.mark <= r.open * .2) return ['CLOSE', 'var(--up)'];
+    return null;
+  }
+
+  // ---------------- PAGE 1: MY PORTFOLIO
+  function pPortfolio(S) {
+    var P = parseP(S), M = build(S, P), h = title(S, 'MY PORTFOLIO'), sv = 0, locked = 0, prem = 0, opts = 0, stocks = 0, plAll = 0;
+    M.flat.forEach(function (r) { if (r.st === 'SH') { sv += r.val; stocks++; } else { opts++; if (r.st[0] === 'S') { prem += r.open * r.q; if (r.p.m === 'cash') locked += r.p.K * r.q; } } plAll += r.pl; });
+    if (P.hasPl) locked = P.pl;
+    M.groups.forEach(function (gr) { var ho = gr.rows.some(function (r) { return r.st !== 'SH'; }); gr.rows.forEach(function (r) { r.hasOpt = ho; }); });
+    var inv = sv + locked, acct = S.c + inv, pct = function (v) { return acct > 0 ? v / acct * 100 : 0; };
+    var K = [['EXCHANGE BALANCE', g(S.c), '', 'free glint to trade', 'dim'], ['INVESTED', g(inv), '', pc(pct(inv), 0).replace('+', '') + ' of your account · shares + locked', 'dim'],
+      ['OPEN POSITIONS', fmt(M.flat.length), '', stocks + ' stocks · ' + opts + ' options', 'dim'], ['PREMIUM COLLECTED', g(prem), 'amb', pc(pct(prem), 1).replace('+', '') + ' of your account · short options', 'dim'],
+      ['RESULT TODAY', sg(P.pd) + ' ◆', P.pd >= 0 ? 'up' : 'dn', sg(pct(P.pd), 1) + ' % of your account', P.pd >= 0 ? 'up' : 'dn']];
+    K.forEach(function (c, i) { var x = 100 + i * 347; h += card(x, 146, 331, 124) + T(x + 18, 158, 19, 'acc', c[0], 0, 'letter-spacing:.14em') + T(x + 18, 184, 52, c[2], c[1]) + T(x + 18, 240, 18, c[4], c[3], 296, 'overflow:hidden;text-overflow:ellipsis'); });
+    var yH = 286, X = { st: 120, lg: 278, nm: 324, sec: 640, op: 1065, ry: 1195, rp: 1226, vl: 1590, pl: 1745 };
+    h += T(X.st, yH, 19, 'dim', 'STRATEGY', 0, 'letter-spacing:.1em') + T(X.lg, yH, 19, 'dim', 'STOCK · STRIKE · ENDS', 0, 'letter-spacing:.1em') + T(X.sec, yH, 19, 'dim', 'SECTOR · PEERS', 0, 'letter-spacing:.1em') + TR(X.op, yH, 19, 'dim', 'OPEN · QTY') + TR(X.ry, yH, 19, 'dim', 'A YEAR') +
+      T(X.rp, yH, 19, 'dim', 'NEXT REPORT', 0, 'letter-spacing:.1em') + TR(X.vl, yH, 19, 'dim', 'VALUE') + TR(X.pl, yH, 19, 'dim', 'P / L') + A(100, yH + 28, 1720, 2, '', '', 'background:var(--line)');
+    if (!M.flat.length) return h + TC(470, 50, 'dim', 'No open positions.') + TC(550, 32, 'dim', 'Buy shares or sell an option first.');
+    var sel = Math.max(0, Math.min(M.flat.length - 1, S.sel)), pi = 0;
+    M.pages.forEach(function (pg, i) { if (sel >= pg[0] && sel < pg[1]) pi = i; });
+    var pg = M.pages[pi], y0 = 322;
+    for (var i = pg[0]; i < pg[1]; i++) {
+      var r = M.flat[i], y = y0 + (i - pg[0]) * 52, k = r.k, st = STRAT[r.st], opt = r.st !== 'SH', t = nextDay(CO.report_day[k], 12 * 3600000), rs = soon(t), up = r.pl >= 0, hn = hint(r);
+      if (r.first && r.n > 1) { var gh = 0, gi = i; while (gi < pg[1] && M.flat[gi].k === k) { gh += 52; gi++; } h += A(88, y - 3, 1744, gh - 2, '', '', 'background:#ffffff0A;border-radius:8px;border-left:6px solid ' + (r.wheel ? 'var(--amb)' : '#4A6A99') + ';box-sizing:border-box'); }
+      if (i === sel) h += A(80, y - 3, 1760, 50, '', '', 'background:#7FD4FF33;border-left:8px solid var(--acc);box-sizing:border-box');
+      h += chipTxt(X.st, y + 5, 140, 34, st[1], st[0], 20) + A(X.lg, y + 5, 36, 36, '', logo(k, 36));
+      var sub = r.st === 'SH' ? TICKS[k] + ' · now ' + f2(S.px[k]) : 'strike ' + f2(r.p.K) + ' · ' + (r.p.end * 1000 - Date.now() < 48 * 3600000 ? 'ends ' + inH(r.p.end * 1000) : 'ends ' + dstr(r.p.end * 1000)) + (r.p.m === 'naked' ? ' · naked' : '');
+      h += T(X.nm, y + 1, 26, '', esc(NAMES[k]), 300, 'overflow:hidden;text-overflow:ellipsis') + T(X.nm, y + 29, 18, 'dim', sub, 300, 'overflow:hidden');
+      h += T(X.sec, y + 1, 21, 'lab', esc(CO.sector[k]), 250, 'overflow:hidden;text-overflow:ellipsis') + T(X.sec, y + 29, 18, 'dim', 'peers ' + CO.peers[k].join(' · '), 250, 'overflow:hidden');
+      h += TR(X.op, y + 1, 25, 'lab', f2(r.open)) + TR(X.op, y + 29, 18, 'dim', '× ' + fmt(r.st === 'SH' ? r.sh : r.q) + (r.st === 'SH' ? ' shares' : ' contr.'));
+      var ry = r.st === 'SH' ? CO.div_yield[k] : r.ret;
+      h += ry === null ? TR(X.ry, y + 1, 25, 'dim', '–') : TR(X.ry, y + 1, 25, 'lab', ry > 999 ? '>999 %' : (ry < 10 ? ry.toFixed(1) : Math.round(ry)) + ' %') + TR(X.ry, y + 29, 18, 'dim', r.st === 'SH' ? 'dividend' : 'premium');
+      if (rs) h += A(X.rp - 12, y - 3, 214, 50, '', '', 'border-radius:8px;background:#FFB02E26;border:1px solid #FFB02E99;box-sizing:border-box');
+      h += T(X.rp, y + 1, 23, rs ? 'amb' : 'lab', dstr(t)) + T(X.rp, y + 27, 18, rs ? 'amb' : 'dim', inH(t) + (rs ? ' · deposit' : ''));
+      h += TR(X.vl, y + 1, 25, r.val < 0 ? 'dim' : '', fmt(r.val) + ' ◆') + (opt ? TR(X.vl, y + 29, 18, 'dim', r.st[0] === 'S' ? 'to buy back' : 'to sell back') : TR(X.vl, y + 29, 18, 'dim', fmt(r.sh) + ' × ' + f2(S.px[k])));
+      h += TR(X.pl, y + 1, 25, up ? 'up' : 'dn', sg(r.pl) + ' ◆') + TR(X.pl, y + 29, 18, up ? 'up' : 'dn', pc(r.pct) + (opt && r.st[0] === 'S' ? ' kept' : ''));
+      if (hn) h += chipTxt(1752, y + 6, 68, 32, hn[1], hn[0], 18);
+    }
+    h += T(100, 800, 22, 'dim', 'page ' + (pi + 1) + '/' + M.pages.length + ' · ▲▼ move, past the end = next page') + TR(1820, 800, 26, 'lab', 'all open P / L <span class="' + (plAll >= 0 ? 'up' : 'dn') + '">' + sg(plAll) + ' ◆</span>');
+    h += A(100, 842, 10, 22, '', '', 'background:var(--amb);border-radius:3px') + T(120, 840, 20, 'dim', 'amber bar = wheel: shares with a short call on them') + T(740, 840, 20, 'dim', 'ALERT report within 48 h') + T(1030, 840, 20, 'dim', 'ITM short option ends inside the money') + T(1470, 840, 20, 'dim', 'CLOSE 80 % of premium kept');
+    return h;
+  }
+
+  // ---------------- sunburst model (sector = inner ring, stock = outer ring) from shares + cash put collateral
+  function slices(S, P) {
+    var M = build(S, P), bySec = {}, secs = [], tot = 0, flat = [];
+    M.groups.forEach(function (gr) {
+      var k = gr.k, v = 0, names = [];
+      gr.rows.forEach(function (r) { if (r.st === 'SH') { v += r.val; names.push('SHARES'); } else { names.push(STRAT[r.st][0]); if (r.st === 'SP' && r.p.m === 'cash') v += r.p.K * r.q; } });
+      if (v <= 0) return;
+      var sec = CO.sector[k]; if (!bySec[sec]) { bySec[sec] = { name: sec, value: 0, kids: [] }; secs.push(bySec[sec]); }
+      bySec[sec].value += v; bySec[sec].kids.push({ key: k, k: k, value: v, strat: names.join(' + '), rows: gr.rows }); tot += v;
+    });
+    secs.sort(function (a, b) { return b.value - a.value; });
+    secs.forEach(function (s, i) { s.kids.sort(function (a, b) { return b.value - a.value; }); s.col = GCH.PAL[i % GCH.PAL.length]; s.kids.forEach(function (kd) { kd.sec = s; kd.share = kd.value / tot * 100; flat.push(kd); }); });
+    return { secs: secs, flat: flat, total: tot };
+  }
+
+  // ---------------- PAGE 2: MY RESULTS
+  function vOverview(S, P) {
+    var h = '', m = P.mon, n = m.length, yms = m.map(function (r) { return r.ym; });
+    h += card(100, 146, 850, 372) + card(970, 146, 850, 372);
+    var vals, cum = 0;
+    if (P.val) vals = m.map(function (r) { return r.value; }); else vals = m.map(function (r) { cum += r.v[0] + r.v[1] + r.v[2] + r.v[3]; return cum; });
+    h += T(124, 160, 21, 'acc', P.val ? 'GLINT VALUE · account at each month end' : 'INCOME ADDED UP · since you started', 0, 'letter-spacing:.1em');
+    h += A(116, 196, 818, 306, '', GCH.line(818, 306, vals, yms, { zero: !P.val, col: P.val ? '#7FD4FF' : '#2EE59D' }));
+    h += T(994, 160, 21, 'acc', 'INCOME EACH MONTH', 0, 'letter-spacing:.1em');
+    var lg = [['puts', GCH.COL.puts], ['calls', GCH.COL.calls], ['dividends', GCH.COL.div], ['price gains', GCH.COL.gains]], lx = 1280;
+    lg.forEach(function (l) { h += A(lx, 164, 16, 16, '', '', 'background:' + l[1] + ';border-radius:4px') + T(lx + 24, 158, 20, 'lab', l[0]); lx += 24 + l[0].length * 10.5 + 22; });
+    h += A(986, 196, 818, 306, '', GCH.bars(818, 306, m, {}));
+    // small cards: invested share with 80-100 / 50-80 / 0-50 bands, average discount on puts, average days to expiry
+    var last = m[n - 1], ci = last.inv, mean = function (key) { var s = 0, c = 0; m.forEach(function (r) { if (r[key] > 0) { s += r[key]; c++; } }); return c ? s / c : 0; };
+    var cx = [100, 680, 1260], tt = ['INVESTED SHARE OF ACCOUNT', 'AVERAGE DISCOUNT ON PUTS', 'AVERAGE DAYS TO EXPIRY'];
+    cx.forEach(function (x, i) { h += card(x, 536, 560, 330) + T(x + 22, 550, 21, 'acc', tt[i], 0, 'letter-spacing:.1em'); });
+    h += T(122, 580, 70, '', ci + ' <span style="font-size:40px" class="dim">%</span>') + T(330, 598, 20, 'dim', 'of the account is in shares<br>and locked glint now', 270, 'white-space:normal;line-height:1.2');
+    h += A(122, 676, 520, 176, '', GCH.bandLine(516, 176, m.map(function (r) { return r.inv; }), yms, [[80, 100, '#FFB02E', '80–100'], [50, 80, '#7FD4FF', '50–80'], [0, 50, '#8C9AB5', '0–50']]));
+    var ad = mean('disc') / 10, dd = mean('dte') / 10;
+    h += T(702, 580, 70, '', ad.toFixed(1) + ' <span style="font-size:40px" class="dim">%</span>') + T(960, 598, 20, 'dim', 'strike below the share<br>price when you sold', 250, 'white-space:normal;line-height:1.2');
+    h += A(702, 676, 520, 176, '', GCH.miniBars(520, 176, m.map(function (r) { return r.disc; }), yms, '#7FD4FF', mean('disc'), function (v) { return (v / 10).toFixed(1) + ' %'; }));
+    h += T(1282, 580, 70, '', dd.toFixed(1) + ' <span style="font-size:40px" class="dim">days</span>') + T(1552, 598, 20, 'dim', 'how long your<br>contracts run', 250, 'white-space:normal;line-height:1.2');
+    h += A(1282, 676, 520, 176, '', GCH.miniBars(520, 176, m.map(function (r) { return r.dte; }), yms, '#FFB02E', mean('dte'), function (v) { return (v / 10).toFixed(1) + ' d'; }));
+    return h;
+  }
+  function vSectors(S, P) {
+    var SL = slices(S, P), h = '';
+    if (!SL.flat.length) return h + TC(470, 50, 'dim', 'Nothing invested yet.');
+    var sel = Math.max(0, Math.min(SL.flat.length - 1, S.sel)), kd = SL.flat[sel];
+    h += A(100, 150, 700, 716, '', GCH.sunburst(700, SL.secs, kd.key, { center: [fmt(SL.total) + ' ◆', 'invested'] }));
+    h += T(830, 160, 21, 'acc', 'SECTORS · inner ring', 0, 'letter-spacing:.1em');
+    SL.secs.forEach(function (s, i) {
+      var y = 204 + i * 52, on = s === kd.sec;
+      if (on) h += A(822, y - 6, 440, 48, '', '', 'background:#7FD4FF22;border:1px solid #7FD4FF66;border-radius:8px;box-sizing:border-box');
+      h += A(838, y + 6, 22, 22, '', '', 'background:' + s.col + ';border-radius:6px') + T(876, y, 25, on ? '' : 'lab', esc(s.name), 290, 'overflow:hidden;text-overflow:ellipsis') + TR(1246, y, 25, on ? '' : 'lab', (s.value / SL.total * 100).toFixed(1) + ' %');
+    });
+    h += card(1296, 146, 524, 720);
+    var x = 1320;
+    h += T(x, 160, 21, 'acc', 'PICKED SLICE · outer ring', 0, 'letter-spacing:.1em') + A(x, 204, 88, 88, '', logo(kd.k, 88));
+    h += T(x + 108, 208, 32, '', esc(NAMES[kd.k]), 380, 'overflow:hidden;text-overflow:ellipsis') + T(x + 108, 252, 21, 'dim', TICKS[kd.k] + ' · ' + esc(CO.sector[kd.k]), 380, 'overflow:hidden');
+    h += T(x, 316, 30, 'amb', esc(kd.strat), 480, 'white-space:normal;line-height:1.1') + T(x, 372, 84, '', kd.share.toFixed(1) + ' <span style="font-size:44px" class="dim">%</span>') + T(x, 468, 22, 'lab', 'of everything you have invested');
+    var rep = nextDay(CO.report_day[kd.k], 12 * 3600000), sh = kd.rows.filter(function (r) { return r.st === 'SH'; })[0], pl = 0; kd.rows.forEach(function (r) { pl += r.pl; });
+    var rows = [['Slice value', g(kd.value)], ['Shares', sh ? fmt(sh.sh) : 'none'], ['Options', fmt(kd.rows.length - (sh ? 1 : 0)) + ' open'], ['Sector total', (kd.sec.value / SL.total * 100).toFixed(1) + ' %'], ['P / L open', '<span class="' + (pl >= 0 ? 'up' : 'dn') + '">' + sg(pl) + ' ◆</span>'], ['Next report', '<span class="' + (soon(rep) ? 'amb' : '') + '">' + dstr(rep) + ' · ' + inH(rep) + '</span>']];
+    rows.forEach(function (rw, i) { var y = 520 + i * 54; h += T(x, y + 4, 22, 'dim', rw[0]) + TR(1796, y, 27, 'lab', rw[1]) + A(x, y + 40, 476, 1, '', '', 'background:var(--line)'); });
+    return h;
+  }
+  function vTop(S, P) {
+    var h = '', T10 = P.top, X = { nm: 176, pu: 790, ca: 950, dv: 1130, gn: 1310, tt: 1480, bar: 1512, pc: 1810 }, n = Math.min(10, T10.length), sum = 0, others;
+    var hd = [['PUTS', X.pu, GCH.COL.puts], ['CALLS', X.ca, GCH.COL.calls], ['DIVIDENDS', X.dv, GCH.COL.div], ['PRICE GAINS', X.gn, GCH.COL.gains]];
+    h += T(120, 150, 20, 'dim', 'WHERE DID I EARN MOST · all time', 0, 'letter-spacing:.1em');
+    hd.forEach(function (c) { h += TR(c[1], 150, 20, '', '<span style="color:' + c[2] + '">' + c[0] + '</span>', 'letter-spacing:.06em'); });
+    h += TR(X.tt, 150, 20, 'lab', 'TOTAL') + T(X.bar, 150, 20, 'dim', 'SHARE OF RESULT') + A(100, 182, 1720, 2, '', '', 'background:var(--line)');
+    if (!n) return h + TC(470, 50, 'dim', 'No results yet.') + TC(550, 32, 'dim', 'Sell an option or hold a dividend share first.');
+    var sel = Math.max(0, Math.min(n - 1, S.sel)), pg = Math.floor(sel / 10), rtt = P.rtt || 0;
+    T10.forEach(function (r) { sum += r.v[0] + r.v[1] + r.v[2] + r.v[3]; });
+    function row(y, label, k, v, tot, share, hot) {
+      var o = '';
+      if (hot) o += A(80, y - 6, 1760, 52, '', '', 'background:#7FD4FF33;border-left:8px solid var(--acc);box-sizing:border-box');
+      o += (k >= 0 ? A(120, y + 1, 38, 38, '', logo(k, 38)) : '') + T(k >= 0 ? 176 : 124, y + 3, 27, k >= 0 ? '' : 'lab', label, 420, 'overflow:hidden;text-overflow:ellipsis');
+      if (v) [X.pu, X.ca, X.dv, X.gn].forEach(function (x, i) { o += TR(x, y + 3, 26, v[i] < 0 ? 'dn' : v[i] === 0 ? 'dim' : 'lab', v[i] === 0 ? '–' : fmt(v[i])); });
+      o += TR(X.tt, y + 1, 30, tot >= 0 ? 'up' : 'dn', sg(tot));
+      if (share !== null) o += A(X.bar, y + 10, 200, 20, '', '', 'background:#2C3E6677;border-radius:10px') + A(X.bar, y + 10, Math.max(0, Math.min(200, share * 2)), 20, '', '', 'background:' + (tot >= 0 ? 'var(--up)' : 'var(--dn)') + ';border-radius:10px') + TR(X.pc, y + 3, 26, 'lab', share.toFixed(1) + ' %');
+      return o;
+    }
+    for (var i = pg * 10; i < Math.min(n, pg * 10 + 10); i++) {
+      var r = T10[i], tot = r.v[0] + r.v[1] + r.v[2] + r.v[3];
+      h += row(196 + (i - pg * 10) * 52, esc(NAMES[r.k]), r.k, r.v, tot, rtt ? tot / rtt * 100 : 0, i === sel);
+    }
+    others = rtt - sum;
+    h += A(100, 724, 1720, 2, '', '', 'background:var(--line)');
+    if (rtt) { h += row(734, 'Other stocks', -1, null, others, others / rtt * 100, false); h += A(100, 786, 1720, 2, '', '', 'background:var(--line)') + row(796, 'ALL STOCKS', -1, null, rtt, 100, false); }
+    h += T(100, 846, 20, 'dim', 'page ' + (pg + 1) + '/' + Math.ceil(n / 10) + ' · top ' + n + ' stocks · ▲▼ move');
+    return h;
+  }
+  function pResults(S) {
+    var P = parseP(S), h = title(S, 'MY RESULTS · all time · ' + (P.view + 1) + '/3 ' + VIEWS[P.view]);
+    if (!P.mon.length && P.view === 0) return h + TC(470, 50, 'dim', 'No results yet.') + TC(550, 32, 'dim', 'Sell an option or hold a dividend share first.');
+    return h + (P.view === 0 ? vOverview(S, P) : P.view === 1 ? vSectors(S, P) : vTop(S, P));
+  }
+
+  // ---------------- register pages + bars (entry buttons only in free slots)
+  PAGES.portfolio = pPortfolio; PAGES.results = pResults;
+  BARS.portfolio = ['BACK', '▲', '▼', 'MY SHARES', 'RESULTS', 'OPEN'];
+  BARS.results = ['BACK', '', '', '◀ VIEW', 'VIEW ▶', ''];
+  BARS.shares[3] = 'PORTFOLIO'; BARS.shares[4] = 'RESULTS'; BARS.myopt[3] = 'PORTFOLIO';
+  var baseBar = bar;
+  bar = function (S) {
+    if (S.p === 'results') { var P = parseP(S); BARS.results = ['BACK', P.view ? '▲' : '', P.view ? '▼' : '', '◀ VIEW', 'VIEW ▶', P.view ? '' : (P.val ? 'SHOW INCOME' : 'SHOW VALUE')]; }
+    return baseBar(S);
+  };
+  render();
+  return { parse: parseP, build: build, slices: slices, views: VIEWS.length, EXPD: EXPD };
+})();

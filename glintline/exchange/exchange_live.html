@@ -4,10 +4,11 @@
 /* Glint Exchange LIVE page (25 Nov 2026). Look = flow_B mock-up (TWS-style, palette A Midnight Floor). ONE page per player screen, 1920x1080.
    The game only changes the URL #fragment -> hashchange -> redraw, no reload (same pattern as kiosk_live.html).
    URL   exchange_live.html[?demo=1][&dbg=1]#p=<page>&c=..&b=..&px=..&pv=..&sel=..&k=..&side=buy|sell&q=..&h=..&cb=..&ch=..&r=..&f=..&n=..
-   p    attract|market|stock|amount|total|wait|result|shares|move  + OPTIONS pages chain|ticket|oreview|myopt|oclose (keys: exchange_options.js)      c free glint (int)   b banked glint (int)
+   p    attract|market|stock|amount|total|wait|result|shares|move  + OPTIONS pages chain|ticket|oreview|myopt|oclose (keys: exchange_options.js) + ACCOUNT pages portfolio|results (keys: exchange_portfolio.js)      c free glint (int)   b banked glint (int)
    px   50 prices in CENTS, board order   pv 50 prices 24 h ago (cents)   sel highlighted row (market: stock id; shares: row in the owned list)
    k    stock id   side buy|sell   q shares   h 50 owned counts   cb 50 cost bases (glint x 100, fee included)   ch 13 chart prices (cents)
    r    ok|kind|qty|glint|fee|text   (kind buy|sell|in|out; text URL-encoded; on ok results text = optional result line, e.g. "+12 glint result")
+   pz   1 = MARKET PAUSED (the price script waits for the game-link numbers): amber strip on every page + text on the wait page; 0/missing = normal
    f    fee per order (default 5)   n send counter (ignored)   unknown keys ignored.   ?demo=1 = fake state + clickable buttons/keys.   ?dbg=1 = counter. */
 @font-face{font-family:Brand;src:url(../kiosk/live/fonts/Cinzel.ttf);font-weight:400 900}
 @font-face{font-family:UI;src:url(../kiosk/live/fonts/BarlowSemiCondensed-Bold.ttf)}
@@ -133,7 +134,7 @@ function parse() {
   function dec(s) { try { return decodeURIComponent(String(s).replace(/\+/g, ' ')); } catch (e) { return s; } }
   function lst(key, n, d) { return arr(S[key] ? S[key].split(',') : null, n, d); }
   var o = { p: dec(S.p || 'attract'), c: parseInt(S.c) || 0, b: parseInt(S.b) || 0, sel: parseInt(S.sel) || 0, k: Math.max(0, Math.min(STOCKS - 1, parseInt(S.k) || 0)),
-    side: S.side === 'sell' ? 'sell' : 'buy', q: Math.max(0, parseInt(S.q) || 0), f: S.f !== undefined && S.f !== '' ? parseInt(S.f) : 5, r: null };
+    pz: S.pz === '1', side: S.side === 'sell' ? 'sell' : 'buy', q: Math.max(0, parseInt(S.q) || 0), f: S.f !== undefined && S.f !== '' ? parseInt(S.f) : 5, r: null };
   o.px = lst('px', STOCKS, 0).map(function (v, i) { return v > 0 ? v : BASE[i]; });
   o.pv = lst('pv', STOCKS, 0).map(function (v, i) { return v > 0 ? v : o.px[i]; });
   o.h = lst('h', STOCKS, 0); o.cb = lst('cb', STOCKS, 0);
@@ -267,7 +268,16 @@ function pTotal(S) {
   h += TC(800, 30, 'lab', 'Press SELECT, then Yes in the box');
   return h;
 }
-function pWait(S) { return frame(S, '') + A(905, 300, 110, 110, 'spin', '') + TC(470, 70, '', 'Booking…', '') + TC(570, 30, 'dim', 'one moment'); }
+function pWait(S) {
+  if (S.pz) return frame(S, '') + A(905, 300, 110, 110, 'spin', '') + TC(470, 70, 'amb', 'MARKET PAUSED') + TC(570, 32, 'lab', 'The broker is waiting for the race office numbers.') + TC(620, 32, 'dim', 'Prices come back on their own.');
+  return frame(S, '') + A(905, 300, 110, 110, 'spin', '') + TC(470, 70, '', 'Booking…', '') + TC(570, 30, 'dim', 'one moment');
+}
+// pz=1: amber glass strip in the top bar of ANY page (no chat; nothing under it is covered)
+function pauseBanner(S) {
+  if (!S.pz) return '';
+  return A(600, 10, 1260, 64, '', '<span class="amb" style="font-size:32px;font-weight:700;letter-spacing:.12em">MARKET PAUSED</span><span class="lab" style="font-size:23px;margin-left:22px">waiting for the race office numbers · prices come back on their own</span>',
+    'background:linear-gradient(180deg,#FFB02E33,#FFB02E14);border:2px solid #FFB02Ecc;border-radius:12px;box-sizing:border-box;line-height:60px;padding-left:24px;z-index:5');
+}
 function pResult(S) {
   var r = S.r, h = frame(S, ''), k = S.k, ix = r ? r.kind : '';
   if (!r) return h + TC(400, 50, 'dim', 'No result');
@@ -320,7 +330,7 @@ var lastS = null;
 function render() {
   var t = performance.now(), S = parse(); lastS = S;
   var fn = PAGES[S.p] || pAttract; if (!PAGES[S.p]) S.p = 'attract';
-  stage.innerHTML = fn(S) + (S.p === 'attract' ? '' : bar(S)) + '<div id="dlg"></div>';
+  stage.innerHTML = fn(S) + (S.p === 'attract' ? '' : bar(S)) + pauseBanner(S) + '<div id="dlg"></div>';
   fitText(); tickClock(); if (DEMO) demoAfterRender();
   switches++; if (DBG) requestAnimationFrame(function () { dbgEl.textContent = 'L' + loads + ' S' + switches + ' ' + Math.round(performance.now() - t) + 'ms'; });
 }
@@ -339,7 +349,7 @@ function demoInit() {
 }
 function ownedD() { var o = []; for (var i = 0; i < STOCKS; i++) if (D.h[i] > 0) o.push(i); return o; }
 function demoWrite() {
-  var u = 'p=' + D.p + '&c=' + D.c + '&b=' + D.b + '&px=' + D.px.join(',') + '&pv=' + D.pv.join(',') + '&sel=' + D.sel + '&k=' + D.k + '&side=' + D.side + '&q=' + D.q + '&h=' + D.h.join(',') + '&cb=' + D.cb.join(',') + '&ch=' + D.hist[D.k].slice(-13).join(',') + '&f=' + D.f + '&n=' + (D.n = (D.n || 0) + 1);
+  var u = 'p=' + D.p + '&c=' + D.c + '&b=' + D.b + '&px=' + D.px.join(',') + '&pv=' + D.pv.join(',') + '&sel=' + D.sel + '&k=' + D.k + '&side=' + D.side + '&q=' + D.q + '&h=' + D.h.join(',') + '&cb=' + D.cb.join(',') + '&ch=' + D.hist[D.k].slice(-13).join(',') + '&f=' + D.f + '&n=' + (D.n = (D.n || 0) + 1) + (D.pz ? '&pz=1' : '');
   if (D.r) u += '&r=' + D.r;
   location.hash = u;
 }
@@ -404,6 +414,7 @@ if (DEMO) {
   });
   addEventListener('keydown', function (e) {
     var m = { Escape: 'back', ArrowUp: 'up', ArrowDown: 'down', PageUp: 'pgup', PageDown: 'pgdn', '-': 'minus', '+': 'plus', '=': 'plus', Enter: 'select' }[e.key];
+    if (e.key === 'P' && e.shiftKey) { D.pz = D.pz ? 0 : 1; demoWrite(); return; }   // demo: Shift+P toggles MARKET PAUSED
     if (pendingYes) { if (e.key === 'y' || e.key === 'Enter') answer(true); else if (e.key === 'n' || e.key === 'Escape') answer(false); return; }
     if (m) { e.preventDefault(); press(m); }
   });
@@ -413,6 +424,7 @@ if (DEMO) {
   if (sp && PAGES[sp]) {
     D.p = sp; var m = location.hash.match(/k=(\d+)/); if (m) D.k = +m[1]; m = location.hash.match(/side=(\w+)/); if (m) D.side = m[1]; m = location.hash.match(/q=(\d+)/); if (m) D.q = +m[1];
     m = location.hash.match(/sel=(\d+)/); if (m) D.sel = +m[1];
+    if (/[#&]pz=1/.test(location.hash)) D.pz = 1;
     if (sp === 'result') { D.r = ''; var ok = location.hash.match(/res=(\w+)/); if (ok && ok[1] === 'no') refuse('buy', 'Not enough free glint for that amount.'); else { D.q = D.q || 5; D.side = 'buy'; bookNowQuiet(); } }
   }
   demoWrite();
@@ -421,4 +433,5 @@ function bookNowQuiet() { var k = D.k, f = fillBuy(D.px[k], k), tot = Math.ceil(
 if (!DEMO) render();
 else render();
 </script>
-<script src="exchange_options.js"></script></body></html>
+<script src="exchange_options.js"></script>
+<script src="exchange_charts.js"></script><script src="exchange_portfolio.js"></script><script src="exchange_portfolio_demo.js"></script></body></html>
