@@ -4,7 +4,7 @@
 var GCH = (function () {
   'use strict';
   var COL = { puts: '#7FD4FF', calls: '#FFB02E', div: '#9B7BFF', gains: '#2EE59D', loss: '#FF4F64', grid: '#2C3E66', txt: '#8C9AB5', lab: '#DCE3EE' };
-  var PAL = ['#7FD4FF', '#FFB02E', '#9B7BFF', '#2EE59D', '#FF6B85', '#E8C46A', '#1FB0BA', '#C7D2E8', '#5F8BFF', '#FF9F6B'];   // sector colours, glint palette
+  var PAL = ['#7FD4FF', '#FFB02E', '#9B7BFF', '#2EE59D', '#FF6B85', '#E8C46A', '#1FB0BA', '#C7D2E8', '#5F8BFF', '#FF9F6B', '#C4F24E'];   // sector colours, glint palette (11th = Health Care lime, 26 Nov)
   var MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], uid = 0;
   function n1(v) { return Math.round(v * 10) / 10; }
   function nice(lo, hi, n) {                                         // axis with round numbers
