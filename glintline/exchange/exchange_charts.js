@@ -4,6 +4,8 @@
 var GCH = (function () {
   'use strict';
   var COL = { puts: '#7FD4FF', calls: '#FFB02E', div: '#9B7BFF', gains: '#2EE59D', loss: '#FF4F64', grid: '#2C3E66', txt: '#8C9AB5', lab: '#DCE3EE' };
+  var SECT = { 'Consumer Discretionary': '#7FD4FF', 'Technology': '#FFB02E', 'Financials': '#9B7BFF', 'Industrials': '#2EE59D', 'Energy': '#FF6B85', 'Real Estate': '#E8C46A', 'Communication Services': '#1FB0BA', 'Utilities': '#C7D2E8', 'Materials': '#5F8BFF', 'Consumer Staples': '#FF9F6B', 'Health Care': '#C4F24E' };   // FIXED colour per sector name (same for every player)
+  function secCol(name, i) { return SECT[name] || PAL[i % PAL.length]; }
   var PAL = ['#7FD4FF', '#FFB02E', '#9B7BFF', '#2EE59D', '#FF6B85', '#E8C46A', '#1FB0BA', '#C7D2E8', '#5F8BFF', '#FF9F6B', '#C4F24E'];   // sector colours, glint palette (11th = Health Care lime, 26 Nov)
   var MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], uid = 0;
   function n1(v) { return Math.round(v * 10) / 10; }
@@ -81,7 +83,7 @@ var GCH = (function () {
     secs.forEach(function (s) { total += s.value; });
     if (!total) return svg(sz, sz, tx(cx, cy, 28, COL.txt, 'nothing invested', 'middle'));
     secs.forEach(function (s, si) {
-      var span = s.value / total * Math.PI * 2, col = PAL[si % PAL.length], ka = a, hot = false;
+      var span = s.value / total * Math.PI * 2, col = secCol(s.name, si), ka = a, hot = false;
       s.kids.forEach(function (k) {
         var ks = k.value / s.value * span, sel = k.key === selKey; if (sel) hot = true;
         b += '<path d="' + arc(cx, cy, R1 + 5, R2 + (sel ? 14 : 0), ka, ka + ks) + '" fill="' + col + '" fill-opacity="' + (sel ? 1 : .62) + '" stroke="' + (sel ? '#fff' : '#101A33') + '" stroke-width="' + (sel ? 4 : 3) + '"/>';
@@ -121,5 +123,5 @@ var GCH = (function () {
     return svg(w, h, b);
   }
 
-  return { COL: COL, PAL: PAL, line: line, bars: bars, sunburst: sunburst, bandLine: bandLine, miniBars: miniBars, kf: kf, mon: mon };
+  return { COL: COL, PAL: PAL, SECT: SECT, secCol: secCol, line: line, bars: bars, sunburst: sunburst, bandLine: bandLine, miniBars: miniBars, kf: kf, mon: mon };
 })();

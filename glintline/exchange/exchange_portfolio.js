@@ -148,7 +148,7 @@ var PF = (function () {
     return h;
   }
 
-  // ---------------- sunburst model (sector = inner ring, stock = outer ring) from shares + cash put collateral
+  // ---------------- sunburst model (sector = YOUR SECTORS ring, stock = COMPANY ring) from shares + cash put collateral
   function slices(S, P) {
     var M = build(S, P, true), bySec = {}, secs = [], tot = 0, flat = [];
     M.groups.forEach(function (gr) {
@@ -159,7 +159,7 @@ var PF = (function () {
       bySec[sec].value += v; bySec[sec].kids.push({ key: k, k: k, value: v, strat: names.join(' + '), rows: gr.rows }); tot += v;
     });
     secs.sort(function (a, b) { return b.value - a.value; });
-    secs.forEach(function (s, i) { s.kids.sort(function (a, b) { return b.value - a.value; }); s.col = GCH.PAL[i % GCH.PAL.length]; s.kids.forEach(function (kd) { kd.sec = s; kd.share = kd.value / tot * 100; flat.push(kd); }); });
+    secs.forEach(function (s, i) { s.kids.sort(function (a, b) { return b.value - a.value; }); s.col = GCH.secCol(s.name, i); s.kids.forEach(function (kd) { kd.sec = s; kd.share = kd.value / tot * 100; flat.push(kd); }); });
     return { secs: secs, flat: flat, total: tot };
   }
 
@@ -193,7 +193,7 @@ var PF = (function () {
     if (!SL.flat.length) return h + TC(470, 50, 'dim', 'Nothing invested yet.');
     var sel = Math.max(0, Math.min(SL.flat.length - 1, S.sel)), kd = SL.flat[sel];
     h += A(100, 150, 700, 716, '', GCH.sunburst(700, SL.secs, kd.key, { center: [fmt(SL.total) + ' ◆', 'invested'] }));
-    h += T(830, 160, 21, 'acc', 'SECTORS · inner ring', 0, 'letter-spacing:.1em');
+    h += T(830, 160, 21, 'acc', 'YOUR SECTORS', 0, 'letter-spacing:.1em');
     SL.secs.forEach(function (s, i) {
       var y = 204 + i * 52, on = s === kd.sec;
       if (on) h += A(822, y - 6, 440, 48, '', '', 'background:#7FD4FF22;border:1px solid #7FD4FF66;border-radius:8px;box-sizing:border-box');
@@ -201,7 +201,7 @@ var PF = (function () {
     });
     h += card(1296, 146, 524, 720);
     var x = 1320;
-    h += T(x, 160, 21, 'acc', 'PICKED SLICE · outer ring', 0, 'letter-spacing:.1em') + A(x, 204, 88, 88, '', logo(kd.k, 88));
+    h += T(x, 160, 21, 'acc', 'COMPANY', 0, 'letter-spacing:.1em') + A(x, 204, 88, 88, '', logo(kd.k, 88));
     h += T(x + 108, 208, 32, '', esc(NAMES[kd.k]), 380, 'overflow:hidden;text-overflow:ellipsis') + T(x + 108, 252, 21, 'dim', TICKS[kd.k] + ' · ' + esc(CO.sector[kd.k]), 380, 'overflow:hidden');
     h += T(x, 316, 30, 'amb', esc(kd.strat), 480, 'white-space:normal;line-height:1.1') + T(x, 372, 84, '', kd.share.toFixed(1) + ' <span style="font-size:44px" class="dim">%</span>') + T(x, 468, 22, 'lab', 'of everything you have invested');
     var rep = nextDay(CO.report_day[kd.k], 12 * 3600000), sh = kd.rows.filter(function (r) { return r.st === 'SH'; })[0], pl = 0; kd.rows.forEach(function (r) { pl += r.pl; });
