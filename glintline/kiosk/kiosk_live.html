@@ -7,6 +7,7 @@
    p     page name, SAME names as the mp4 set (GlintKiosk.cs unchanged):  attract | own_<car> | buy_<car> | drive_<car> |
          menu_<car>_<tile> | paint_<car>_<i> | paint_<car>_drive.  Any other page (upg_*, trail_*, rims_*, shield*, ug_*, twin_*, planes)
          = HYBRID fallback: the page's existing mp4 <pal>/<page>.mp4 plays INSIDE this page (lf/lt loop), no reload.
+   DRIVE  25 Nov: own DRIVE button bottom-right (hit zone 'drive' = mirror of BACK) on CUSTOMISE + sub-pages; no DRIVE tiles in lists.
    y=1   optional: this paint/item is already owned -> tag YOURS, button CHOOSE.     b=<n>  optional: banked glint shown in the top bar.
    s=<n> optional send counter, ignored (lets the script re-send the same page).     Unknown keys are ignored (format reusable, e.g. EXCHANGE).
    dbg=1 small counter top-left: L<page loads> S<switches> <ms from hashchange to painted frame>.                                        */
@@ -33,6 +34,7 @@ html,body{margin:0;height:100%;background:#000;overflow:hidden}
 .sel::after{content:'';position:absolute;top:0;bottom:0;width:90px;left:-200px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.45),transparent);transform:skewX(-25deg);filter:blur(6px);animation:shim 4s linear infinite}
 @keyframes shim{0%{left:-200px}50%,100%{left:820px}}
 .back{left:77px;top:884px;width:422px;height:112px;box-sizing:border-box;border-radius:24px;background:rgba(var(--tabRGB),.88);border:3px solid rgba(var(--accentRGB),.63);color:var(--chip);font-size:46px;display:flex;align-items:center;justify-content:center;gap:22px;white-space:nowrap}
+.drive{left:1421px;top:884px;width:422px;height:112px;box-sizing:border-box;border-radius:24px;background:rgba(var(--tabRGB),.92);border:4px solid var(--accent);color:var(--accent);font-size:46px;letter-spacing:.3em;display:flex;align-items:center;justify-content:center;gap:22px;white-space:nowrap}
 .tile{box-sizing:border-box;border-radius:14px;background:rgba(var(--tabRGB),.92);border:2px solid rgba(var(--softRGB),.35);display:flex;align-items:center;justify-content:center;overflow:hidden}
 .tile.on{border:5px solid var(--accent)}
 .tile.drv{gap:10px;color:var(--soft);font-size:32px}.tile.drv.on{background:var(--accent);color:var(--btnTxt)}
@@ -53,7 +55,7 @@ html,body{margin:0;height:100%;background:#000;overflow:hidden}
 #ld i{width:9vh;height:9vh;border-radius:50%;border:1.1vh solid rgba(255,190,90,.18);border-top-color:#ffbe5a;animation:r .8s linear infinite}@keyframes r{to{transform:rotate(360deg)}}
 #dbg{position:fixed;left:6px;top:6px;font:14px monospace;color:#ffbe5a;background:rgba(0,0,0,.6);padding:4px 8px;z-index:30;display:none}
 </style></head>
-<body><div id="stage"><canvas id="dust" class="abs" width="1920" height="1080"></canvas><div id="live"></div><video id="vid" class="abs" muted playsinline></video></div>
+<body><div id="stage"><canvas id="dust" class="abs" width="1920" height="1080"></canvas><div id="live"></div><video id="vid" class="abs" muted playsinline></video><div id="ovl"></div></div>
 <div id="ld"><i></i></div><div id="dbg"></div>
 <script>
 'use strict';
@@ -96,8 +98,9 @@ function carImg(render, b, cls) {  // cut-out render, bottom-centred in box b, g
   return '<div class="abs ' + (cls || 'slide') + '"><div class="abs glow" style="' + box(cx - w * .42, b[3] - 56, cx + w * .42, b[3] + 14) + '"></div><img class="abs car" src="live/img/' + render + '.webp" style="' + box(b[0], b[1], b[2], b[3]) + '"></div>';
 }
 function tag(x1, y, text, withStar) { return '<div class="abs tag fade" data-r="' + x1 + '" style="top:' + y + 'px">' + (withStar ? star(0, 0, 20, 'var(--chip)').replace('class="abs ', 'style="position:static" class="') : '') + esc(text) + '</div>'; }
-function buttons(sel, arrows, back) {
+function buttons(sel, arrows, back, drive) {
   var h = '', R = CAT.hitsPx;
+  if (drive) h += '<div class="abs drive btn"><svg width="30" height="40"><polygon points="2,2 28,20 2,38" fill="var(--accent)"/></svg>DRIVE</div>';   // 25 Nov owner: own DRIVE button next to OPEN / CHOOSE
   if (arrows) ['left', 'right'].forEach(function (k) {
     var r = R[k], cx = (r[0] + r[2]) / 2, cy = (r[1] + r[3]) / 2, s = k === 'left' ? -1 : 1;
     h += '<div class="abs arrow btn" style="left:' + (cx - 124) + 'px;top:' + (cy - 124) + 'px"></div><svg class="abs btn" style="left:' + (cx - 60) + 'px;top:' + (cy - 60) + 'px" width="120" height="120"><polygon fill="var(--accent)" points="' +
@@ -135,7 +138,7 @@ function pageCar(kind, vid, f) {
   return h + buttons(own ? 'DRIVE' : 'BUY', true, own ? 'CUSTOMISE' : null);
 }
 function pageMenu(vid, i) {
-  var v = CAT.vehicles[vid], T = CAT.menu, n = T.length, C = CARD, gap = n <= 4 ? 30 : 14, tw = (C[2] - C[0] - 80 - gap * (n - 1)) / n, y0 = C[1] + 316, y1 = C[3] - 36;
+  var v = CAT.vehicles[vid], T = CAT.menu.filter(function (t) { return t[0] !== 'DRIVE'; }), n = T.length, C = CARD, gap = n <= 4 ? 30 : 14, tw = (C[2] - C[0] - 80 - gap * (n - 1)) / n, y0 = C[1] + 316, y1 = C[3] - 36;
   var h = base('CUSTOMISE · ' + v.name, [i, n]) + card() + carImg(v.render, [C[0] + 400, C[1] + 24, C[2] - 400, C[1] + 290]);
   T.forEach(function (t, j) {
     var x0 = C[0] + 40 + j * (tw + gap), on = j === i, cx = tw / 2, col = on ? 'var(--accent)' : 'var(--soft)', ic = '';
@@ -151,10 +154,10 @@ function pageMenu(vid, i) {
       '<div style="position:absolute;left:0;right:0;top:172px;text-align:center;font-size:36px;white-space:nowrap;color:' + (on ? 'var(--text)' : 'var(--soft)') + '" data-fit="' + (tw - 14) + '">' + esc(t[0]) + '</div>' +
       '<div class="soft" style="position:absolute;left:0;right:0;top:250px;text-align:center;font-size:28px;white-space:nowrap" data-fit="' + (tw - 14) + '">' + esc(t[1]) + '</div></div>';
   });
-  return h + buttons('OPEN', true, 'BACK');
+  return h + buttons('OPEN', true, 'BACK', true);
 }
 function pagePaint(vid, i, f) {
-  var v = CAT.vehicles[vid], P = CAT.paints[vid] || [], C = CARD, n = P.length + 1, drive = i === 'drive';
+  var v = CAT.vehicles[vid], P = CAT.paints[vid] || [], C = CARD, n = P.length, drive = i === 'drive';
   var h = base('PAINT · ' + v.name, [drive ? P.length : +i, n], { vonly: !drive }) + card();
   if (f.b) h += '<div class="abs bank" style="right:' + 430 + 'px">BANK ' + money(f.b) + ' glint</div>';
   if (drive) {
@@ -163,7 +166,7 @@ function pagePaint(vid, i, f) {
       '<div class="abs ctr brand fade" style="top:' + (C[1] + 386) + 'px;font-size:76px">READY TO DRIVE</div>' +
       '<div class="abs ctr hi fade" style="top:' + (C[1] + 490) + 'px;font-size:42px">Touch DRIVE · your ride waits on the start pad</div>' +
       '<div class="abs ctr soft fade" style="top:' + (C[1] + 556) + 'px;font-size:34px">BACK for more paint, parts, lines, rims or a shield</div>';
-    return h + buttons('DRIVE', true, 'BACK');
+    return h + buttons('DRIVE', true, 'BACK', false);
   }
   var p = P[+i], owned = f.y === '1';
   h += carImg(p.img, [C[0] + 170, C[1] + 40, C[2] - 170, C[1] + 360]);
@@ -172,9 +175,7 @@ function pagePaint(vid, i, f) {
   h += tag(C[2] - 30, C[1] + 30, owned && p.price ? 'YOURS' : p.tag, p.price > 0 && !owned);
   var tw = 150, th = 84, gap = 22, x = W / 2 - (n * tw + (n - 1) * gap) / 2, y = C[3] - th - 34;
   P.forEach(function (q, j) { var x0 = x + j * (tw + gap); h += '<div class="abs tile' + (j === +i ? ' on' : '') + '" style="' + box(x0, y, x0 + tw, y + th) + '"><img src="live/img/' + q.img + '.webp" style="max-width:' + (tw - 16) + 'px;max-height:' + (th - 12) + 'px"></div>'; });
-  var xd = x + P.length * (tw + gap);
-  h += '<div class="abs tile drv" style="' + box(xd, y, xd + tw, y + th) + '"><svg width="24" height="30"><polygon points="0,1 22,15 0,29" fill="currentColor"/></svg>DRIVE</div>';
-  return h + buttons(owned || !p.price ? 'CHOOSE' : 'BUY', true, 'BACK');
+  return h + buttons(owned || !p.price ? 'CHOOSE' : 'BUY', true, 'BACK', true);
 }
 function title(s) { return s.toLowerCase().replace(/\b\w/g, function (c) { return c.toUpperCase(); }); }
 
@@ -192,10 +193,11 @@ function show() {
   var t = performance.now(), f = parse(), pg = build(f);
   if (!pg) {                                                   // hybrid fallback: the existing mp4 page, played inside this page
     live.style.display = 'none'; vid.style.display = 'block';
-    var src = PAL + '/' + f.p + '.mp4'; if (vid.getAttribute('src') !== src) { vid.src = src; vid.currentTime = 0; }
+    var src = PAL + '/' + f.p + '.mp4'; if (vid.getAttribute('src') !== src) { loading(true); vid.src = src; vid.currentTime = 0; }
+    var k = f.p.split('_')[0]; ovl.innerHTML = /^(upg|trail|twin|rims|shield|ug)$/.test(k) && !/_drive$/.test(f.p) ? buttons(null, false, null, true) : '';
     vid.loop = isNaN(LF); vid.play(); prev = null; done(t, 'mp4'); return;
   }
-  vid.style.display = 'none'; if (!vid.paused) vid.pause(); live.style.display = 'block';
+  vid.style.display = 'none'; if (!vid.paused) vid.pause(); loading(false); ovl.innerHTML = ''; live.style.display = 'block';
   var same = prev && prev.key === pg.key, sameCar = same && prev.car === pg.car;
   live.className = ''; live.innerHTML = pg.html;
   if (same) live.querySelectorAll('.rise,.btn').forEach(function (n) { n.classList.remove('rise', 'btn'); });   // same page kind: only the changed parts move
@@ -210,6 +212,10 @@ function show() {
 }
 function done(t, how) { requestAnimationFrame(function () { requestAnimationFrame(function () { lastMs = Math.round(performance.now() - t); switches++; dbg(how); }); }); }
 function dbg(how) { if (!DBG) return; var d = document.getElementById('dbg'); d.style.display = 'block'; d.textContent = 'L' + loads + ' S' + switches + ' ' + lastMs + 'ms ' + how + ' ' + parse().p + ' first ' + Math.round(firstMs) + 'ms'; }
+var ovl = document.getElementById('ovl');
+function loading(on) { document.getElementById('ld').style.display = on ? 'flex' : 'none'; }   // the kiosk loading screen (same spinner as play.html)
+vid.addEventListener('playing', function () { loading(false); });
+vid.addEventListener('error', function () { loading(false); });
 vid.addEventListener('timeupdate', function () { if (!isNaN(LT) && vid.currentTime >= LT - .05) { vid.currentTime = LF; vid.play(); } });
 vid.addEventListener('ended', function () { if (!isNaN(LF)) { vid.currentTime = LF; vid.play(); } });
 
