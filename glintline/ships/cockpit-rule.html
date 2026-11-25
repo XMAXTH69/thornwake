@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ship Cockpit Rule</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root { --bg:#0b1316; --panel:#0f2226; --line:#2a4a50; --gold:#d9b46a; --text:#e8eef0; --dim:#9fb3b8; --ok:#5fd39a; --bad:#ff7b6b; --pick:#e7c46a; }
+* { box-sizing:border-box; }
+html, body { margin:0; background:var(--bg); color:var(--text); font:15px/1.5 Inter,system-ui,sans-serif; }
+main { max-width:1100px; margin:0 auto; padding:28px 16px 60px; }
+h1 { font:600 26px Cinzel,serif; letter-spacing:.12em; color:var(--gold); margin:0 0 4px; }
+h2 { font:600 17px Cinzel,serif; letter-spacing:.1em; color:var(--gold); margin:36px 0 12px; }
+.sub { color:var(--dim); margin:0 0 20px; }
+.quote { border-left:3px solid var(--gold); padding:6px 14px; background:var(--panel); margin:8px 0; }
+.rules { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:12px; }
+.card { background:var(--panel); border:1px solid var(--line); padding:14px; }
+.card b { color:var(--gold); letter-spacing:.06em; }
+.num { font:600 22px Inter; color:var(--text); }
+svg { width:100%; height:auto; background:var(--panel); border:1px solid var(--line); }
+.tw { overflow-x:auto; }
+table { width:100%; border-collapse:collapse; min-width:640px; }
+th, td { padding:8px 10px; border-bottom:1px solid var(--line); text-align:left; font-variant-numeric:tabular-nums; }
+th { color:var(--dim); font-weight:600; font-size:12px; letter-spacing:.08em; text-transform:uppercase; }
+.ok { color:var(--ok); font-weight:600; } .bad { color:var(--bad); font-weight:600; } .pick { color:var(--pick); font-weight:600; }
+a { color:var(--gold); }
+.refs { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:14px; }
+.ref { background:var(--panel); border:1px solid var(--line); }
+.ref img { width:100%; aspect-ratio:16/10; object-fit:cover; display:block; background:#000; }
+.ref div { padding:10px 12px; }
+.ref small { color:var(--dim); display:block; margin-top:4px; }
+.btns a { display:inline-block; padding:8px 14px; border:1px solid var(--line); background:var(--panel); margin:0 8px 8px 0; text-decoration:none; font-weight:600; letter-spacing:.05em; }
+</style>
+</head>
+<body>
+<main>
+<h1>SHIP COCKPIT RULE</h1>
+<p class="sub">Glintline ships rework · 25 Nov 2026 · checked automatically in every ship build (ship_c_lib canopy_check)</p>
+<div class="quote">“The cockpit must not be a too noticeable bump.”</div>
+<div class="quote">“The metal on top of the cockpit is too wide, it covers too much.” (KB7 V11)</div>
+
+<h2>THE RULE - 3 NUMBERS</h2>
+<div class="rules">
+  <div class="card"><b>BUMP</b><div class="num">≤ 20 %</div>How far the glass rises above the <i>spine line</i> (a straight line from the hull top in front of the glass to the hull top behind it), measured against the body depth there. The canopy rides in the body line, like the SR-71 or YF-23 - not a dome sitting on top.</div>
+  <div class="card"><b>METAL OVER THE GLASS</b><div class="num">≤ 5 %</div>Bows and hoops across the glass, as a share of the canopy length. Thin bows only (about 2 cm), with tight glass rings each side so the smoothing cannot spread them wide.</div>
+  <div class="card"><b>FRONT STEP</b><div class="num">≤ 4 cm</div>The glass starts flush with the hull at the front: no collar, no step at the windscreen.</div>
+</div>
+<p></p>
+<svg viewBox="0 0 900 230" role="img" aria-label="Side view: spine line, canopy height and body depth">
+  <path d="M60 150 Q200 128 330 112 L700 100 Q790 104 840 120 L840 170 Q600 185 330 182 Q190 176 60 160 Z" fill="#163238" stroke="#2a4a50"/>
+  <path d="M330 112 Q420 70 520 88 Q590 98 620 104" fill="rgba(150,170,160,.35)" stroke="#9fb3b8"/>
+  <line x1="330" y1="112" x2="620" y2="104" stroke="#d9b46a" stroke-width="2" stroke-dasharray="7 6"/>
+  <line x1="430" y1="76" x2="430" y2="109" stroke="#ff7b6b" stroke-width="2"/>
+  <line x1="470" y1="108" x2="470" y2="183" stroke="#5fd39a" stroke-width="2"/>
+  <text x="438" y="70" fill="#ff7b6b" font-size="14" font-family="Inter">h = glass above the spine line</text>
+  <text x="478" y="160" fill="#5fd39a" font-size="14" font-family="Inter">body depth</text>
+  <text x="560" y="96" fill="#d9b46a" font-size="14" font-family="Inter">spine line</text>
+  <text x="60" y="215" fill="#9fb3b8" font-size="14" font-family="Inter">BUMP = h ÷ body depth  ·  this sketch ≈ 45 % (fails)  ·  target ≤ 20 %</text>
+</svg>
+
+<h2>BEFORE | AFTER</h2>
+<div class="btns">
+  <a href="kb8.html">KB8 STINGRAY · BEFORE | V1</a>
+  <a href="kb7.html">KB7 FORKTAIL · V11 | V12</a>
+  <a href="kb3.html">KB3 CORSAIR · V3 | V4</a>
+  <a href="basement.html">BASEMENT · V1 | V2</a>
+</div>
+
+<h2>EVERY SHIP SO FAR</h2>
+<div class="tw"><table>
+<thead><tr><th>Ship</th><th>Bump</th><th>Metal over glass</th><th>Front step</th><th>Result</th><th>What happens</th></tr></thead>
+<tbody>
+<tr><td>KB8 STINGRAY V1</td><td>19 % (14 cm)</td><td>0 %</td><td>0 cm</td><td class="ok">PASS</td><td>New ship, built to the rule: the spine rises from the nose into a low glass.</td></tr>
+<tr><td>KB8 STINGRAY draft</td><td>53 % (36 cm)</td><td>0 %</td><td>0 cm</td><td class="bad">FAIL</td><td>Replaced by V1 (kept as BEFORE).</td></tr>
+<tr><td>KB7 FORKTAIL V12</td><td>7 % (8 cm)</td><td>2.2 % (2 cm bow)</td><td>4 cm</td><td class="ok">PASS</td><td>New: thin bow over the glass.</td></tr>
+<tr><td>KB7 FORKTAIL V11</td><td>7 %</td><td>15.6 % (~17 cm band)</td><td>4 cm</td><td class="bad">FAIL</td><td>Fixed in V12.</td></tr>
+<tr><td>KB3 CORSAIR V4</td><td>45 % (32 cm)</td><td>3.6 %</td><td>0 cm</td><td class="pick">YOUR PICK</td><td>Keeps the V2 cockpit you chose - the check only reports it.</td></tr>
+<tr><td>KB3 CORSAIR V3</td><td>45 %</td><td>6.8 %</td><td>0 cm</td><td class="bad">FAIL</td><td>Replaced by V4.</td></tr>
+<tr><td>BASEMENT V2</td><td>67 % (48 cm)</td><td>6.6 %</td><td>0 cm</td><td class="bad">FAIL</td><td>Tandem trainer bubble (rear seat raised). Needs a V3: longer, lower tandem glass faired into the spine + thin bow - or keep it as the trainer look. Your call.</td></tr>
+</tbody>
+</table></div>
+
+<h2>REFERENCES - GLASS IN THE BODY LINE</h2>
+<div class="refs">
+  <div class="ref"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/06/X-36_Tailless_Fighter_Agility_Research_Aircraft_in_flight_%28EC97-44294-23%29.jpg/960px-X-36_Tailless_Fighter_Agility_Research_Aircraft_in_flight_%28EC97-44294-23%29.jpg" alt="X-36 tailless research aircraft in flight"><div><b>X-36 · tailless + canards</b> - closest to the Stingray: no fin, nose canards, the cockpit is only a low blister in a smooth spine.<small>NASA, public domain · <a href="https://commons.wikimedia.org/wiki/File:X-36_Tailless_Fighter_Agility_Research_Aircraft_in_flight_(EC97-44294-23).jpg">source</a></small></div></div>
+  <div class="ref"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2b/Northrop_YF-23_DFRC.jpg/960px-Northrop_YF-23_DFRC.jpg" alt="Northrop YF-23 in flight"><div><b>YF-23 · canopy into the spine</b> - the glass flows back into a long hump; no step, no collar.<small>NASA/DFRC, public domain · <a href="https://commons.wikimedia.org/wiki/File:Northrop_YF-23_DFRC.jpg">source</a></small></div></div>
+  <div class="ref"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/97/Lockheed_SR-71_Blackbird.jpg/960px-Lockheed_SR-71_Blackbird.jpg" alt="Lockheed SR-71 Blackbird in flight"><div><b>SR-71 · flush canopy</b> - the canopy is part of the chine line; you barely see it from the side.<small>USAF/NASA, public domain · <a href="https://commons.wikimedia.org/wiki/File:Lockheed_SR-71_Blackbird.jpg">source</a></small></div></div>
+  <div class="ref"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/F-22_Raptor_-_100702-F-4815G-217.jpg/960px-F-22_Raptor_-_100702-F-4815G-217.jpg" alt="F-22 Raptor in flight"><div><b>F-22 · no frame at all</b> - one-piece glass, no bow across it: the most glass, the least metal.<small>USAF, public domain · <a href="https://commons.wikimedia.org/wiki/File:F-22_Raptor_-_100702-F-4815G-217.jpg">source</a></small></div></div>
+  <div class="ref"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/54/F-35A_Side.jpg/960px-F-35A_Side.jpg" alt="F-35A side view"><div><b>F-35 · one thin bow</b> - a single narrow frame between front and rear glass = the KB7 V12 idea.<small>JSF program, public domain · <a href="https://commons.wikimedia.org/wiki/File:F-35A_Side.jpg">source</a></small></div></div>
+  <div class="ref"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/B-2_Spirit_original.jpg/960px-B-2_Spirit_original.jpg" alt="B-2 Spirit flying wing"><div><b>B-2 · cockpit inside the wing</b> - the flying-wing extreme: the windows sit in the body hump, nothing sticks up.<small>USAF, public domain · <a href="https://commons.wikimedia.org/wiki/File:B-2_Spirit_original.jpg">source</a></small></div></div>
+</div>
+<p class="sub" style="margin-top:16px">Game look (described, no pictures copied): anti-gravity racers in the WipEout / F-Zero style and light fighters in Star Citizen / Elite keep the pilot low with the glass faired into the spine - the same rule.</p>
+</main>
+</body>
+</html>
