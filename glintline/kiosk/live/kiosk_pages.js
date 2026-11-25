@@ -124,8 +124,8 @@ function startTrail(key, same, level, offs) {
 
 // ---------- RIMS & SPINNER: rims_<key>
 function pageRims(key, f) {
-  var R = CAT.rims, i = R.findIndex(function (r) { return r.key === key; }), r = R[i], C = CARD, x = C[0] + 570, mw = C[2] - x - 40, kind = key === 'none' ? 'none' : (key === 'aurum' || key === 'null') ? 'faction' : 'shop', own = owned(f);
-  var h = base('RIMS & SPINNER', dots(i, R.length), { vonly: 1 }) + card() + pool('rim_' + key, [C[0] + 40, C[1] + 100, C[0] + 520, C[1] + 470]);
+  var R = CAT.rims, i = R.findIndex(function (r) { return r.key === key; }), r = R[i], C = CARD, x = C[0] + 570, mw = C[2] - x - 40, kind = (key === 'none' || r.tyre) ? 'none' : (key === 'aurum' || key === 'null') ? 'faction' : 'shop', own = owned(f);
+  var h = base(r.tyre ? 'TYRES' : 'RIMS & SPINNER', dots(i, R.length), { vonly: 1 }) + card() + pool('rim_' + key, [C[0] + 40, C[1] + 100, C[0] + 520, C[1] + 470]);
   h += T(x, C[1] + 150, esc(r.name), 70, 'brand', mw) + T(x, C[1] + 250, esc(r.line), 34, 'hi', mw);
   // 25 Nov owner: rim hint lines removed (name, effect, price only)
   h += ownedTag(own, r.price, kind === 'shop');

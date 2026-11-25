@@ -225,7 +225,7 @@ function build(f) {
   if (p === 'twin_on' || p === 'twin_off' || /^twin_buy_\d+$/.test(p)) return { key: 'twin', car: p, html: pageTwin(p), start: function (same) { startTrail('STEADY', same, p === 'twin_off' ? .3 : 1, [-26, 26]); } };
   if (a[0] === 'upg' && a.length === 3 && CAT.upg.list.some(function (q) { return q[0] === a[1] && q[1] === +a[2]; })) return { key: 'upg', car: a[1] + a[2], html: pageUpg(a[1], +a[2], f) };
   if (a[0] === 'trail' && a.length === 2 && CAT.trails[+a[1]]) return { key: 'trail', car: a[1], html: pageTrail(+a[1], f), start: function (same) { startTrail(CAT.trails[+a[1]], same); } };
-  if (a[0] === 'rims' && a.length === 2 && CAT.rims.some(function (r) { return r.key === a[1]; })) return { key: 'rims', car: a[1], html: pageRims(a[1], f) };
+  if (a[0] === 'rims' && CAT.rims.some(function (r) { return r.key === p.slice(5); })) return { key: 'rims', car: p.slice(5), html: pageRims(p.slice(5), f) };   // tyre_<style> keys hold a '_'
   if (p === 'shield') return { key: 'shield', car: 's', html: pageShield(f) };
   if (a[0] === 'ug' && ugKnown(p.slice(3))) return { key: 'ug', car: p.slice(3).replace(/_own$/, ''), html: pageUg(p.slice(3), f) };
   if (a.length === 2 && a[1] === 'drive' && CAT.sub_title[a[0]] && a[0] !== 'paint') return { key: 'drive' + a[0], car: 'd', html: pageSubDrive(a[0]) };

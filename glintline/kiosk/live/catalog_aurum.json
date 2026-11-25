@@ -720,6 +720,22 @@
     "Keeps turning after you stop",
     "One per car or bike · change free"
    ]
+  },
+  {
+   "key": "tyre_chevron",
+   "name": "CHEVRON TYRES",
+   "line": "Deep chevron tread",
+   "price": "FREE",
+   "hints": [],
+   "tyre": 1
+  },
+  {
+   "key": "tyre_plain",
+   "name": "PLAIN TYRES",
+   "line": "Fine all-round tread",
+   "price": "FREE",
+   "hints": [],
+   "tyre": 1
   }
  ],
  "ug": {
