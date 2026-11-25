@@ -32,7 +32,7 @@
   <div class="grp" id="vers">
     <button data-v="v2" class="on">V2</button><button data-v="v4">V4</button><button data-v="v5">V5</button><button data-v="v6">V6</button><button data-v="v7">V7</button><button data-v="v8">V8</button><button data-v="v9">V9</button><button data-v="v10">V10</button><button data-v="v11">V11</button><button data-v="cmp">V10 | V11</button><button data-v="all">ALL</button>
   </div>
-  <div class="grp"><button id="wire">WIREFRAME</button><button id="reset">RESET VIEW</button></div>
+  <div class="grp"><button id="gear">GEAR UP</button><button id="wire">WIREFRAME</button><button id="reset">RESET VIEW</button></div>
 </header>
 <div id="info"><div id="label"></div><div id="hint">Drag = turn · scroll / pinch = zoom · right-drag / two fingers = move</div></div>
 <div id="load">Loading ships…</div>
@@ -135,6 +135,18 @@ function setWire(on) {
 }
 document.querySelectorAll('#vers button').forEach(b => b.onclick = () => show(b.dataset.v));
 document.getElementById('wire').onclick = () => setWire(!wire);
+// landing gear (owner 25 Nov): ships built with gear nodes carry <key>_gear_down (struts, wheels, open doors) and
+// <key>_gear_doors (closed doors flush under the hull). Older versions have none and are not touched.
+let gearUp = false;
+function setGear(up) {
+  gearUp = up; const b = document.getElementById('gear'); b.textContent = up ? 'GEAR DOWN' : 'GEAR UP'; b.classList.toggle('on', up);
+  VERS.forEach(v => ships[v].traverse(o => {
+    if (/_gear_down$/.test(o.name)) o.visible = !up;
+    if (/_gear_doors$/.test(o.name)) o.visible = up;
+  }));
+}
+document.getElementById('gear').onclick = () => setGear(!gearUp);
+setGear(false);
 document.getElementById('reset').onclick = () => show(mode);
 
 function resize() {
