@@ -216,7 +216,7 @@ function pStock(S) {
   var own = S.h[k], fs = fillSell(px, k), x = 100;
   if (own > 0) {
     var net = own * fs / 100 - S.f, pl = net - S.cb[k] / 100;
-    h += T(x, 748, 30, '', 'You own ' + fmt(own) + ' shares · paid ' + f2(S.cb[k] / own) + ' each') + T(x, 790, 30, pl >= 0 ? 'up' : 'dn', 'If you sold now: ' + sg(pl) + ' ◆ <span class="dim" style="font-size:22px">(after spread + fee)</span>');
+    h += T(x, 748, 30, '', 'You own ' + fmt(own) + ' shares · paid ' + f2(S.cb[k] / own) + ' each') + T(x, 790, 30, pl >= 0 ? 'up' : 'dn', 'If you sold now: ' + sg(pl) + ' ◆');
   } else h += T(x, 748, 30, '', 'You own no shares') + T(x, 790, 28, 'dim', 'Press BUY to get some');
   h += T(x, 834, 22, 'dim', 'Spread ' + spreadOf(k) + ' % each way · buy ' + f2(fillBuy(px, k)) + ' · sell ' + f2(fs) + ' · fee ' + S.f + ' ◆');
   h += TR(1620, 330, 24, 'dim', 'Your free glint: <span style="color:#fff">' + fmt(S.c) + ' ◆</span>');
@@ -251,7 +251,7 @@ function pAmount(S) {
   h += T(100, 108, 30, 'dim', '<span class="' + col + '">' + (sell ? 'SELL' : 'BUY') + '</span> · ' + esc(NAMES[k]) + ' · ' + f2(fill) + ' ◆ a share');
   h += TC(250, 240, '', fmt(S.q)) + TR(560, 290, 160, 'acc', '−') + T(1360, 290, 160, 'acc', '+') + TC(500, 40, 'lab', 'shares');
   h += TC(600, 34, 'lab', sell ? 'You own ' + fmt(S.h[k]) + ' · max to sell ' + fmt(max) + ' · ' + fmt(Math.max(0, S.h[k] - S.q)) + ' left after' : 'Free glint ' + fmt(S.c) + ' ◆ · max ' + fmt(max) + ' shares with the fee');
-  h += TC(670, 40, '', (sell ? 'you get about ' : 'about ') + '<b style="font-weight:400;color:var(--' + col + ')">' + fmt(S.q * fill / 100) + ' ◆</b> before the fee');
+  h += TC(670, 40, '', (sell ? 'you get about ' : 'about ') + '<b style="font-weight:400;color:var(--' + col + ')">' + fmt(Math.max(0, S.q * fill / 100 + (sell ? -S.f : S.f))) + ' ◆</b>');
   h += TC(760, 28, 'dim', 'quick picks on the buttons: +10 · −10 · −1 · +1');
   return h;
 }
@@ -259,7 +259,7 @@ function pTotal(S) {
   var k = S.k, sell = S.side === 'sell', px = S.px[k], fill = sell ? fillSell(px, k) : fillBuy(px, k), q = S.q, col = sell ? 'dn' : 'up', h = frame(S, '');
   var mid = q * px, gross = q * fill, feeC = S.f * 100, tot = sell ? Math.max(0, Math.floor((gross - feeC) / 100 + 1e-9)) : Math.ceil((gross + feeC) / 100 - 1e-9);
   h += T(100, 108, 30, 'dim', '<span class="' + col + '">' + (sell ? 'SELL' : 'BUY') + '</span> ' + fmt(q) + ' ' + esc(NAMES[k]) + ' · check the total');
-  h += T(100, 150, 120, sell ? 'up' : '', (sell ? '+' : '−') + fmt(tot) + ' <span class="acc" style="font-size:60px">◆</span>') + T(100, 292, 32, 'lab', sell ? 'you get, fee taken' : 'you pay, fee included');
+  h += T(100, 150, 120, sell ? 'up' : '', (sell ? '+' : '−') + fmt(tot) + ' <span class="acc" style="font-size:60px">◆</span>') + T(100, 292, 32, 'lab', sell ? 'you get' : 'you pay');
   var rows = [[fmt(q) + ' shares × ' + f2(px) + ' (mid price)', f2(mid) + ' ◆', 'lab'], ['Spread ' + spreadOf(k) + ' % ' + (sell ? '(taken off)' : '(added)'), sg((gross - mid) / 100, 2) + ' ◆', 'amb'],
     ['Broker fee', sg((sell ? -1 : 1) * S.f) + ' ◆', 'amb'], ['Total ' + (sell ? 'to you' : '') + ' (' + (sell ? 'rounded down' : 'rounded up') + ')', fmt(tot) + ' ◆', '']];
   for (var i = 0; i < 4; i++) { var y = 370 + i * 62 + (i === 3 ? 16 : 0); h += T(100, y, 32, i === 3 ? '' : 'lab', rows[i][0]) + TR(1300, y, 34, rows[i][2], rows[i][1]); if (i === 2) h += A(100, y + 52, 1200, 3, '', '', 'background:var(--line)'); }
@@ -283,9 +283,9 @@ function pResult(S) {
   if (!r) return h + TC(400, 50, 'dim', 'No result');
   if (!r.ok) return h + T(100, 108, 30, 'dim', 'Not booked' + (ix === 'buy' || ix === 'sell' ? ' · ' + esc(NAMES[k]) : '')) + T(100, 200, 100, 'dn', 'Refused') + T(100, 350, 46, 'dn', esc(r.text || 'The order was not booked'), 0, 'white-space:normal;width:1600px;line-height:1.25') + T(100, 700, 28, 'dim', 'Nothing was taken from your glint.');
   var rows = [], big = '', sub = '', bc = '';
-  if (ix === 'buy') { big = '+' + fmt(r.qty) + ' <span class="acc" style="font-size:54px">shares</span>'; sub = '−' + fmt(r.glint) + ' ◆ (fee ' + r.fee + ' included)'; bc = '';
+  if (ix === 'buy') { big = '+' + fmt(r.qty) + ' <span class="acc" style="font-size:54px">shares</span>'; sub = '−' + fmt(r.glint) + ' ◆'; bc = '';
     rows = [['You own now', fmt(S.h[k]) + ' ' + NAMES[k]], ['Paid each (average)', S.h[k] ? f2(S.cb[k] / S.h[k]) : '–'], ['Free glint', fmt(S.c) + ' ◆']]; }
-  else if (ix === 'sell') { big = '+' + fmt(r.glint) + ' <span class="up" style="font-size:54px">◆ in</span>'; bc = 'up'; sub = r.text || ('fee ' + r.fee + ' ◆ taken');
+  else if (ix === 'sell') { big = '+' + fmt(r.glint) + ' <span class="up" style="font-size:54px">◆ in</span>'; bc = 'up'; sub = r.text || '';
     rows = [['You own now', fmt(S.h[k]) + ' ' + NAMES[k]], ['Paid each', S.h[k] ? f2(S.cb[k] / S.h[k]) : '–'], ['Free glint', fmt(S.c) + ' ◆']]; }
   else { var inn = ix === 'in'; big = (inn ? '+' : '−') + fmt(r.glint) + ' <span class="acc" style="font-size:54px">◆</span>'; bc = inn ? 'up' : ''; sub = inn ? 'moved into your Exchange account' : 'moved out to your vault'; rows = [['Free glint (Exchange)', fmt(S.c) + ' ◆'], ['Banked glint (vault)', fmt(S.b) + ' ◆']]; }
   var title = ix === 'buy' ? 'Bought' : ix === 'sell' ? 'Sold' : 'Moved';
@@ -309,9 +309,9 @@ function pShares(S) {
     h += T(120, y, 32, '', esc(NAMES[i])) + TR(900, y, 32, 'lab', fmt(S.h[i])) + TR(1200, y, 32, '', fmt(val) + ' ◆') + TR(1480, y, 32, 'lab', fmt(cost) + ' ◆') + TR(1780, y, 32, pl >= 0 ? 'up' : 'dn', sg(pl, 1) + ' %');
   });
   if (L.length) { var tp = tc ? (tv - tc) / tc * 100 : 0; h += A(100, 784, 1700, 2, '', '', 'background:var(--line)') + T(100, 796, 34, '', 'Total') + TR(1200, 796, 34, '', fmt(tv) + ' ◆') + TR(1480, 796, 34, 'lab', fmt(tc) + ' ◆') + TR(1780, 796, 34, tp >= 0 ? 'up' : 'dn', sg(tp, 1) + ' %');
-    // owner 25 Nov: the NET glint a sale of everything gives now (sell price after spread, fee per order taken off)
+    // owner 25 Nov: ONE plain number = glint a sale of everything gives now (spread + fee per order already in it, no explanation line)
     var sn = 0; L.forEach(function (i) { sn += Math.floor(S.h[i] * fillSell(S.px[i], i) / 100) - S.f; });
-    h += T(100, 842, 22, 'dim', 'Sell all now: ' + sg(sn) + ' ◆ to you, after spread + ' + S.f + ' fee per stock already taken off'); }
+    h += T(100, 842, 32, '', 'If you sell all now: ' + fmt(sn) + ' ◆'); }
   return h;
 }
 function pMove(S) {
@@ -400,7 +400,7 @@ function press(id) {
 }
 function showDlg() {
   var d = document.getElementById('dlg'), k = D.k, sell = D.side === 'sell', px = D.px[k], fill = sell ? fillSell(px, k) : fillBuy(px, k), g = D.q * fill, tot = sell ? Math.floor((g - D.f * 100) / 100) : Math.ceil((g + D.f * 100) / 100);
-  d.innerHTML = '<b>' + (sell ? 'Sell ' : 'Buy ') + fmt(D.q) + ' ' + esc(NAMES[k]) + ' at ' + f2(fill) + '?<br>' + (sell ? 'You get ' : 'You pay ') + fmt(tot) + ' glint with the fee.</b>' +
+  d.innerHTML = '<b>' + (sell ? 'Sell ' : 'Buy ') + fmt(D.q) + ' ' + esc(NAMES[k]) + ' at ' + f2(fill) + '?<br>' + (sell ? 'You get ' : 'You pay ') + fmt(tot) + ' glint.</b>' +
     '<i style="left:120px;background:var(--acc);color:#04070F" data-yn="y">Yes</i><i style="right:120px;background:#3A4050;color:#fff" data-yn="n">No</i>';
   d.style.display = 'block'; pendingYes = true;
 }

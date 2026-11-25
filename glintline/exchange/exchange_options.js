@@ -163,7 +163,7 @@ var OPT = (function () {
     var o = parseO(S), t = ticket(S, o), h = head(S, o, 'CHECK THE ORDER');
     var name = (t.sell ? 'SELL ' : 'BUY ') + fmt(t.q) + ' ' + (t.call ? 'CALL' : 'PUT') + (t.q > 1 ? 'S' : '') + ' · ' + f2(t.K) + ' · ' + EXP[o.e];
     h += T(100, 150, 40, t.sell ? 'amb' : 'acc', name);
-    h += T(100, 206, 120, t.sell ? 'up' : '', (t.sell ? '+' : '−') + fmt(Math.abs(t.net)) + ' <span class="acc" style="font-size:60px">◆</span>') + T(100, 346, 32, 'lab', t.sell ? 'you are paid now, fee taken' : 'you pay now, fee included');
+    h += T(100, 206, 120, t.sell ? 'up' : '', (t.sell ? '+' : '−') + fmt(Math.abs(t.net)) + ' <span class="acc" style="font-size:60px">◆</span>') + T(100, 346, 32, 'lab', t.sell ? 'you are paid now' : 'you pay now') + T(100, 388, 22, 'dim', 'no fee if it runs to the end');
     if (t.sell) h += T(100, 420, 30, 'lab', 'Mode: <span class="acc">' + (MODE[t.mode] || '-') + '</span>' + (t.modes.length > 1 ? ' <span class="dim" style="font-size:22px">(MODE changes it)</span>' : '')) + T(100, 466, 26, 'dim', 'Locked until expiry: ' + esc(t.lock));
     var plain = plainText(S, t);
     h += T(100, 540, 30, '', esc(plain), 0, 'white-space:normal;width:940px;line-height:1.3');
@@ -187,11 +187,10 @@ var OPT = (function () {
       h += T(X[1], y, 30, p.bs === 's' ? 'amb' : 'acc', kind(p.cp, p.bs) + ' ' + f2(p.K)) + TR(X[3], y, 30, 'lab', fmt(p.q)) + TR(X[4], y, 30, 'lab', f2(p.open)) + TR(X[5], y, 30, '', f2(p.mark));
       h += TR(X[6], y, 30, v >= 0 ? 'up' : 'dn', sg(v) + ' ◆') + TR(X[7], y + 4, 22, 'dim', EXP[p.e] + ' · ' + (MODE[p.m] || 'LONG').split(' ')[0]);
     });
-    // owner 25 Nov: show the NET glint that moves if every position is closed now (buy-back / sell-back AND the fee already in it)
-    var net = 0, gross = 0, nq = 0;
-    L.forEach(function (p) { var c = p.mark * p.q; gross += c; nq += p.q; net += (p.bs === 's' ? -c : c) - o.fee * p.q; });
+    // owner 25 Nov: ONE plain number = the glint that moves if every position is closed now (buy-back / sell-back and fee already in it, no explanation line)
+    var net = 0;
+    L.forEach(function (p) { var c = p.mark * p.q; net += (p.bs === 's' ? -c : c) - o.fee * p.q; });
     h += A(100, 790, 1720, 2, '', '', 'background:var(--line)') + T(120, 804, 32, '', 'If you close all now') + TR(X[6], 804, 34, net >= 0 ? 'up' : 'dn', sg(net) + ' ◆');
-    h += T(120, 848, 22, 'dim', 'buy-back / sell-back ' + g(gross) + ' and fee ' + o.fee + ' × ' + fmt(nq) + ' contracts already in it  ·  let it run to the end: no fee');
     return h;
   }
   function pClose(S) {
@@ -199,8 +198,8 @@ var OPT = (function () {
     if (!p) return h + TC(400, 50, 'dim', 'No position picked');
     var sh = p.bs === 's', cost = p.mark * p.q, fee = o.fee * p.q, net = sh ? -(cost + fee) : cost - fee, res = pl(p) - fee - o.fee * p.q;
     h += T(100, 108, 30, 'dim', 'CLOSE EARLY · ' + esc(NAMES[p.k]) + ' · ' + kind(p.cp, p.bs) + ' ' + f2(p.K) + ' · ' + EXP[p.e]);
-    h += T(100, 150, 120, net >= 0 ? 'up' : '', (net >= 0 ? '+' : '−') + fmt(Math.abs(net)) + ' <span class="acc" style="font-size:60px">◆</span>') + T(100, 292, 32, 'lab', sh ? 'you pay to buy it back, fee included' : 'you get for selling it back, fee taken');
-    var rows = [[(sh ? 'Buy back ' : 'Sell back ') + fmt(p.q) + ' × 100 × ' + f2(p.mark), g(cost), 'lab'], ['Broker fee (' + o.fee + ' a contract)', g(fee), 'amb'], ['Result of the whole trade (both fees)', sg(res) + ' ◆', res >= 0 ? 'up' : 'dn']];
+    h += T(100, 150, 120, net >= 0 ? 'up' : '', (net >= 0 ? '+' : '−') + fmt(Math.abs(net)) + ' <span class="acc" style="font-size:60px">◆</span>') + T(100, 292, 32, 'lab', sh ? 'you pay to buy it back' : 'you get for selling it back');
+    var rows = [[(sh ? 'Buy back ' : 'Sell back ') + fmt(p.q) + ' × 100 × ' + f2(p.mark), g(cost), 'lab'], ['Result of the whole trade', sg(res) + ' ◆', res >= 0 ? 'up' : 'dn']];
     rows.forEach(function (r, i) { var y = 380 + i * 66; h += T(100, y, 32, 'lab', r[0]) + TR(1300, y, 34, r[2], r[1]); });
     h += T(100, 600, 28, 'dim', sh ? 'The locked ' + (p.m === 'cov' ? 'shares are' : 'glint is') + ' free again at once.' : 'The glint goes to your free Exchange glint.');
     h += TC(820, 30, 'lab', 'Press CLOSE NOW, then Yes in the box');
@@ -308,7 +307,7 @@ var OPT = (function () {
   showDlg = function () {
     if (!D || ['oreview', 'oclose'].indexOf(D.p) < 0) return baseDlg();
     var d = document.getElementById('dlg'), msg;
-    if (D.p === 'oreview') { var t = curT(); msg = (t.sell ? 'Sell ' : 'Buy ') + t.q + ' ' + (t.call ? 'call' : 'put') + (t.q > 1 ? 's' : '') + ' ' + f2(t.K) + ' ' + EXP[D.oe] + '?<br>' + (t.sell ? 'You get ' : 'You pay ') + fmt(Math.abs(t.net)) + ' glint with the fee.'; }
+    if (D.p === 'oreview') { var t = curT(); msg = (t.sell ? 'Sell ' : 'Buy ') + t.q + ' ' + (t.call ? 'call' : 'put') + (t.q > 1 ? 's' : '') + ' ' + f2(t.K) + ' ' + EXP[D.oe] + '?<br>' + (t.sell ? 'You get ' : 'You pay ') + fmt(Math.abs(t.net)) + ' glint.'; }
     else { var p = D.pos[Math.min(D.sel, D.pos.length - 1)]; msg = 'Close ' + kind(p.cp, p.bs).toLowerCase() + ' ' + f2(p.K) + ' now?'; }
     d.innerHTML = '<b>' + msg + '</b><i style="left:120px;background:var(--acc);color:#04070F" data-yn="y">Yes</i><i style="right:120px;background:#3A4050;color:#fff" data-yn="n">No</i>';
     d.style.display = 'block'; pendingYes = true;
