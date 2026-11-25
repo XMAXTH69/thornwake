@@ -14,7 +14,7 @@
 @font-face{font-family:UI;src:url(../kiosk/live/fonts/BarlowSemiCondensed-Bold.ttf)}
 :root{--bg:#070C18;--bg2:#16264A;--pan:#101A33;--line:#2C3E66;--tick:#04070F;--acc:#7FD4FF;--lab:#DCE3EE;--txt:#fff;--up:#2EE59D;--dn:#FF4F64;--dim:#8C9AB5;--amb:#FFB02E}
 html,body{margin:0;height:100%;background:#000;overflow:hidden}
-#stage{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0;overflow:hidden;background:var(--bg);font-family:UI,'Segoe UI',Arial,sans-serif;color:var(--txt)}
+#stage{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0;overflow:hidden;contain:paint;background:var(--bg);font-family:UI,'Segoe UI',Arial,sans-serif;color:var(--txt)}
 #stage::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 70% 70% at 50% 40%,#16264A55,transparent 70%)}
 .a{position:absolute;white-space:nowrap}
 .r{text-align:right}.c{text-align:center}
@@ -34,12 +34,13 @@ html,body{margin:0;height:100%;background:#000;overflow:hidden}
 #dlg b{display:block;margin:54px 30px 0;font-weight:400;white-space:normal;line-height:1.35}
 #dlg i{position:absolute;bottom:40px;width:200px;height:72px;line-height:72px;font-style:normal;cursor:pointer}
 /* ---- motion (26 Nov): transforms/opacity only, all off under prefers-reduced-motion. Entrance (.ent) only when the page changes, flashes only on changed prices. */
-#stage::before{inset:-90px;animation:drift 45s ease-in-out infinite alternate}
-#stage::after{content:'';position:absolute;inset:-80px;z-index:-1;pointer-events:none;background-image:linear-gradient(#7FD4FF0A 1px,transparent 1px),linear-gradient(90deg,#7FD4FF0A 1px,transparent 1px);background-size:80px 80px;animation:grid 14s linear infinite}
+#stage::before{left:-90px;top:-90px;width:2100px;height:1260px;animation:drift 45s ease-in-out infinite alternate}
+#stage::after{content:'';position:absolute;left:-80px;top:-80px;width:2080px;height:1240px;z-index:-1;pointer-events:none;background-image:linear-gradient(#7FD4FF0A 1px,transparent 1px),linear-gradient(90deg,#7FD4FF0A 1px,transparent 1px);background-size:80px 80px;animation:grid 14s linear infinite}
 @keyframes drift{from{transform:translate3d(-40px,-20px,0)}to{transform:translate3d(40px,24px,0)}}
 @keyframes grid{to{transform:translate3d(80px,80px,0)}}
 .tape{position:absolute;left:640px;top:0;width:1220px;height:84px;overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent);mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent)}
-.tape .trk{position:absolute;left:0;top:0;height:84px;line-height:84px;font-size:26px;white-space:nowrap;animation:tape 150s linear infinite;will-change:transform}
+.tape .trk{position:absolute;left:0;top:0;height:84px;line-height:84px;font-size:26px;white-space:nowrap;animation:tape 40s linear infinite}
+.tape.full{left:0;width:1920px}
 .tape .ti{display:inline-block;margin-right:46px}.tape b{font-weight:400;color:var(--lab);letter-spacing:.08em;margin-right:12px}
 @keyframes tape{to{transform:translate3d(-50%,0,0)}}
 .ent .a{animation:fin .4s ease-out both}
@@ -66,7 +67,16 @@ html,body{margin:0;height:100%;background:#000;overflow:hidden}
 @keyframes glw{50%{opacity:.72}}
 @keyframes sweep{0%{transform:translate3d(-260px,0,0)}60%,100%{transform:translate3d(1800px,0,0)}}
 @keyframes selin{from{opacity:.3;transform:scale(.97,1)}}
-@media (prefers-reduced-motion:reduce){#stage::before,#stage::after,.tape .trk,.selb,.selb::after,.ent .a,.ent .btn,.ent .rw,.ent .bar,.chip,.chv{animation:none!important}}
+#stage .logo{text-shadow:0 0 24px #7FD4FF55;animation:lglow 3.2s ease-in-out infinite}
+#stage .touch{animation:breathe 2.2s ease-in-out infinite}
+.ent .logo{animation:fin .7s ease-out both,lglow 3.2s ease-in-out .7s infinite}
+.ent .touch{animation:bin .6s ease-out .3s both,breathe 2.2s ease-in-out .9s infinite}
+.ent .sub{animation:fin .8s ease-out .5s both}
+.ring{position:absolute;left:660px;top:250px;width:600px;height:600px;border-radius:50%;border:2px solid #7FD4FF55;pointer-events:none;animation:ring 5s ease-out infinite}
+@keyframes lglow{50%{text-shadow:0 0 70px #7FD4FFCC,0 0 18px #BFE9FF88}}
+@keyframes breathe{50%{opacity:.35;transform:scale(.97)}}
+@keyframes ring{from{opacity:.7;transform:scale(.4)}to{opacity:0;transform:scale(1.7)}}
+@media (prefers-reduced-motion:reduce){.logo,.touch,.ring,.ent .sub,#stage::before,#stage::after,.tape .trk,.selb,.selb::after,.ent .a,.ent .btn,.ent .rw,.ent .bar,.chip,.chv{animation:none!important}}
 #dbg{position:fixed;left:6px;top:6px;font:14px monospace;color:#FFB02E;background:#000a;padding:4px 8px;z-index:30;display:none}
 </style></head>
 <body><svg id="xdefs" width="0" height="0" style="position:absolute"><defs><radialGradient id="xBg" cx=".5" cy=".4" r=".7"><stop offset="0" stop-color="#1B2F5E"/><stop offset="1" stop-color="#04070F"/></radialGradient><linearGradient id="xGold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFF3C0"/><stop offset="0.5" stop-color="#E8C46A"/><stop offset="1" stop-color="#9A6F1C"/></linearGradient><linearGradient id="xSil" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="0.5" stop-color="#DCE3EE"/><stop offset="1" stop-color="#7A88A5"/></linearGradient><linearGradient id="xCy" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#D4F1FF"/><stop offset="0.5" stop-color="#7FD4FF"/><stop offset="1" stop-color="#2A7FB0"/></linearGradient><linearGradient id="xVio" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#D2C4FF"/><stop offset="0.5" stop-color="#9B7BFF"/><stop offset="1" stop-color="#4E2FB0"/></linearGradient><linearGradient id="xRed" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFA3AE"/><stop offset="0.5" stop-color="#FF4F64"/><stop offset="1" stop-color="#A81A32"/></linearGradient><linearGradient id="xAmb" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFE4A8"/><stop offset="0.5" stop-color="#FFB02E"/><stop offset="1" stop-color="#B85F00"/></linearGradient><linearGradient id="xGrn" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#A6F7D4"/><stop offset="0.5" stop-color="#2EE59D"/><stop offset="1" stop-color="#117A52"/></linearGradient><radialGradient id="xPet" cx=".5" cy=".4" r=".7"><stop offset="0" stop-color="#1FB0BA"/><stop offset="1" stop-color="#0A3D45"/></radialGradient><radialGradient id="xVoid" cx=".5" cy=".4" r=".7"><stop offset="0" stop-color="#000"/><stop offset="0.6" stop-color="#1A0F40"/><stop offset="1" stop-color="#5B3BC0"/></radialGradient><linearGradient id="xNight" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2B4A9A"/><stop offset="1" stop-color="#070C18"/></linearGradient><clipPath id="xRR"><rect x="3" y="3" width="42" height="42" rx="9"/></clipPath><clipPath id="xCircle"><circle cx="24" cy="24" r="19"/></clipPath><clipPath id="xShield"><path d="M24 5L40 11V24C40 33 33 39 24 43C15 39 8 33 8 24V11Z"/></clipPath></defs></svg><div id="stage"></div><div id="dbg"></div>
@@ -212,15 +222,15 @@ function pct(S, i) { return (S.px[i] - S.pv[i]) / S.pv[i] * 100; }
 function bandWord(k, size) { return '<span class="' + BCOL[BANDS[k]] + '" style="font-size:' + size + 'px">' + BANDS[k] + '</span>'; }
 
 // ---------- pages
-function pAttract() {
-  return A(0, 0, 1920, 84, '', '', 'background:var(--tick);border-bottom:3px solid var(--line)') + TC(300, 110, 'brand', 'GLINT EXCHANGE', 'font-size:110px;letter-spacing:.22em') +
-    TC(480, 60, 'lab', 'Touch to start', 'color:var(--acc);font-size:64px') + TC(580, 36, 'dim', 'Buy and sell shares with your glint ◆');
+function pAttract(S) {
+  return A(0, 0, 1920, 84, '', '', 'background:var(--tick);border-bottom:3px solid var(--line)') + tapeHtml(S, true) + '<div class="ring"></div>' + TC(300, 110, 'brand logo', 'GLINT EXCHANGE', 'font-size:110px;letter-spacing:.22em') +
+    TC(480, 60, 'lab touch', 'Touch to start', 'color:var(--acc);font-size:64px') + TC(580, 36, 'dim sub', 'Buy and sell shares with your glint ◆');
 }
 // ticker tape (market page): real names/prices/24 h change from the fragment; start offset follows the clock so a redraw never jumps it
-function tapeHtml(S) {
-  var t = '';
-  for (var i = 0; i < STOCKS; i++) { var up = S.px[i] >= S.pv[i]; t += '<span class="ti"><b>' + TICKS[i] + '</b>' + f2(S.px[i]) + ' <span class="' + (up ? 'up' : 'dn') + '">' + (up ? '▲' : '▼') + ' ' + sg(pct(S, i), 2) + ' %</span></span>'; }
-  return '<div class="tape"><div class="trk" style="animation-delay:-' + ((Date.now() / 1000) % 150).toFixed(2) + 's">' + t + t + '</div></div>';
+function tapeHtml(S, full) {
+  var t = '', N = 12, st = Math.floor(Date.now() / 60000) % STOCKS;      // 12 names per loop (short track), window moves on every minute
+  for (var j = 0; j < N; j++) { var i = (st + j) % STOCKS, up = S.px[i] >= S.pv[i]; t += '<span class="ti"><b>' + TICKS[i] + '</b>' + f2(S.px[i]) + ' <span class="' + (up ? 'up' : 'dn') + '">' + (up ? '▲' : '▼') + ' ' + sg(pct(S, i), 2) + ' %</span></span>'; }
+  return '<div class="tape' + (full ? ' full' : '') + '"><div class="trk" style="animation-delay:-' + ((Date.now() / 1000) % 40).toFixed(2) + 's">' + t + t + '</div></div>';
 }
 function pMarket(S) {
   var h = frame(S, ''), shares = worth(S);
