@@ -186,9 +186,9 @@
    "rent": 50,
    "stat_names": [
     "SPEED",
-    "CLIMB",
-    "TURN",
-    "SLOW FLY",
+    "CLIMBING",
+    "STEERING",
+    "EASY LANDING",
     "RAM POWER"
    ]
   },
@@ -208,9 +208,9 @@
    "rent": 75,
    "stat_names": [
     "SPEED",
-    "CLIMB",
-    "TURN",
-    "SLOW FLY",
+    "CLIMBING",
+    "STEERING",
+    "EASY LANDING",
     "RAM POWER"
    ]
   },
@@ -230,9 +230,9 @@
    "rent": 100,
    "stat_names": [
     "SPEED",
-    "CLIMB",
-    "TURN",
-    "SLOW FLY",
+    "CLIMBING",
+    "STEERING",
+    "EASY LANDING",
     "RAM POWER"
    ]
   },
@@ -252,9 +252,9 @@
    "rent": 150,
    "stat_names": [
     "SPEED",
-    "CLIMB",
-    "TURN",
-    "SLOW FLY",
+    "CLIMBING",
+    "STEERING",
+    "EASY LANDING",
     "RAM POWER"
    ]
   }
