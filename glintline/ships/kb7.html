@@ -30,7 +30,7 @@
 <header>
   <h1>KB7 FORKTAIL</h1>
   <div class="grp" id="vers">
-    <button data-v="v2" class="on">V2</button><button data-v="v4">V4</button><button data-v="v5">V5</button><button data-v="all">ALL 3</button>
+    <button data-v="v2" class="on">V2</button><button data-v="v4">V4</button><button data-v="v5">V5</button><button data-v="v6">V6</button><button data-v="v7">V7</button><button data-v="v8">V8</button><button data-v="v9">V9</button><button data-v="v10">V10</button><button data-v="all">ALL</button>
   </div>
   <div class="grp"><button id="wire">WIREFRAME</button><button id="reset">RESET VIEW</button></div>
 </header>
@@ -53,9 +53,14 @@ const LABELS = {
   v2:  '<b>V2</b> — the shape you liked: twin booms, deep cargo hold, ring-ducted engines, glass nose.',
   v4:  '<b>V4</b> — V2 shape + detail: faceted engine shrouds, fillets, side sponsons, armour layers, deeper hatches.',
   v5:  '<b>V5</b> — sculpted main body: the hull section changes along the ship, waist at the wing, spine hump, nose strakes into the wing roots.',
-  all: '<b>ALL 3</b> — V2 · V4 · V5 side by side, same light and scale.'
+  v6:  '<b>V6 · BOLD SCULPT</b> — deep waist at the wing, tall hump over the cargo hold, high prow with a keel blade, taller fins.',
+  v7:  '<b>V7 · STEALTH FACETS</b> — sharp tent-shaped sections, long wedge nose, leaning armour facets, steep canted fins, cut wing tips.',
+  v8:  '<b>V8 · INDUSTRIAL HAULER</b> — frame ribs around the hold, saddle tanks on top, cargo pods under the wings, wheels and a ladder.',
+  v9:  '<b>V9 · ORGANIC FLOW</b> — oval body, big blended wing roots, gull wing with tip pods, booms that sweep up to the tail, round engines.',
+  v10: '<b>V10 · PREMIUM SLEEK</b> — long sharp nose, slim low body, swept-back wing tips, slim booms, gold beltline nose to ramp.',
+  all: '<b>ALL</b> — every version, same light and scale. Top row V2 · V4 · V5 · V6, bottom row V7 · V8 · V9 · V10.'
 };
-const VERS = ['v2', 'v4', 'v5'];
+const VERS = ['v2', 'v4', 'v5', 'v6', 'v7', 'v8', 'v9', 'v10'];
 
 const el = document.getElementById('view');
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -101,14 +106,21 @@ function show(m) {
   mode = m;
   document.querySelectorAll('#vers button').forEach(b => b.classList.toggle('on', b.dataset.v === m));
   document.getElementById('label').innerHTML = LABELS[m];
-  const gap = Math.max(...VERS.map(v => ships[v].userData.size.x)) * 1.15;
+  const gap = Math.max(...VERS.map(v => ships[v].userData.size.x)) * 1.12;
+  const row = Math.max(...VERS.map(v => ships[v].userData.size.z)) * 1.15;
   VERS.forEach((v, i) => {
     ships[v].visible = (m === 'all' || m === v);
-    ships[v].position.x = m === 'all' ? (1 - i) * gap : 0;   // reads V2 V4 V5 left to right from the nose-side camera
+    // 4 x 2 grid, reads left to right from the nose-side camera; first row nearest the viewer
+    ships[v].position.x = m === 'all' ? (1.5 - (i % 4)) * gap : 0;
+    ships[v].position.z = m === 'all' ? (i < 4 ? 0.5 : -0.5) * row : 0;   // top row (V2..V6) = far row
     tags[v].style.display = m === 'all' ? '' : 'none';
   });
   const s = ships.v2.userData.size;
-  if (m === 'all') frame(gap * 3, s.y, s.z); else frame(s.x, s.y, s.z);
+  if (m === 'all') {                                   // straight nose-on from above: columns read left to right, rows top/bottom
+    const d = gap * 4 * 0.5 / Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) / Math.min(camera.aspect, 2) * 1.55;
+    controls.target.set(0, s.y * 0.3, 0); camera.position.set(0, d * 0.85, -d * 0.75); controls.update();
+  }
+  else frame(s.x, s.y, s.z);
 }
 function setWire(on) {
   wire = on; document.getElementById('wire').classList.toggle('on', on);
@@ -128,7 +140,7 @@ const p = new THREE.Vector3();
 renderer.setAnimationLoop(() => {
   controls.update(); renderer.render(scene, camera);
   if (mode === 'all') VERS.forEach(v => {
-    const s = ships[v].userData.size; p.set(ships[v].position.x, s.y * 1.15, 0).project(camera);
+    const s = ships[v].userData.size; p.set(ships[v].position.x, s.y * 1.15, ships[v].position.z).project(camera);
     tags[v].style.left = (p.x * 0.5 + 0.5) * innerWidth + 'px'; tags[v].style.top = (-p.y * 0.5 + 0.5) * innerHeight + 'px';
   });
 });
