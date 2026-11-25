@@ -106,37 +106,41 @@ var PF = (function () {
     ['ALL ' + A0.flat.length, 'SHARES ' + stocks, 'OPTIONS ' + opts].forEach(function (lb, i) {
       h += A(450 + i * 210, 102, 196, 38, 'c', lb, 'font-size:22px;line-height:34px;border-radius:7px;box-sizing:border-box;' + (i === P.pf ? 'background:var(--acc);color:#04070F' : 'border:2px solid var(--line);color:var(--dim)'));
     });
-    var inv = sv + locked, acct = S.c + inv, pct = function (v) { return acct > 0 ? v / acct * 100 : 0; };
-    var K = [['EXCHANGE BALANCE', g(S.c), '', 'free glint to trade', 'dim'], ['INVESTED', g(inv), '', pc(pct(inv), 0).replace('+', '') + ' of your account · shares + locked', 'dim'],
-      ['OPEN POSITIONS', fmt(A0.flat.length), '', stocks + ' stocks · ' + opts + ' options', 'dim'], ['PREMIUM COLLECTED', g(prem), 'amb', pc(pct(prem), 1).replace('+', '') + ' of your account · short options', 'dim'],
-      ['RESULT TODAY', sg(P.pd) + ' ◆', P.pd >= 0 ? 'up' : 'dn', sg(pct(P.pd), 1) + ' % of your account', P.pd >= 0 ? 'up' : 'dn']];
-    K.forEach(function (c, i) { var x = 100 + i * 347; h += card(x, 146, 331, 124) + T(x + 18, 158, 19, 'acc', c[0], 0, 'letter-spacing:.14em') + T(x + 18, 184, 52, c[2], c[1]) + T(x + 18, 240, 18, c[4], c[3], 296, 'overflow:hidden;text-overflow:ellipsis'); });
-    var yH = 286, X = { st: 120, lg: 278, nm: 324, sec: 640, op: 1065, ry: 1195, rp: 1226, vl: 1590, pl: 1745 };
-    h += T(X.st, yH, 19, 'dim', 'STRATEGY', 0, 'letter-spacing:.1em') + T(X.lg, yH, 19, 'dim', 'STOCK · STRIKE · ENDS', 0, 'letter-spacing:.1em') + T(X.sec, yH, 19, 'dim', 'SECTOR · PEERS', 0, 'letter-spacing:.1em') + TR(X.op, yH, 19, 'dim', 'OPEN · QTY') + TR(X.ry, yH, 19, 'dim', 'A YEAR') +
-      T(X.rp, yH, 19, 'dim', 'NEXT REPORT', 0, 'letter-spacing:.1em') + TR(X.vl, yH, 19, 'dim', 'VALUE') + TR(X.pl, yH, 19, 'dim', 'P / L') + A(100, yH + 28, 1720, 2, '', '', 'background:var(--line)');
+    var inv = sv + locked;
+    // owner 26 Nov: main view = what you decide on. ONE top strip, rows = name · how many · value · gain/loss (+ expiry for options); the rest sits in the detail panel of the selected row.
+    h += card(100, 146, 1720, 84) + T(124, 158, 19, 'acc', 'PORTFOLIO VALUE', 0, 'letter-spacing:.14em') + T(124, 184, 40, '', g(inv)) +
+      T(620, 158, 19, 'acc', 'GAIN / LOSS', 0, 'letter-spacing:.14em') + T(620, 184, 40, plAll >= 0 ? 'up' : 'dn', sg(plAll) + ' ◆') +
+      T(1120, 158, 19, 'acc', 'FREE GLINTS', 0, 'letter-spacing:.14em') + T(1120, 184, 40, '', g(S.c));
+    var yH = 250, X = { lg: 120, nm: 170, ch: 480, hn: 624, qt: 880, vl: 1070, pl: 1270 }, DX = 1320;
+    h += T(X.nm, yH, 19, 'dim', 'STOCK', 0, 'letter-spacing:.1em') + TR(X.qt, yH, 19, 'dim', 'HOW MANY') + TR(X.vl, yH, 19, 'dim', 'VALUE') + TR(X.pl, yH, 19, 'dim', 'GAIN / LOSS') + A(100, yH + 28, 1200, 2, '', '', 'background:var(--line)');
     if (!M.flat.length) return h + TC(470, 50, 'dim', P.pf === 1 ? 'You own no shares.' : P.pf === 2 ? 'No open options.' : 'No open positions.') + TC(550, 32, 'dim', 'Buy shares or sell an option first.');
     var sel = Math.max(0, Math.min(M.flat.length - 1, S.sel)), pi = 0;
     M.pages.forEach(function (pg, i) { if (sel >= pg[0] && sel < pg[1]) pi = i; });
-    var pg = M.pages[pi], y0 = 322;
+    var pg = M.pages[pi], y0 = 286, cur = M.flat[sel];
     for (var i = pg[0]; i < pg[1]; i++) {
-      var r = M.flat[i], y = y0 + (i - pg[0]) * 52, k = r.k, st = STRAT[r.st], opt = r.st !== 'SH', t = nextDay(CO.report_day[k], 12 * 3600000), rs = soon(t), up = r.pl >= 0, hn = hint(r);
-      if (r.first && r.n > 1) { var gh = 0, gi = i; while (gi < pg[1] && M.flat[gi].k === k) { gh += 52; gi++; } h += A(88, y - 3, 1744, gh - 2, '', '', 'background:#ffffff0A;border-radius:8px;border-left:6px solid ' + (r.wheel ? 'var(--amb)' : '#4A6A99') + ';box-sizing:border-box'); }
-      if (i === sel) h += A(80, y - 3, 1760, 50, '', '', 'background:#7FD4FF33;border-left:8px solid var(--acc);box-sizing:border-box');
-      h += chipTxt(X.st, y + 5, 140, 34, st[1], st[0], 20) + A(X.lg, y + 5, 36, 36, '', logo(k, 36));
-      var sub = r.st === 'SH' ? TICKS[k] + ' · now ' + f2(S.px[k]) : 'strike ' + f2(r.p.K) + ' · ' + (r.p.end * 1000 - Date.now() < 48 * 3600000 ? 'ends ' + inH(r.p.end * 1000) : 'ends ' + dstr(r.p.end * 1000)) + (r.p.m === 'naked' ? ' · naked' : '');
-      h += T(X.nm, y + 1, 26, '', esc(NAMES[k]), 300, 'overflow:hidden;text-overflow:ellipsis') + T(X.nm, y + 29, 18, 'dim', sub, 300, 'overflow:hidden');
-      h += T(X.sec, y + 1, 21, 'lab', esc(CO.sector[k]), 250, 'overflow:hidden;text-overflow:ellipsis') + T(X.sec, y + 29, 18, 'dim', 'peers ' + CO.peers[k].join(' · '), 250, 'overflow:hidden');
-      h += TR(X.op, y + 1, 25, 'lab', f2(r.open)) + TR(X.op, y + 29, 18, 'dim', '× ' + fmt(r.st === 'SH' ? r.sh : r.q) + (r.st === 'SH' ? ' shares' : ' contr.'));
-      var ry = r.st === 'SH' ? CO.div_yield[k] : r.ret;
-      h += ry === null ? TR(X.ry, y + 1, 25, 'dim', '–') : TR(X.ry, y + 1, 25, 'lab', ry > 999 ? '>999 %' : (ry < 10 ? ry.toFixed(1) : Math.round(ry)) + ' %') + TR(X.ry, y + 29, 18, 'dim', r.st === 'SH' ? 'dividend' : 'premium');
-      if (rs) h += A(X.rp - 12, y - 3, 214, 50, '', '', 'border-radius:8px;background:#FFB02E26;border:1px solid #FFB02E99;box-sizing:border-box');
-      h += T(X.rp, y + 1, 23, rs ? 'amb' : 'lab', dstr(t)) + T(X.rp, y + 27, 18, rs ? 'amb' : 'dim', inH(t) + (rs ? ' · deposit' : ''));
-      h += TR(X.vl, y + 1, 25, r.val < 0 ? 'dim' : '', fmt(r.val) + ' ◆') + (opt ? TR(X.vl, y + 29, 18, 'dim', r.st[0] === 'S' ? 'to buy back' : 'to sell back') : TR(X.vl, y + 29, 18, 'dim', fmt(r.sh) + ' × ' + f2(S.px[k])));
-      h += TR(X.pl, y + 1, 25, up ? 'up' : 'dn', sg(r.pl) + ' ◆') + TR(X.pl, y + 29, 18, up ? 'up' : 'dn', pc(r.pct) + (opt && r.st[0] === 'S' ? ' kept' : ''));
-      if (hn) h += chipTxt(1752, y + 6, 68, 32, hn[1], hn[0], 18);
+      var r = M.flat[i], y = y0 + (i - pg[0]) * 52, k = r.k, st = STRAT[r.st], opt = r.st !== 'SH', up = r.pl >= 0, hn = hint(r);
+      if (hn && hn[0] === 'CLOSE') hn = null;                                             // '80 % kept' hint dropped (detail only)
+      if (r.first && r.n > 1) { var gh = 0, gi = i; while (gi < pg[1] && M.flat[gi].k === k) { gh += 52; gi++; } h += A(88, y - 3, 1224, gh - 2, '', '', 'background:#ffffff0A;border-radius:8px;border-left:6px solid ' + (r.wheel ? 'var(--amb)' : '#4A6A99') + ';box-sizing:border-box'); }
+      if (i === sel) h += A(80, y - 3, 1232, 50, '', '', 'background:#7FD4FF33;border-left:8px solid var(--acc);box-sizing:border-box');
+      h += A(X.lg, y + 5, 36, 36, '', logo(k, 36)) + T(X.nm, opt ? y - 1 : y + 7, 29, '', esc(NAMES[k]), 300, 'overflow:hidden;text-overflow:ellipsis;white-space:nowrap');
+      if (opt) h += T(X.nm, y + 28, 18, soon(r.p.end * 1000) ? 'amb' : 'dim', 'ends ' + inH(r.p.end * 1000).replace(' days', ' d'));
+      h += chipTxt(X.ch, y + 7, 134, 30, st[1], st[0], 18);
+      if (hn) h += chipTxt(X.hn, y + 7, 72, 30, hn[1], hn[0], 17);
+      h += TR(X.qt, y + 7, 28, 'lab', fmt(opt ? r.q : r.sh));
+      h += TR(X.vl, y + 7, 28, r.val < 0 ? 'dim' : '', fmt(r.val) + ' ◆') + TR(X.pl, y + 7, 28, up ? 'up' : 'dn', sg(r.pl) + ' ◆');
     }
-    h += T(100, 800, 22, 'dim', 'page ' + (pi + 1) + '/' + M.pages.length + ' · ▲▼ move, past the end = next page') + TR(1820, 800, 26, 'lab', 'open P / L <span class="' + (plAll >= 0 ? 'up' : 'dn') + '">' + sg(plAll) + ' ◆</span>');
-    var cur = M.flat[sel], act = cur.st === 'SH' ? ['SELL ' + TICKS[cur.k], 'var(--dn)'] : ['CLOSE EARLY', 'var(--amb)'];
+    // detail panel of the selected row (everything that is not a decision)
+    var dk = cur.k, dt = nextDay(CO.report_day[dk], 12 * 3600000), drs = soon(dt), dopt = cur.st !== 'SH', dry = dopt ? cur.ret : CO.div_yield[dk], dst = STRAT[cur.st];
+    h += card(DX, 246, 500, 530) + T(DX + 20, 262, 19, 'acc', 'DETAIL', 0, 'letter-spacing:.14em') + A(DX + 20, 296, 64, 64, '', logo(dk, 64)) +
+      T(DX + 100, 298, 28, '', esc(NAMES[dk]), 380, 'overflow:hidden;text-overflow:ellipsis;white-space:nowrap') + T(DX + 100, 334, 19, 'dim', TICKS[dk] + ' · ' + esc(CO.sector[dk]), 380, 'overflow:hidden;white-space:nowrap');
+    var dr = [[dopt ? (cur.st[0] === 'S' ? 'Got per share' : 'Paid per share') : 'Average cost', f2(cur.open)], ['Price now', f2(dopt ? cur.mark : S.px[dk])]];
+    if (dopt) dr.push(['Strike', f2(cur.p.K)], ['Ends', dstr(cur.p.end * 1000) + ' · ' + inH(cur.p.end * 1000)]);
+    dr.push([dopt ? 'A year if repeated' : 'Dividend a year', dry === null || dry === undefined ? '–' : (dry > 999 ? '>999' : dry < 10 ? dry.toFixed(1) : Math.round(dry)) + ' %'],
+      ['Next report', '<span class="' + (drs ? 'amb' : '') + '">' + dstr(dt) + ' · ' + inH(dt) + '</span>'], ['Peers', CO.peers[dk].join(' · ')], ['Gain / loss', '<span class="' + (cur.pl >= 0 ? 'up' : 'dn') + '">' + pc(cur.pct) + '</span>']);
+    dr.forEach(function (rw, i) { var yy = 376 + i * 44; h += T(DX + 20, yy + 4, 20, 'dim', rw[0]) + TR(DX + 480, yy, 24, 'lab', rw[1]) + A(DX + 20, yy + 36, 460, 1, '', '', 'background:var(--line)'); });
+    if (cur.wheel) h += T(DX + 20, 376 + dr.length * 44 + 4, 18, 'amb', 'amber bar = shares with a short call on them', 460, 'white-space:normal;line-height:1.15');
+    h += T(100, 800, 22, 'dim', 'page ' + (pi + 1) + '/' + M.pages.length + ' · ▲▼ move, past the end = next page');
+    var act = cur.st === 'SH' ? ['SELL ' + TICKS[cur.k], 'var(--dn)'] : ['CLOSE EARLY', 'var(--amb)'];
     h += chipTxt(820, 794, 280, 36, act[1], act[0], 22);                // action of the selected row = the SELECT key
     // owner 25 Nov: ONE plain number each (fees already in it, no explanation line)
     var sn = 0, cn = 0;
@@ -144,7 +148,7 @@ var PF = (function () {
     P.pos.forEach(function (p) { var c = p.mark * p.q; cn += (p.bs === 's' ? -c : c) - P.fee * p.q; });
     if (P.pf !== 2 && stocks) h += T(100, 842, 32, '', 'If you sell all now: ' + fmt(sn) + ' ◆');
     if (P.pf !== 1 && opts) h += TR(1820, 842, 32, '', 'If you close all now: <span class="' + (cn >= 0 ? 'up' : 'dn') + '">' + sg(cn) + ' ◆</span>');
-    h += A(100, 896, 10, 22, '', '', 'background:var(--amb);border-radius:3px') + T(120, 892, 20, 'dim', 'amber bar = wheel: shares with a short call on them') + T(740, 892, 20, 'dim', 'ALERT report within 48 h') + T(1030, 892, 20, 'dim', 'ITM short option ends inside the money') + T(1470, 892, 20, 'dim', 'CLOSE 80 % of premium kept');
+    h += T(100, 896, 20, 'dim', 'ALERT report within 48 h · ITM short option ends inside the money');
     return h;
   }
 
