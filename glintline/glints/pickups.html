@@ -49,10 +49,10 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
 const FILES = { ground: { glint: ['shard_v2_2x', 'shard_v3_2x'], gold: ['shard_gold_v2_2x', 'shard_gold_v3_2x'] },
-                air: { glint: ['shard_v3_2x', 'shard_sky_v3_2x'], gold: ['shard_gold_v3_2x', 'shard_sky_gold_v3_2x'] } };
-const TAGS = { ground: ['BEFORE (v2)', 'AFTER (v3)'], air: ['GROUND look (v3)', 'AIR look (sky v3)'] };
+                air: { glint: ['shard_v3_2x', 'shard_sky_v3b_2x'], gold: ['shard_gold_v3_2x', 'shard_sky_gold_v3b_2x'] } };
+const TAGS = { ground: ['BEFORE (v2)', 'AFTER (v3)'], air: ['GROUND look (v3)', 'AIR look (sky v3b)'] };
 const NOTES = { ground: document.getElementById('note').innerHTML,
-  air: '<b>Air crystals.</b> Same gem, no ground dial. Instead: a faint aura shell, two crossed orbit rings that circle at the gem height, and a light streak along local +X that the game yaws toward the next crystal. All motion is shader UV scroll. The sky models have the gem centre at the item origin.' };
+  air: '<b>Air crystals.</b> Same gem, no ground dial. Instead: a faint aura shell and two crossed orbit rings that circle at the gem height. All motion is shader UV scroll. The sky models have the gem centre at the item origin.' };
 let mode = new URLSearchParams(location.search).get('mode') === 'air' ? 'air' : 'ground'; document.querySelectorAll('[data-m]').forEach(x => x.classList.toggle('on', x.dataset.m === mode));
 const GEM_Y = { glint: 1.2, gold: 1.35 }; const AIR_Y = 1.2;                       // gem centre height in the 2x models (y up)
 const TABLE_Y = { glint: 1.44, gold: 1.6 };
