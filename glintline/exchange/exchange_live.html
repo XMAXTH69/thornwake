@@ -40,6 +40,26 @@ html,body{margin:0;height:100%;background:#000;overflow:hidden}
 var Q = new URLSearchParams(location.search), DEMO = Q.get('demo') === '1', DBG = Q.get('dbg') === '1';
 var W = 1920, H = 1080, stage = document.getElementById('stage'), dbgEl = document.getElementById('dbg');
 var NAMES = ['AURUM','NULL WAKE','ECHOES','GLINTLINE','WRENCH','SAFEGUARD','TYRELAB','VOLT','NIGHTLINE','GLTV','PAINTWORKS','KERB TRUST','PETROL & CO','HALO AIR'];
+var TICKS = ['AURM','NULL','ECHO','GLNT','WRCH','SAFE','TYRE','VOLT','NITE','GLTV','PNTW','KERB','PTRL','HALO'];
+// original vector marks, 48x48 box, palette colours only (gold = GLINTLINE brand gold, violet = NULL WAKE faction)
+var GOLD = '#E8C46A', VIO = '#9B7BFF', PET = '#0F6B73';
+var LOGOS = [
+  '<circle cx="24" cy="24" r="19" fill="none" stroke="' + GOLD + '" stroke-width="3"/><path d="M24 10L36 38H30L24 22L18 38H12Z" fill="' + GOLD + '"/>',
+  '<circle cx="24" cy="24" r="17" fill="none" stroke="' + VIO + '" stroke-width="4"/><path d="M10 38L38 10" stroke="#7FD4FF" stroke-width="4"/><circle cx="24" cy="24" r="4" fill="#04070F"/>',
+  '<circle cx="12" cy="24" r="4" fill="#7FD4FF"/><path d="M20 15A12 12 0 0 1 20 33M27 9A19 19 0 0 1 27 39M34 4A26 26 0 0 1 34 44" fill="none" stroke="#7FD4FF" stroke-width="3" stroke-linecap="round"/>',
+  '<circle cx="24" cy="24" r="21" fill="none" stroke="' + GOLD + '" stroke-width="1.5"/><path d="M24 4L28.5 19.5L44 24L28.5 28.5L24 44L19.5 28.5L4 24L19.5 19.5Z" fill="' + GOLD + '"/><circle cx="24" cy="24" r="3" fill="#04070F"/>',
+  '<path d="M24 5L40 14V34L24 43L8 34V14Z" fill="none" stroke="#FFB02E" stroke-width="4" stroke-linejoin="round"/><circle cx="24" cy="24" r="6" fill="none" stroke="#FFB02E" stroke-width="3.5"/><path d="M24 24L24 5" stroke="#04070F" stroke-width="5"/>',
+  '<path d="M24 5L40 11V24C40 33 33 39 24 43C15 39 8 33 8 24V11Z" fill="none" stroke="#2EE59D" stroke-width="4" stroke-linejoin="round"/><path d="M16 24L22 30L33 18" fill="none" stroke="#2EE59D" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>',
+  '<circle cx="24" cy="24" r="19" fill="none" stroke="#DCE3EE" stroke-width="7" stroke-dasharray="5 3"/><circle cx="24" cy="24" r="8" fill="none" stroke="#7FD4FF" stroke-width="3"/>',
+  '<path d="M28 4L10 27H22L19 44L38 20H26Z" fill="#FFB02E"/>',
+  '<path d="M30 6A18 18 0 1 0 42 30A14 14 0 0 1 30 6Z" fill="#7FD4FF"/><path d="M6 40H26M6 34H20" stroke="#DCE3EE" stroke-width="3" stroke-linecap="round"/>',
+  '<rect x="5" y="12" width="38" height="26" rx="5" fill="none" stroke="#7FD4FF" stroke-width="3.5"/><path d="M20 19L31 25L20 31Z" fill="#7FD4FF"/><path d="M16 5L24 12L32 5" fill="none" stroke="#DCE3EE" stroke-width="2.5" stroke-linecap="round"/>',
+  '<path d="M24 5C31 15 37 22 37 29A13 13 0 0 1 11 29C11 22 17 15 24 5Z" fill="#FF4F64"/><path d="M17 31A7 7 0 0 0 24 38" fill="none" stroke="#FFB02E" stroke-width="3.5" stroke-linecap="round"/><circle cx="31" cy="31" r="3" fill="#7FD4FF"/>',
+  '<path d="M4 18L12 12H44V32L36 38H4Z" fill="#DCE3EE"/><path d="M13 12H21L13 38H5V18ZM29 12H37L29 38H21ZM45 12V32L40 36L37 38L45 12Z" fill="#FF4F64"/>',
+  '<circle cx="24" cy="24" r="20" fill="' + PET + '"/><path d="M24 9C30 17 34 22 34 27A10 10 0 0 1 14 27C14 22 18 17 24 9Z" fill="#FFB02E"/>',
+  '<ellipse cx="24" cy="26" rx="20" ry="9" fill="none" stroke="' + GOLD + '" stroke-width="3" transform="rotate(-18 24 26)"/><path d="M8 24L40 8L28 40L23 27Z" fill="#DCE3EE"/><path d="M23 27L40 8" stroke="#04070F" stroke-width="2"/>'
+];
+function logo(i, s) { return '<svg width="' + s + '" height="' + s + '" viewBox="0 0 48 48" style="display:block"><rect x="0" y="0" width="48" height="48" rx="9" fill="#04070F" stroke="#2C3E66" stroke-width="2"/><g transform="translate(5 5) scale(.8958)">' + LOGOS[i] + '</g></svg>'; }
 var BANDS = ['CALM','BUMPY','BUMPY','CALM','BUMPY','CALM','BUMPY','WILD','BUMPY','BUMPY','BUMPY','CALM','CALM','WILD'];
 var SPREAD = { CALM: .25, BUMPY: .5, WILD: 1 }, BCOL = { CALM: 'up', BUMPY: 'amb', WILD: 'dn' };
 var BASE = [4520,3910,2500,835,910,1980,605,1240,700,1500,880,1100,2200,1650];
@@ -127,7 +147,7 @@ function pMarket(S) {
   for (var i = 0; i < 14; i++) {
     var y = y0 + i * 44, ch = pct(S, i), up = S.px[i] >= S.pv[i], sel = i === S.sel;
     if (sel) h += A(80, y, 1760, 44, '', '', 'background:#7FD4FF33;border-left:8px solid var(--acc);box-sizing:border-box');
-    h += T(120, y, 28, 'row', esc(NAMES[i]), 0, 'color:#fff') + T(430, y + 4, 22, 'row', bandWord(i, 22), 0, 'height:36px;line-height:36px');
+    h += A(120, y + 3, 32, 32, '', logo(i, 32)) + T(168, y, 28, 'row', esc(NAMES[i]), 0, 'color:#fff') + T(372, y + 4, 22, 'row dim', TICKS[i], 0, 'height:36px;line-height:36px;letter-spacing:.08em') + T(480, y + 4, 22, 'row', bandWord(i, 22), 0, 'height:36px;line-height:36px');
     h += TR(1000, y, 26, 'row ' + (up ? 'up' : 'dn'), sg(ch, 2) + ' %') + T(1060, y, 28, 'row ' + (up ? 'up' : 'dn'), up ? '▲' : '▼');
     h += TR(1500, y, 22, 'row dim', 'spread ' + spreadOf(i) + ' %');
     h += A(1560, y + 3, 230, 38, 'chip', f2(S.px[i]) + ' ◆', 'background:var(--' + (up ? 'up' : 'dn') + ')');
@@ -136,7 +156,7 @@ function pMarket(S) {
 }
 function pStock(S) {
   var k = S.k, px = S.px[k], pv = S.pv[k], d = px - pv, up = d >= 0, h = frame(S, '');
-  h += T(100, 108, 30, 'dim', esc(NAMES[k]) + ' · ' + bandWord(k, 30)) + TR(1820, 110, 24, 'dim', clockHtml());
+  h += T(100, 108, 30, 'dim', esc(NAMES[k]) + ' · <span class="acc">' + TICKS[k] + '</span> · ' + bandWord(k, 30)) + TR(1820, 110, 24, 'dim', clockHtml()) + A(1660, 150, 160, 160, '', logo(k, 160));
   h += T(100, 150, 120, '', f2(px) + ' <span class="acc" style="font-size:60px">◆</span>');
   h += T(100, 290, 36, up ? 'up' : 'dn', sg(d / 100, 2) + ' ◆  (' + sg(d / pv * 100, 2) + ' %) in 24 h');
   var ch = S.ch.slice(-13), cx = 100, cw = 1000, cy1 = 700, chh = 300, bw = cw / 13;
