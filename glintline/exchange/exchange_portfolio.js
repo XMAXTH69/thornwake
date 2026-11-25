@@ -66,10 +66,10 @@ var PF = (function () {
   function build(S, P, nof) {                                         // nof = ignore the pf filter (KPI cards, sunburst)
     var by = {}, ks = [], i;
     function grp(k) { if (!by[k]) { by[k] = { k: k, rows: [], exp: 0 }; ks.push(k); } return by[k]; }
-    for (i = 0; i < STOCKS; i++) { var t = total(S, P, i); if (t.sh > 0) { var gg = grp(i), val = t.sh * S.px[i] / 100; gg.exp += val; gg.rows.push({ st: 'SH', k: i, sh: t.sh, open: t.cost / t.sh, mark: S.px[i], val: val, pl: val - t.cost / 100, pct: t.cost ? (val - t.cost / 100) / (t.cost / 100) * 100 : 0 }); } }
+    for (i = 0; i < STOCKS; i++) { var t = total(S, P, i); if (t.sh > 0) { var gg = grp(i), val = t.sh * S.px[i] / 100, net = Math.floor(t.sh * fillSell(S.px[i], i) / 100) - S.f - t.cost / 100; gg.exp += val; gg.rows.push({ st: 'SH', k: i, sh: t.sh, open: t.cost / t.sh, mark: S.px[i], val: val, pl: net, pct: t.cost ? net / (t.cost / 100) * 100 : 0 }); } }
     P.pos.forEach(function (p) {
       var gg = grp(p.k), short = p.bs === 's', st = (short ? 'S' : 'L') + (p.cp === 'c' ? 'C' : 'P'), spot = S.px[p.k], q = p.q;
-      var plv = (short ? p.open - p.mark : p.mark - p.open) * q, itm = short && (p.cp === 'c' ? spot > p.K : spot < p.K);
+      var plv = (short ? p.open - p.mark : p.mark - p.open) * q - 2 * P.fee * q, itm = short && (p.cp === 'c' ? spot > p.K : spot < p.K);
       gg.exp += p.K * q; gg.rows.push({ st: st, k: p.k, p: p, q: q, open: p.open, mark: p.mark, val: (short ? -1 : 1) * p.mark * q, pl: plv, pct: p.open ? plv / (p.open * q) * 100 : 0, itm: itm,
         ret: short ? p.open / p.K * 365 / (EXPD[p.e] || 7) * 100 : null });
     });
