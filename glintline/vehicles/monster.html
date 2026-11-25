@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Monster Truck Interior</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root { --bg:#0b1316; --panel:rgba(14,30,34,.82); --line:#2a4a50; --gold:#d9b46a; --text:#e8eef0; --dim:#9fb3b8; }
+  * { box-sizing:border-box; }
+  html,body { margin:0; height:100%; background:var(--bg); color:var(--text); font:14px/1.4 Inter,system-ui,sans-serif; overflow:hidden; }
+  #view { position:fixed; inset:0; }
+  header { position:fixed; top:16px; left:16px; right:16px; display:flex; flex-wrap:wrap; gap:8px; align-items:center; pointer-events:none; }
+  header > * { pointer-events:auto; }
+  h1 { font:600 18px Cinzel,serif; letter-spacing:.12em; color:var(--gold); margin:0 12px 0 0; }
+  .grp { display:flex; border:1px solid var(--line); background:var(--panel); }
+  button { background:none; border:0; color:var(--dim); font:600 13px Inter,sans-serif; padding:8px 14px; cursor:pointer; letter-spacing:.06em; }
+  button + button { border-left:1px solid var(--line); }
+  button.on { color:#0b1316; background:var(--gold); }
+  button:disabled { opacity:.35; cursor:default; }
+  #info { position:fixed; left:16px; right:16px; bottom:16px; max-width:600px; padding:12px 14px; background:var(--panel); border:1px solid var(--line); }
+  #info b { color:var(--gold); font-family:Cinzel,serif; letter-spacing:.08em; }
+  #hint { color:var(--dim); font-size:12px; margin-top:4px; }
+  #load { position:fixed; inset:0; display:grid; place-items:center; color:var(--dim); pointer-events:none; }
+  .tag { position:fixed; transform:translate(-50%,0); font:600 14px Cinzel,serif; color:var(--gold); letter-spacing:.1em; pointer-events:none; text-shadow:0 1px 4px #000; }
+</style>
+</head>
+<body>
+<div id="view"></div>
+<header>
+  <h1>MONSTER TRUCK</h1>
+  <div class="grp" id="vers">
+    <button data-v="v5">V5 NOW</button><button data-v="v6" class="on">V6 INTERIOR</button><button data-v="cmp">V5 | V6</button>
+  </div>
+  <div class="grp">
+    <button id="inside">INSIDE</button><button id="glass" class="on">GLASS ON</button><button id="driver" class="on">DRIVER ON</button><button id="reset">RESET VIEW</button>
+  </div>
+</header>
+<div id="info"><div id="label"></div><div id="hint">Drag = turn · scroll / pinch = zoom · right-drag / two fingers = move</div></div>
+<div id="load">Loading monster truck…</div>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+const LABELS = {
+  v5:  '<b>V5 · NOW IN THE GAME</b> — closed cab with dark glass, driver hidden.',
+  v6:  '<b>V6 · REAL INTERIOR</b> — the cab is now hollow with clear glass. Inside: a centred bucket seat, steering wheel with a gold hub, a dash with 3 amber gauges, painted door panels with gold armrests, and a roll bar behind the seat that runs up through the roof into the outside cage. The grey figure is a stand-in for a seated Sansar avatar (head 23 cm under the roof, hands on the wheel). Press INSIDE for the driver’s view.',
+  cmp: '<b>V5 | V6</b> — same truck: V5 (left) closed cab with dark glass, V6 (right) clear glass with the interior and the driver visible.',
+  inside: '<b>DRIVER’S VIEW</b> — from the driver’s eyes. Drag to look around. Press INSIDE again to step out.'
+};
+const VERS = ['v5', 'v6'], CMP = ['v5', 'v6'];
+const EYE = new THREE.Vector3(0, 3.13, 0.38);        // car space (glTF: +Y up, nose = -Z): head top 3.27 m, 8 cm in front of the head joint
+
+const el = document.getElementById('view');
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+el.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0b1316);
+scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(), 0.04).texture;
+const key = new THREE.DirectionalLight(0xfff4e8, 2.2); key.position.set(5, 8, 6); scene.add(key);
+const rim = new THREE.DirectionalLight(0xcfe4ff, 1.2); rim.position.set(-6, 4, -8); scene.add(rim);
+scene.add(new THREE.HemisphereLight(0xdde8ec, 0x1a2224, 0.6));
+const floor = new THREE.Mesh(new THREE.CircleGeometry(40, 64), new THREE.MeshStandardMaterial({ color: 0x111c1f, roughness: 0.9 }));
+floor.rotation.x = -Math.PI / 2; scene.add(floor);
+
+const camera = new THREE.PerspectiveCamera(35, 1, 0.02, 500);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+
+const cars = {}, glassMats = [], driverNodes = [];
+const loader = new GLTFLoader();
+await Promise.all(VERS.map(v => new Promise((ok, bad) => loader.load(`monster/monster_${v}.glb`, g => {
+  const root = g.scene;
+  root.traverse(o => {
+    if (o.name.startsWith('driver')) driverNodes.push(o);
+    if (!o.isMesh) return;
+    [].concat(o.material).forEach(mt => {
+      if (mt.name.startsWith('vessel_glass_clear')) {       // Sansar: Transparent shader; here a light petrol tint
+        mt.transparent = true; mt.opacity = 0.22; mt.depthWrite = false; mt.side = THREE.DoubleSide; mt.roughness = 0.05; mt.metalness = 0;
+        mt.color.set(0x5a8c96); glassMats.push(mt);
+      }
+    });
+  });
+  const box = new THREE.Box3().setFromObject(root), c = box.getCenter(new THREE.Vector3());
+  root.position.sub(new THREE.Vector3(c.x, box.min.y, c.z));        // centre on floor
+  const holder = new THREE.Group(); holder.add(root); holder.userData.size = box.getSize(new THREE.Vector3()); holder.userData.root = root;
+  scene.add(holder); cars[v] = holder; ok();
+}, undefined, bad))));
+document.getElementById('load').remove();
+
+const tags = {};
+for (const v of VERS) { const t = document.createElement('div'); t.className = 'tag'; t.textContent = v.toUpperCase(); document.body.appendChild(t); tags[v] = t; }
+
+let mode = 'v6', inside = false, glassOn = true, driverOn = true;
+function frame(w, h, d) {
+  const r = Math.max(w, h, d) * 0.5;
+  const dist = r / Math.sin(THREE.MathUtils.degToRad(camera.fov / 2)) * (camera.aspect < 1 ? 1.6 : 1.05);
+  controls.target.set(0, h * 0.55, 0);
+  camera.position.set(dist * 0.62, dist * 0.42, -dist * 0.66);   // nose-side 3/4
+  controls.update();
+}
+function show(m) {
+  mode = m; setInside(false, true);
+  document.querySelectorAll('#vers button').forEach(b => b.classList.toggle('on', b.dataset.v === m));
+  document.getElementById('label').innerHTML = LABELS[m];
+  document.getElementById('inside').disabled = m !== 'v6';
+  const gap = Math.max(...VERS.map(v => cars[v].userData.size.x)) * 1.25;
+  VERS.forEach(v => {
+    cars[v].visible = m === v || (m === 'cmp' && CMP.includes(v));
+    cars[v].position.set(m === 'cmp' ? (v === CMP[0] ? 0.5 : -0.5) * gap : 0, 0, 0);
+    tags[v].style.display = m === 'cmp' ? '' : 'none';
+  });
+  const s = cars.v6.userData.size;
+  if (m === 'cmp') frame(gap * 2, s.y, s.z); else frame(s.x, s.y, s.z);
+}
+function setInside(on, quiet) {
+  inside = on; const b = document.getElementById('inside'); b.classList.toggle('on', on); b.textContent = on ? 'OUTSIDE' : 'INSIDE';
+  driverNodes.forEach(o => o.visible = driverOn && !on);           // you ARE the driver in the inside view
+  controls.enableZoom = !on; controls.enablePan = !on;
+  if (on) {
+    const eye = cars.v6.userData.root.localToWorld(EYE.clone());
+    camera.position.copy(eye); controls.target.copy(eye).add(new THREE.Vector3(0, -0.04, -0.05));   // tiny orbit radius = look around
+    camera.fov = 70; camera.updateProjectionMatrix(); controls.update();
+    document.getElementById('label').innerHTML = LABELS.inside;
+  } else if (!quiet) { camera.fov = 35; camera.updateProjectionMatrix(); show(mode); }
+  if (!on) { camera.fov = 35; camera.updateProjectionMatrix(); }
+}
+document.querySelectorAll('#vers button').forEach(b => b.onclick = () => show(b.dataset.v));
+document.getElementById('inside').onclick = () => setInside(!inside);
+document.getElementById('glass').onclick = () => {
+  glassOn = !glassOn; const b = document.getElementById('glass'); b.textContent = glassOn ? 'GLASS ON' : 'GLASS OFF'; b.classList.toggle('on', glassOn);
+  glassMats.forEach(mt => mt.visible = glassOn);
+};
+document.getElementById('driver').onclick = () => {
+  driverOn = !driverOn; const b = document.getElementById('driver'); b.textContent = driverOn ? 'DRIVER ON' : 'DRIVER OFF'; b.classList.toggle('on', driverOn);
+  driverNodes.forEach(o => o.visible = driverOn && !inside);
+};
+document.getElementById('reset').onclick = () => show(mode);
+
+function resize() {
+  const w = innerWidth, h = innerHeight; renderer.setSize(w, h); camera.aspect = w / h; camera.updateProjectionMatrix();
+}
+addEventListener('resize', () => { resize(); if (!inside) show(mode); });
+resize(); show('v6');
+
+const p = new THREE.Vector3();
+renderer.setAnimationLoop(() => {
+  controls.update(); renderer.render(scene, camera);
+  if (mode === 'cmp') VERS.forEach(v => {
+    const s = cars[v].userData.size; p.set(cars[v].position.x, s.y * 1.1, cars[v].position.z).project(camera);
+    tags[v].style.left = (p.x * 0.5 + 0.5) * innerWidth + 'px'; tags[v].style.top = (-p.y * 0.5 + 0.5) * innerHeight + 'px';
+  });
+});
+</script>
+</body>
+</html>
