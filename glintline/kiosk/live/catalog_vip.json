@@ -275,6 +275,134 @@
   "halo",
   "meridian"
  ],
+ "ships": [
+  {
+   "key": "basement",
+   "name": "BASEMENT",
+   "price": 15000,
+   "rent": 100,
+   "broker": false
+  },
+  {
+   "key": "kb7",
+   "name": "FORKTAIL",
+   "price": 20000,
+   "rent": 120,
+   "broker": false
+  },
+  {
+   "key": "kb3",
+   "name": "WG CORSAIR",
+   "price": 45000,
+   "rent": 150,
+   "broker": false
+  },
+  {
+   "key": "kb8",
+   "name": "STINGRAY",
+   "price": 50000,
+   "rent": 150,
+   "broker": false
+  },
+  {
+   "key": "kb2",
+   "name": "NORTHSTAR RAPTOR",
+   "price": 60000,
+   "rent": 175,
+   "broker": false
+  },
+  {
+   "key": "kb4",
+   "name": "NORTHSTAR FANWING",
+   "price": 70000,
+   "rent": 175,
+   "broker": false
+  },
+  {
+   "key": "kb5",
+   "name": "LANCER",
+   "price": 80000,
+   "rent": 200,
+   "broker": false
+  },
+  {
+   "key": "kb10",
+   "name": "LANCER FANWING",
+   "price": 95000,
+   "rent": 200,
+   "broker": false
+  },
+  {
+   "key": "kb1",
+   "name": "NORTHSTAR HEAVY",
+   "price": 110000,
+   "rent": 250,
+   "broker": false
+  },
+  {
+   "key": "kb9",
+   "name": "TWINFAN HEAVY",
+   "price": 120000,
+   "rent": 250,
+   "broker": false
+  },
+  {
+   "key": "northstar",
+   "name": "NORTHSTAR ORIGINAL",
+   "price": 250000,
+   "rent": 400,
+   "broker": true
+  },
+  {
+   "key": "shipa",
+   "name": "NORTHSTAR A INTERCEPTOR",
+   "price": 300000,
+   "rent": 500,
+   "broker": true
+  },
+  {
+   "key": "shipb",
+   "name": "NORTHSTAR B HEAVY",
+   "price": 300000,
+   "rent": 500,
+   "broker": true
+  },
+  {
+   "key": "shipc",
+   "name": "NORTHSTAR C LONG-RANGE",
+   "price": 300000,
+   "rent": 500,
+   "broker": true
+  },
+  {
+   "key": "shipd",
+   "name": "NORTHSTAR D TWIN-ENGINE",
+   "price": 300000,
+   "rent": 500,
+   "broker": true
+  },
+  {
+   "key": "kb6",
+   "name": "CRUISER",
+   "price": 400000,
+   "rent": 600,
+   "broker": true
+  },
+  {
+   "key": "kb11",
+   "name": "CRUISER RAPTOR",
+   "price": 450000,
+   "rent": 600,
+   "broker": true
+  },
+  {
+   "key": "big",
+   "name": "BIG NORTHSTAR",
+   "price": 1000000,
+   "rent": 0,
+   "broker": true
+  }
+ ],
  "menu": [
   [
    "PAINT",

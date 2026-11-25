@@ -1,14 +1,15 @@
 <!doctype html>
 <html><head><meta charset="utf-8"><title>Glintline kiosk (live)</title>
 <style>
-/* Glintline LIVE kiosk page (25 Nov 2026). ONE page per kiosk screen: it DRAWS the garage pages itself (same look as the mp4 pages of
+/* Glintline LIVE kiosk page (25 Nov 2026, no mp4 left 27 Nov). ONE page per kiosk screen: it DRAWS every garage page itself (same look as the mp4 pages of
    build_kiosk_pages.py) from live/catalog_<pal>.json; a click only changes the URL #fragment (hashchange, no reload, test 22 Nov: 4 ms).
-   URL   kiosk_live.html?pal=<e|vip|aurum|null>[&lf=1.6&lt=5.6][&dbg=1]#p=<page>[&y=1][&b=<glint>][&s=<n>]
-   p     page name, SAME names as the mp4 set (GlintKiosk.cs unchanged):  attract | own_<car> | buy_<car> | drive_<car> |
-         menu_<car>_<tile> | paint_<car>_<i> | paint_<car>_drive |
-         upg_<kind>_<mk> | trail_<i> | rims_<key> | shield | ug_p_<pattern>[_own] | ug_t_<tone>[_own] | <upg|trail|rims|shield|ug>_drive
-         (26 Nov: drawn live by live/kiosk_pages.js; LIGHT LINE ribbon = animated canvas). browse_/own_/buy_/rent_/drive_<plane> (air_order, airport kiosk) go through the same car renderer. Every other page
-         = HYBRID fallback (26 Nov kept only for pages that could still arrive: broker_*, twin_*, ships, unknown): the page's existing mp4 <pal>/<page>.mp4 plays INSIDE this page (lf/lt loop), no reload.
+   URL   kiosk_live.html?pal=<e|vip|aurum|null>[&dbg=1][&still=1]#p=<page>[&y=1][&b=<glint>][&s=<n>]
+   p     page name, SAME names GlintKiosk.cs sends (it is unchanged), ALL drawn live:
+         attract | own_<car> | buy_<car> | drive_<car> | menu_<car>_<tile> | paint_<car>_<i> | paint_<car>_drive |
+         own_/buy_/rent_/drive_/browse_<plane> (airport) | own_/buy_/rent_/drive_<ship> | broker_<ship> (own BROKER palette, never palette E) |
+         upg_<kind>_<mk> | trail_<i> | rims_<key> | shield | ug_p_<pattern>[_own] | ug_t_<tone>[_own] | twin_buy_<price> | twin_on | twin_off |
+         <upg|trail|rims|shield|ug>_drive      (sub-pages + ships: live/kiosk_pages.js; LIGHT LINE + TWIN ribbons = animated canvas).
+         An unknown page name draws the attract page and logs a console warning (no video fallback any more).
    DRIVE  25 Nov: own DRIVE button bottom-right (hit zone 'drive' = mirror of BACK) on CUSTOMISE + sub-pages; no DRIVE tiles in lists.
    y=1   optional: this paint/item is already owned -> tag YOURS, button CHOOSE.     b=<n>  optional: banked glint shown in the top bar.
    s=<n> optional send counter, ignored (lets the script re-send the same page).     Unknown keys are ignored (format reusable, e.g. EXCHANGE).
@@ -53,22 +54,22 @@ html,body{margin:0;height:100%;background:#000;overflow:hidden}
 #streak rect{fill:none;stroke:var(--hi);stroke-linecap:round;animation:run 4s linear infinite}
 @keyframes run{from{stroke-dashoffset:0}to{stroke-dashoffset:-1000}}
 #dust{left:0;top:0}
-#vid{left:0;top:0;width:1920px;height:1080px;object-fit:cover;display:none;background:#000}
+#stage.brk{--bg:rgb(7,12,24);--bgRGB:7,12,24;--tab:rgb(22,38,74);--tabRGB:22,38,74;--accent:rgb(127,212,255);--accentRGB:127,212,255;--hi:rgb(127,212,255);--hiRGB:127,212,255;--text:rgb(220,227,238);--textRGB:220,227,238;--soft:rgb(140,154,181);--softRGB:140,154,181;--card:rgb(16,26,51);--cardRGB:16,26,51;--btnTxt:rgb(7,12,24);--glow:rgb(127,212,255);--glowRGB:127,212,255;--glowA:.35;--tt:rgb(127,212,255);--ttRGB:127,212,255;--chip:rgb(220,227,238);--hiTxt:rgb(127,212,255)}
+#stage.brk #dust{display:none}#stage.brk .title,#stage.brk .brand{font-weight:700;letter-spacing:.3em}
 #ld{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#05080a;z-index:20}
 #ld i{width:9vh;height:9vh;border-radius:50%;border:1.1vh solid rgba(255,190,90,.18);border-top-color:#ffbe5a;animation:r .8s linear infinite}@keyframes r{to{transform:rotate(360deg)}}
 #dbg{position:fixed;left:6px;top:6px;font:14px monospace;color:#ffbe5a;background:rgba(0,0,0,.6);padding:4px 8px;z-index:30;display:none}
 </style></head>
-<body><div id="stage"><canvas id="dust" class="abs" width="1920" height="1080"></canvas><div id="live"></div><video id="vid" class="abs" muted playsinline></video><div id="ovl"></div></div>
+<body><div id="stage"><canvas id="dust" class="abs" width="1920" height="1080"></canvas><div id="live"></div></div>
 <div id="ld"><i></i></div><div id="dbg"></div>
 <script src="live/kiosk_pages.js"></script>
 <script>
 'use strict';
 var Q = new URLSearchParams(location.search), PAL = Q.get('pal') || 'e', DBG = Q.get('dbg') === '1';
 if (Q.get('still') === '1') document.head.appendChild(document.createElement('style')).textContent = '*{animation:none!important}';   // dev: final frame, for screenshots
-var LF = parseFloat(Q.get('lf')), LT = parseFloat(Q.get('lt'));
 var W = 1920, H = 1080, CARD = [420, 150, 1500, 800], CAT = null, prev = null, t0 = performance.now(), switches = 0, lastMs = 0;
 var loads = +(sessionStorage.getItem('kL') || 0) + 1; try { sessionStorage.setItem('kL', loads); } catch (e) {}
-var stage = document.getElementById('stage'), live = document.getElementById('live'), vid = document.getElementById('vid');
+var stage = document.getElementById('stage'), live = document.getElementById('live');
 function fitStage() { var s = Math.min(innerWidth / W, innerHeight / H); stage.style.transform = 'scale(' + s + ')'; }
 addEventListener('resize', fitStage); fitStage();
 
@@ -125,8 +126,8 @@ function pageAttract() {
     '<div class="abs ctr soft fade" style="top:676px;font-size:40px">then touch START to choose your car or bike</div>' + buttons('START', false, null);
 }
 function pageCar(kind, vid, f) {       // own_ / buy_ / drive_ / browse_ / rent_ <car or plane>; planes (kind 'plane') only switch titles, texts, bar names, dots and buttons
-  var v = CAT.vehicles[vid], plane = v.kind === 'plane', ord = plane ? CAT.air_order : CAT.order, k = ord.indexOf(vid), C = CARD, own = kind === 'own';
-  var ttl = { browse: plane ? 'CHOOSE YOUR PLANE' : 'CHOOSE YOUR RIDE', own: plane ? 'YOUR PLANE' : 'YOUR RIDE', buy: plane ? 'IN THE HANGAR' : 'IN THE SHOP', drive: 'READY', rent: 'RENT A PLANE' }[kind];
+  var v = CAT.vehicles[vid], plane = v.kind === 'plane' || v.kind === 'ship', ord = v.kind === 'ship' ? CAT.ship_order : plane ? CAT.air_order : CAT.order, k = ord.indexOf(vid), C = CARD, own = kind === 'own';
+  var ttl = { browse: plane ? 'CHOOSE YOUR PLANE' : 'CHOOSE YOUR RIDE', own: plane ? (v.kind === 'ship' ? 'YOUR SHIP' : 'YOUR PLANE') : 'YOUR RIDE', buy: plane ? 'IN THE HANGAR' : 'IN THE SHOP', drive: 'READY', rent: v.kind === 'ship' ? 'RENT A SHIP' : 'RENT A PLANE' }[kind];
   var price = kind === 'rent' ? money(v.rent) + ' · 5 MIN' : own ? 'YOURS' : (v.price ? money(v.price) + ' glint' : 'FREE');
   if (kind === 'drive') return base(ttl, [k, ord.length]) + card() + carImg(v.render, [C[0] + 220, C[1] + 60, C[2] - 220, C[1] + 420]) +
     '<div class="abs ctr fade" style="top:' + (C[1] + 456) + 'px;font-size:58px">Your ' + esc(title(v.name)) + (plane ? ' waits on the apron' : ' waits on the start pad') + '</div>' +
@@ -135,17 +136,18 @@ function pageCar(kind, vid, f) {       // own_ / buy_ / drive_ / browse_ / rent_
   if (kind === 'browse') return h + card() + carImg(v.render, [C[0] + 140, C[1] + 70, C[2] - 140, C[1] + 460]) +
     '<div class="abs ctr brand fade" id="nm" style="top:' + (C[1] + 478) + 'px;font-size:80px">' + esc(v.name) + '</div>' +
     '<div class="abs ctr soft fade" style="top:' + (C[1] + 585) + 'px;font-size:42px">' + esc(v.line) + '</div>' + tag(C[2] - 30, C[1] + 30, price, v.price > 0) + buttons('DETAILS', true, 'BACK');
-  h += card() + carImg(v.render, [C[0] + 30, C[1] + 170, C[0] + 450, C[1] + 480]);
-  h += '<div class="abs brand fade" id="nm" style="left:' + (C[0] + 480) + 'px;top:' + (C[1] + 50) + 'px;font-size:66px;white-space:nowrap">' + esc(v.name) + '</div>';
-  h += '<div class="abs soft fade" style="left:' + (C[0] + 484) + 'px;top:' + (C[1] + 140) + 'px;font-size:36px">' + esc(v.line) + '</div>';
-  var names = v.stat_names || CAT.stat_names, step = names.length <= 4 ? 84 : Math.floor(252 / (names.length - 1));
+  var noStats = !v.stats;      // ships: no bars / line exist -> bigger picture
+  h += card() + carImg(v.render, noStats ? [C[0] + 150, C[1] + 110, C[2] - 150, C[1] + 500] : [C[0] + 30, C[1] + 170, C[0] + 450, C[1] + 480]);
+  h += noStats ? '<div class="abs ctr brand fade" id="nm" style="top:' + (C[1] + 40) + 'px;font-size:66px">' + esc(v.name) + '</div>' : '<div class="abs brand fade" id="nm" style="left:' + (C[0] + 480) + 'px;top:' + (C[1] + 50) + 'px;font-size:66px;white-space:nowrap">' + esc(v.name) + '</div>';
+  if (v.line) h += '<div class="abs soft fade" style="left:' + (C[0] + 484) + 'px;top:' + (C[1] + 140) + 'px;font-size:36px">' + esc(v.line) + '</div>';
+  var names = noStats ? [] : (v.stat_names || CAT.stat_names), step = names.length <= 4 ? 84 : Math.floor(252 / (names.length - 1));
   names.forEach(function (nm, i) {
     var y = C[1] + 222 + i * step; h += '<div class="abs soft fade" style="left:' + (C[0] + 484) + 'px;top:' + (y + 2) + 'px;font-size:32px;width:190px;white-space:nowrap" data-fit="186">' + nm + '</div><div class="abs" style="left:' + (C[0] + 684) + 'px;top:' + (y + 4) + 'px;white-space:nowrap">';
     for (var s = 0; s < 5; s++) h += '<span class="bar"><i data-on="' + (s < v.stats[i] ? 1 : 0) + '" data-d="' + (450 + s * 160) + '"></i></span>';
     h += '</div>';
   });
   h += tag(C[2] - 30, C[3] - 100, price, !own);
-  if (kind === 'buy') h += '<div class="abs soft fade" style="left:' + (C[0] + 50) + 'px;top:' + (C[3] - 80) + 'px;font-size:34px">' + (plane ? 'Banked glint  ·  arrows: rent' : 'Paid from your banked glint') + '</div>';
+  if (kind === 'buy') h += '<div class="abs soft fade" style="left:' + (C[0] + 50) + 'px;top:' + (C[3] - 80) + 'px;font-size:34px">' + (plane && (v.kind !== 'ship' || v.rent) ? 'Banked glint  ·  arrows: rent' : 'Paid from your banked glint') + '</div>';
   if (kind === 'rent') h += '<div class="abs soft fade" style="left:' + (C[0] + 50) + 'px;top:' + (C[3] - 80) + 'px;font-size:34px">5 minutes  ·  arrows: buy</div>';
   return h + buttons(own ? (plane ? 'FLY' : 'DRIVE') : kind === 'rent' ? 'RENT' : 'BUY', true, plane ? 'BACK' : own ? 'CUSTOMISE' : null);
 }
@@ -195,6 +197,8 @@ function build(f) {
   if ((a[0] === 'own' || a[0] === 'buy' || a[0] === 'drive' || a[0] === 'browse' || a[0] === 'rent') && a.length === 2 && CAT.vehicles[a[1]]) return { key: a[0] + a[1], car: a[1], html: pageCar(a[0], a[1], f) };
   if (a[0] === 'menu' && a.length === 3 && CAT.vehicles[a[1]]) return { key: 'menu' + a[1], car: a[1], html: pageMenu(a[1], +a[2]) };
   if (a[0] === 'paint' && a.length === 3 && CAT.paints[a[1]] && (a[2] === 'drive' || CAT.paints[a[1]][+a[2]])) return { key: 'paint' + a[1] + (a[2] === 'drive' ? 'd' : ''), car: a[1] + a[2], html: pagePaint(a[1], a[2], f) };
+  if (a[0] === 'broker' && a.length === 2 && CAT.vehicles[a[1]] && CAT.vehicles[a[1]].kind === 'ship') return { key: 'broker', car: a[1], html: pageBroker(a[1]), brk: 1 };
+  if (p === 'twin_on' || p === 'twin_off' || /^twin_buy_\d+$/.test(p)) return { key: 'twin', car: p, html: pageTwin(p), start: function (same) { startTrail('STEADY', same, p === 'twin_off' ? .3 : 1, [-26, 26]); } };
   if (a[0] === 'upg' && a.length === 3 && CAT.upg.list.some(function (q) { return q[0] === a[1] && q[1] === +a[2]; })) return { key: 'upg', car: a[1] + a[2], html: pageUpg(a[1], +a[2], f) };
   if (a[0] === 'trail' && a.length === 2 && CAT.trails[+a[1]]) return { key: 'trail', car: a[1], html: pageTrail(+a[1], f), start: function (same) { startTrail(CAT.trails[+a[1]], same); } };
   if (a[0] === 'rims' && a.length === 2 && CAT.rims.some(function (r) { return r.key === a[1]; })) return { key: 'rims', car: a[1], html: pageRims(a[1], f) };
@@ -206,13 +210,8 @@ function build(f) {
 function show() {
   stopAnim();
   var t = performance.now(), f = parse(), pg = build(f);
-  if (!pg) {                                                   // hybrid fallback: the existing mp4 page, played inside this page
-    live.style.display = 'none'; vid.style.display = 'block';
-    var src = PAL + '/' + f.p + '.mp4'; if (vid.getAttribute('src') !== src) { loading(true); vid.src = src; vid.currentTime = 0; }
-    var k = f.p.split('_')[0]; ovl.innerHTML = /^(upg|trail|twin|rims|shield|ug)$/.test(k) && !/_drive$/.test(f.p) ? buttons(null, false, null, true) : '';
-    vid.loop = isNaN(LF); vid.play(); prev = null; done(t, 'mp4'); return;
-  }
-  vid.style.display = 'none'; if (!vid.paused) vid.pause(); loading(false); ovl.innerHTML = ''; live.style.display = 'block';
+  if (!pg) { console.warn('kiosk: unknown page ' + f.p + ' -> attract'); pg = build({ p: 'attract' }); }   // no mp4 fallback any more (27 Nov): every page the kiosk script sends is drawn
+  loading(false); live.style.display = 'block'; stage.classList.toggle('brk', !!pg.brk);
   var same = prev && prev.key === pg.key, sameCar = same && prev.car === pg.car;
   live.className = ''; live.innerHTML = pg.html;
   if (same) live.querySelectorAll('.rise,.btn').forEach(function (n) { n.classList.remove('rise', 'btn'); });   // same page kind: only the changed parts move
@@ -228,12 +227,7 @@ function show() {
 }
 function done(t, how) { requestAnimationFrame(function () { requestAnimationFrame(function () { lastMs = Math.round(performance.now() - t); switches++; dbg(how); }); }); }
 function dbg(how) { if (!DBG) return; var d = document.getElementById('dbg'); d.style.display = 'block'; d.textContent = 'L' + loads + ' S' + switches + ' ' + lastMs + 'ms ' + how + ' ' + parse().p + ' first ' + Math.round(firstMs) + 'ms'; }
-var ovl = document.getElementById('ovl');
 function loading(on) { document.getElementById('ld').style.display = on ? 'flex' : 'none'; }   // the kiosk loading screen (same spinner as play.html)
-vid.addEventListener('playing', function () { loading(false); });
-vid.addEventListener('error', function () { loading(false); });
-vid.addEventListener('timeupdate', function () { if (!isNaN(LT) && vid.currentTime >= LT - .05) { vid.currentTime = LF; vid.play(); } });
-vid.addEventListener('ended', function () { if (!isNaN(LF)) { vid.currentTime = LF; vid.play(); } });
 
 // ---------- dust: slow sparks drifting up in the hi colour (palettes with dust / VIP), 4 s cycle like the mp4 loop
 function dust() {
@@ -259,8 +253,9 @@ fetch('live/catalog_' + PAL + '.json').then(function (r) { return r.json(); }).t
               tt: C.tab_text || C.hi, chip: C.chip_text || C.tab_text || C.hi, hiTxt: PAL === 'aurum' ? C.tab : C.hi };
   for (var k in set) { s.setProperty('--' + k, 'rgb(' + rgb(set[k]) + ')'); s.setProperty('--' + k + 'RGB', rgb(set[k])); }
   s.setProperty('--glowA', ((C.glow_a || 150) / 255).toFixed(2));
+  c.vehicles = c.vehicles || {}; c.ship_order = (c.ships || []).map(function (q) { c.vehicles[q.key] = { name: q.name, kind: 'ship', line: '', price: q.price, rent: q.rent, render: 'ship_' + q.key, broker: q.broker }; return q.key; });
   c.hitsPx = {}; for (var h in c.hits) c.hitsPx[h] = [c.hits[h][0] * W, c.hits[h][1] * H, c.hits[h][2] * W, c.hits[h][3] * H];
-  var imgs = ['motor', 'blade5']; c.upg.kinds.forEach(function (k) { imgs.push('part_' + k); }); c.rims.forEach(function (r) { imgs.push('rim_' + r.key); }); c.order.concat(c.air_order = c.air_order || []).forEach(function (v) { imgs.push(c.vehicles[v].render); }); for (var v in c.paints) c.paints[v].forEach(function (p) { imgs.push(p.img); });
+  var imgs = ['motor', 'blade5']; c.upg.kinds.forEach(function (k) { imgs.push('part_' + k); }); c.rims.forEach(function (r) { imgs.push('rim_' + r.key); }); c.order.concat(c.air_order = c.air_order || [], c.ship_order).forEach(function (v) { imgs.push(c.vehicles[v].render); }); for (var v in c.paints) c.paints[v].forEach(function (p) { imgs.push(p.img); });
   return Promise.all(imgs.map(function (n) { return new Promise(function (ok) { var im = new Image(); im.onload = function () { IMGDIM[n] = [im.naturalWidth, im.naturalHeight]; ok(); }; im.onerror = ok; im.src = 'live/img/' + n + '.webp'; }); }).concat([document.fonts.load('42px Brand'), document.fonts.load('42px UI')]));
 }).then(function () {
   firstMs = performance.now() - t0; dust(); show(); document.getElementById('ld').style.display = 'none';

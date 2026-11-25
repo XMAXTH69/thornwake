@@ -83,27 +83,28 @@ function tstyle(key, u, v, t) {    // [colour 0..1 x3, strength]  (kiosk_trail.s
   }
   return [K.CYAN, 1];
 }
-function trailFrame(key, t, alpha, ctx, L, Lg, LC) {   // box (510,260,1410,470) of the page = canvas offset (-450, -CARD[1]-50)
-  var N = 260, bx0 = 510, by0 = CARD[1] + 110, bx1 = 1410, by1 = CARD[1] + 320, ox = 450, oy = CARD[1] + 50, TAU = 2 * Math.PI, height = 46, pts = [];
-  for (var i = 0; i < N; i++) { var u = i / (N - 1); pts.push([u, bx1 - u * (bx1 - bx0) - ox, (by0 + by1) / 2 + (by1 - by0) * .32 * Math.sin(TAU * .75 * u + .4) * (.4 + .6 * u) - oy]); }
+function trailFrame(key, t, alpha, ctx, L, Lg, LC, offs) {     // offs = vertical offsets of the ribbons (TWIN LINES = two)   // box (510,260,1410,470) of the page = canvas offset (-450, -CARD[1]-50)
+  var N = 260, bx0 = 510, by0 = CARD[1] + 110, bx1 = 1410, by1 = CARD[1] + 320, ox = 450, oy = CARD[1] + 50, TAU = 2 * Math.PI, height = 46, pts = []; offs = offs || [0];
+  function mk(off) { var q = []; for (var i = 0; i < N; i++) { var u = i / (N - 1); q.push([u, bx1 - u * (bx1 - bx0) - ox, (by0 + by1) / 2 + (by1 - by0) * .32 * Math.sin(TAU * .75 * u + .4) * (.4 + .6 * u) - oy + off]); } return q; }
   function fade(u) { return Math.pow(tcl(1.25 - u), .8) * alpha; }
   function rgba(c, a) { return 'rgba(' + Math.round(255 * Math.min(1, Math.max(0, c[0]))) + ',' + Math.round(255 * Math.min(1, Math.max(0, c[1]))) + ',' + Math.round(255 * Math.min(1, Math.max(0, c[2]))) + ',' + a.toFixed(3) + ')'; }
   var g = L.getContext('2d'); g.clearRect(0, 0, L.width, L.height); g.lineCap = 'butt'; g.lineWidth = Math.floor(height * .28) + 2;
-  [.12, .34, .62, .88].forEach(function (v) {
+  offs.forEach(function (off) { pts = mk(off); [.12, .34, .62, .88].forEach(function (v) {
     var dy = height * (.5 - v) * .9;
     for (var i = 0; i < N - 1; i++) {
       var s = tstyle(key, pts[i][0], v, t), c = s[0], st = s[1], k = Math.min(1, .55 + .45 * st);
       g.strokeStyle = rgba([c[0] * k, c[1] * k, c[2] * k], fade(pts[i][0]) * Math.min(1, .55 + .35 * st));
       g.beginPath(); g.moveTo(pts[i][1], pts[i][2] + dy); g.lineTo(pts[i + 1][1], pts[i + 1][2] + dy); g.stroke();
     }
-  });
+  }); });
   var h = Lg.getContext('2d'); h.clearRect(0, 0, L.width, L.height); h.filter = 'blur(18px)'; h.drawImage(L, 0, 0); h.filter = 'none';
   var cg = LC.getContext('2d'); cg.clearRect(0, 0, L.width, L.height); cg.lineWidth = 5;
+  offs.forEach(function (off) { pts = mk(off);
   for (var i = 0; i < N - 1; i++) {
     var s = tstyle(key, pts[i][0], .5, t), c = s[0], hot = tcl((s[1] - .8) / 1.5);
     cg.strokeStyle = rgba([c[0] * (.4 - .4 * hot) + .6 + .4 * hot, c[1] * (.4 - .4 * hot) + .6 + .4 * hot, c[2] * (.4 - .4 * hot) + .6 + .4 * hot], .86 * fade(pts[i][0]));
     cg.beginPath(); cg.moveTo(pts[i][1], pts[i][2]); cg.lineTo(pts[i + 1][1], pts[i + 1][2]); cg.stroke();
-  }
+  } });
   if (key === 'PODIUM') for (var k = 0; k < 6; k++) {
     var uu = tfr(k / 6 + t), i2 = Math.floor(uu * (N - 1)), sz = 10 + 8 * twave(2 * t + k / 3), cx = pts[i2][1], cy = pts[i2][2] - height * .7; cg.fillStyle = 'rgba(255,244,214,' + (.9 * fade(pts[i2][0])).toFixed(2) + ')';
     cg.beginPath(); cg.moveTo(cx, cy - sz); cg.lineTo(cx + sz * .28, cy); cg.lineTo(cx, cy + sz); cg.lineTo(cx - sz * .28, cy); cg.fill();
@@ -111,13 +112,13 @@ function trailFrame(key, t, alpha, ctx, L, Lg, LC) {   // box (510,260,1410,470)
   }
   ctx.clearRect(0, 0, L.width, L.height); ctx.drawImage(Lg, 0, 0); ctx.drawImage(Lg, 0, 0); ctx.drawImage(L, 0, 0); ctx.filter = 'blur(1.5px)'; ctx.drawImage(LC, 0, 0); ctx.filter = 'none';
 }
-function startTrail(key, same) {
+function startTrail(key, same, level, offs) {
   var cv = document.getElementById('trl'); if (!cv) return; var ctx = cv.getContext('2d');
   var mk = function () { var c = document.createElement('canvas'); c.width = cv.width; c.height = cv.height; return c; }, L = mk(), Lg = mk(), LC = mk(), t0 = performance.now();
   ANIM = { raf: 0 };
   (function loop(now) {
     var el = (now - t0) / 1000, a = (same || Q.get('still') === '1') ? 1 : tcl((el - .25) / .65);
-    trailFrame(key, (el / 4) % 1, a, ctx, L, Lg, LC); ANIM.raf = requestAnimationFrame(loop);
+    trailFrame(key, (el / 4) % 1, a * (level || 1), ctx, L, Lg, LC, offs); ANIM.raf = requestAnimationFrame(loop);
   })(t0);
 }
 
@@ -190,3 +191,24 @@ function pageUg(spec, f) {
   return h + buttons(own || free ? 'CHOOSE' : 'BUY', true, 'BACK', true);
 }
 function ugKnown(s) { var k = s.replace(/_own$/, ''), G = CAT.ug; return k.charAt(0) === 'p' ? G.pats.some(function (q) { return 'p_' + q[0] === k; }) : G.tones.some(function (q) { return 't_' + q[0] === k; }); }
+
+// ---------- TWIN LINES (23 Nov owner sidegrade, GlintKiosk.cs TwinPage): twin_buy_<price> | twin_on | twin_off - two parallel light lines, one each side
+function pageTwin(p) {
+  var C = CARD, buy = /^twin_buy_/.test(p), on = p === 'twin_on', price = buy ? +p.slice(9) : 0;
+  var h = base('TWIN LINES', dots(CAT.trails.length, CAT.trails.length + 1), { vonly: 1 }) + card() +
+    TC(C[1] + 372, 'TWIN LINES', 80, 'brand', 960) + TC(C[1] + 474, 'Two light lines, one on each side', 44, 'hi') + TC(C[1] + 548, 'The line meter drains twice as fast', 36, 'soft') +
+    tag(C[2] - 30, C[1] + 30, buy ? money(price) + ' glint' : 'YOURS', buy);
+  if (!buy) h += tag(C[0] + 190, C[1] + 30, on ? 'ON' : 'OFF', false).replace('data-r="' + (C[0] + 190) + '"', 'data-r="' + (C[0] + 190) + '"');
+  h += '<canvas id="trl" class="abs" width="1020" height="330" style="left:450px;top:' + (C[1] + 50) + 'px"></canvas>';
+  return h + buttons(buy ? 'BUY' : on ? 'TURN OFF' : 'TURN ON', true, 'BACK', true);
+}
+
+// ---------- BROKER (EXCHANGE window spec 27 Nov): broker_<ship> = ship sold only by the BROKER; own palette (.brk), amber price. Select does nothing here (GlintKiosk DoBuy only posts a HUD), BACK -> rent page
+function pageBroker(key) {
+  var v = CAT.vehicles[key], C = CARD, rentable = v.rent > 0;
+  var h = base('GLINT EXCHANGE', null) + card() + carImg(v.render, [C[0] + 220, C[1] + 10, C[2] - 220, C[1] + 260]) +
+    TC(C[1] + 272, esc(v.name), 62, 'brand', 960) + TC(C[1] + 346, 'SOLD BY THE BROKER', 50, 'brand hi') +
+    TC(C[1] + 416, 'at the GLINT EXCHANGE, behind the spawn beside the Museum', 36, 'text') + TC(C[1] + 474, 'The broker only sells to clients. Put your glint to work at the Exchange first.', 30, 'soft', 1000);
+  h += tag(C[2] - 30, C[3] - 100, money(v.price) + ' ◆', false).replace('class="abs tag fade"', 'class="abs tag fade" ').replace('style="top:', 'style="color:#FFB02E;top:');
+  return h + buttons(null, true, 'BACK');
+}
