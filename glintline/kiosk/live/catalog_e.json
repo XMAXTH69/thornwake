@@ -1,0 +1,361 @@
+{
+ "_note": "build_kiosk_live.py e - read by kiosk_live.html; do not edit by hand",
+ "pal": "e",
+ "colors": {
+  "bg": [
+   4,
+   34,
+   38
+  ],
+  "tab": [
+   2,
+   20,
+   23
+  ],
+  "accent": [
+   255,
+   176,
+   46
+  ],
+  "hi": [
+   255,
+   212,
+   107
+  ],
+  "text": [
+   243,
+   251,
+   250
+  ],
+  "soft": [
+   158,
+   184,
+   184
+  ],
+  "card": [
+   8,
+   52,
+   58
+  ],
+  "btn_text": [
+   10,
+   20,
+   22
+  ],
+  "glow": [
+   235,
+   240,
+   245
+  ],
+  "glow_a": 160,
+  "dust": true
+ },
+ "order": [
+  "heavy",
+  "bike",
+  "classic",
+  "sharp",
+  "drift",
+  "kart",
+  "rocket"
+ ],
+ "stat_names": [
+  "SPEED",
+  "GRIP",
+  "STEERING",
+  "ACCELERATION",
+  "RAM POWER"
+ ],
+ "vehicles": {
+  "heavy": {
+   "name": "GLINT CAR",
+   "kind": "car",
+   "line": "Steady and safe. Hard to spin.",
+   "price": 0,
+   "stats": [
+    3,
+    3,
+    2,
+    2,
+    4
+   ],
+   "render": "car_heavy"
+  },
+  "bike": {
+   "name": "GLINT BIKE",
+   "kind": "bike",
+   "line": "Light and quick. Leans into turns.",
+   "price": 0,
+   "stats": [
+    3,
+    3,
+    3,
+    2,
+    2
+   ],
+   "render": "bike_std"
+  },
+  "classic": {
+   "name": "CLASSIC",
+   "kind": "car",
+   "line": "Even all round.",
+   "price": 400,
+   "stats": [
+    3,
+    3,
+    3,
+    3,
+    3
+   ],
+   "render": "car_orig"
+  },
+  "sharp": {
+   "name": "SHARP",
+   "kind": "car",
+   "line": "Quick steering. Holds the line.",
+   "price": 1500,
+   "stats": [
+    3,
+    4,
+    5,
+    2,
+    3
+   ],
+   "render": "car_sharp"
+  },
+  "drift": {
+   "name": "DRIFT",
+   "kind": "car",
+   "line": "Loose grip. Slides through turns.",
+   "price": 1500,
+   "stats": [
+    3,
+    1,
+    4,
+    2,
+    3
+   ],
+   "render": "car_drift"
+  },
+  "kart": {
+   "name": "KART",
+   "kind": "car",
+   "line": "Tightest turns. Lower top speed.",
+   "price": 500,
+   "stats": [
+    2,
+    5,
+    5,
+    5,
+    4
+   ],
+   "render": "car_kart"
+  },
+  "rocket": {
+   "name": "ROCKET",
+   "kind": "car",
+   "line": "Fastest car. Wide in turns.",
+   "price": 5000,
+   "stats": [
+    5,
+    2,
+    1,
+    4,
+    1
+   ],
+   "render": "car_rocket"
+  }
+ },
+ "menu": [
+  [
+   "PAINT",
+   "Colours"
+  ],
+  [
+   "UPGRADES",
+   "Speed · grip"
+  ],
+  [
+   "LIGHT LINE",
+   "Line glow"
+  ],
+  [
+   "RIMS",
+   "Spinners"
+  ],
+  [
+   "SHIELD",
+   "10 min safe"
+  ],
+  [
+   "UNDERGLOW",
+   "Glow below"
+  ],
+  [
+   "FAVOURITE",
+   "First at the kiosk"
+  ],
+  [
+   "DRIVE",
+   "Go now"
+  ]
+ ],
+ "paints": {
+  "classic": [
+   {
+    "key": "signature",
+    "name": "Club White",
+    "who": "Comes with the car",
+    "img": "car_orig",
+    "price": 0,
+    "tag": "INCLUDED"
+   },
+   {
+    "key": "shop_a",
+    "name": "Ink Blue",
+    "who": "Shop paint",
+    "img": "paint_classic_shop_a",
+    "price": 250,
+    "tag": "250 glint"
+   },
+   {
+    "key": "shop_b",
+    "name": "Cream Petrol",
+    "who": "Shop paint",
+    "img": "paint_classic_shop_b",
+    "price": 250,
+    "tag": "250 glint"
+   }
+  ],
+  "sharp": [
+   {
+    "key": "signature",
+    "name": "Petrol Edge",
+    "who": "Comes with the car",
+    "img": "car_sharp",
+    "price": 0,
+    "tag": "INCLUDED"
+   },
+   {
+    "key": "shop_a",
+    "name": "Silver Ink",
+    "who": "Shop paint",
+    "img": "paint_sharp_shop_a",
+    "price": 250,
+    "tag": "250 glint"
+   },
+   {
+    "key": "shop_b",
+    "name": "Copper Fade",
+    "who": "Shop paint",
+    "img": "paint_sharp_shop_b",
+    "price": 250,
+    "tag": "250 glint"
+   }
+  ],
+  "drift": [
+   {
+    "key": "signature",
+    "name": "Bronze Works",
+    "who": "Comes with the car",
+    "img": "car_drift",
+    "price": 0,
+    "tag": "INCLUDED"
+   },
+   {
+    "key": "shop_a",
+    "name": "Racing Green",
+    "who": "Shop paint",
+    "img": "paint_drift_shop_a",
+    "price": 250,
+    "tag": "250 glint"
+   },
+   {
+    "key": "shop_b",
+    "name": "Gunmetal Bronze",
+    "who": "Shop paint",
+    "img": "paint_drift_shop_b",
+    "price": 250,
+    "tag": "250 glint"
+   }
+  ],
+  "kart": [
+   {
+    "key": "signature",
+    "name": "Gold Plate",
+    "who": "Comes with the car",
+    "img": "car_kart",
+    "price": 0,
+    "tag": "INCLUDED"
+   },
+   {
+    "key": "shop_a",
+    "name": "Cream Petrol",
+    "who": "Shop paint",
+    "img": "paint_kart_shop_a",
+    "price": 250,
+    "tag": "250 glint"
+   },
+   {
+    "key": "shop_b",
+    "name": "Teal Gold",
+    "who": "Shop paint",
+    "img": "paint_kart_shop_b",
+    "price": 250,
+    "tag": "250 glint"
+   }
+  ],
+  "rocket": [
+   {
+    "key": "signature",
+    "name": "Long Arrow",
+    "who": "Comes with the car",
+    "img": "car_rocket",
+    "price": 0,
+    "tag": "INCLUDED"
+   },
+   {
+    "key": "shop_a",
+    "name": "White Arrow",
+    "who": "Shop paint",
+    "img": "paint_rocket_shop_a",
+    "price": 250,
+    "tag": "250 glint"
+   },
+   {
+    "key": "shop_b",
+    "name": "Petrol Arrow",
+    "who": "Shop paint",
+    "img": "paint_rocket_shop_b",
+    "price": 250,
+    "tag": "250 glint"
+   }
+  ]
+ },
+ "hits": {
+  "left": [
+   0.036458333333333336,
+   0.3333333333333333,
+   0.171875,
+   0.5740740740740741
+  ],
+  "right": [
+   0.828125,
+   0.3333333333333333,
+   0.9635416666666666,
+   0.5740740740740741
+  ],
+  "select": [
+   0.34375,
+   0.8055555555555556,
+   0.65625,
+   0.9351851851851852
+  ],
+  "back": [
+   0.04,
+   0.8055555555555556,
+   0.26,
+   0.9351851851851852
+  ]
+ }
+}

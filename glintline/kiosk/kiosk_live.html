@@ -1,0 +1,247 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Glintline kiosk (live)</title>
+<style>
+/* Glintline LIVE kiosk page (25 Nov 2026). ONE page per kiosk screen: it DRAWS the garage pages itself (same look as the mp4 pages of
+   build_kiosk_pages.py) from live/catalog_<pal>.json; a click only changes the URL #fragment (hashchange, no reload, test 22 Nov: 4 ms).
+   URL   kiosk_live.html?pal=<e|vip|aurum|null>[&lf=1.6&lt=5.6][&dbg=1]#p=<page>[&y=1][&b=<glint>][&s=<n>]
+   p     page name, SAME names as the mp4 set (GlintKiosk.cs unchanged):  attract | own_<car> | buy_<car> | drive_<car> |
+         menu_<car>_<tile> | paint_<car>_<i> | paint_<car>_drive.  Any other page (upg_*, trail_*, rims_*, shield*, ug_*, twin_*, planes)
+         = HYBRID fallback: the page's existing mp4 <pal>/<page>.mp4 plays INSIDE this page (lf/lt loop), no reload.
+   y=1   optional: this paint/item is already owned -> tag YOURS, button CHOOSE.     b=<n>  optional: banked glint shown in the top bar.
+   s=<n> optional send counter, ignored (lets the script re-send the same page).     Unknown keys are ignored (format reusable, e.g. EXCHANGE).
+   dbg=1 small counter top-left: L<page loads> S<switches> <ms from hashchange to painted frame>.                                        */
+@font-face{font-family:Brand;src:url(live/fonts/Cinzel.ttf);font-weight:400 900}
+@font-face{font-family:UI;src:url(live/fonts/BarlowSemiCondensed-Bold.ttf)}
+html,body{margin:0;height:100%;background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0;overflow:hidden;background:var(--bg);font-family:UI,sans-serif;color:var(--text)}
+#stage::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 62% 75% at 50% 45%,rgba(var(--accentRGB),.13),transparent 70%)}
+.abs{position:absolute}
+.top{left:0;top:0;width:1920px;height:104px;background:var(--tab);border-bottom:3px solid rgba(var(--accentRGB),.86)}
+.stripe{left:0;top:0;width:14px;height:1080px;background:var(--accent)}
+.title{left:112px;top:30px;font:600 42px Brand;letter-spacing:.32em;color:var(--tt);white-space:nowrap}
+.vonly{top:22px;right:430px;font-size:24px;color:var(--accent);white-space:nowrap}
+.bank{top:62px;font-size:26px;color:var(--soft);white-space:nowrap}
+.card{left:420px;top:150px;width:1080px;height:650px;box-sizing:border-box;border-radius:30px;background:rgba(var(--cardRGB),.96);border:4px solid var(--accent);box-shadow:10px 18px 32px rgba(0,0,0,.43)}
+.ctr{left:0;width:1920px;text-align:center;white-space:nowrap}
+.brand{font-family:Brand;font-weight:600;letter-spacing:.32em}
+.soft{color:var(--soft)}.hi{color:var(--hiTxt)}
+.car{object-fit:contain;object-position:50% 100%}
+.glow{border-radius:50%;background:rgba(var(--glowRGB),var(--glowA));filter:blur(26px)}
+.tag{height:70px;box-sizing:border-box;border-radius:35px;background:rgba(var(--tabRGB),.92);border:3px solid var(--accent);color:var(--chip);font-size:44px;line-height:64px;padding:0 24px;white-space:nowrap;display:flex;align-items:center;gap:14px}
+.arrow{width:248px;height:248px;box-sizing:border-box;border-radius:50%;background:rgba(var(--cardRGB),.94);border:6px solid var(--accent)}
+.sel{left:660px;top:870px;width:600px;height:140px;border-radius:28px;background:var(--accent);color:var(--btnTxt);font-size:62px;letter-spacing:.3em;text-align:center;line-height:140px;overflow:hidden}
+.sel::after{content:'';position:absolute;top:0;bottom:0;width:90px;left:-200px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.45),transparent);transform:skewX(-25deg);filter:blur(6px);animation:shim 4s linear infinite}
+@keyframes shim{0%{left:-200px}50%,100%{left:820px}}
+.back{left:77px;top:884px;width:422px;height:112px;box-sizing:border-box;border-radius:24px;background:rgba(var(--tabRGB),.88);border:3px solid rgba(var(--accentRGB),.63);color:var(--chip);font-size:46px;display:flex;align-items:center;justify-content:center;gap:22px;white-space:nowrap}
+.tile{box-sizing:border-box;border-radius:14px;background:rgba(var(--tabRGB),.92);border:2px solid rgba(var(--softRGB),.35);display:flex;align-items:center;justify-content:center;overflow:hidden}
+.tile.on{border:5px solid var(--accent)}
+.tile.drv{gap:10px;color:var(--soft);font-size:32px}.tile.drv.on{background:var(--accent);color:var(--btnTxt)}
+.bar{width:64px;height:32px;box-sizing:border-box;border-radius:8px;background:rgba(var(--tabRGB),.47);border:2px solid rgba(var(--softRGB),.43);overflow:hidden;display:inline-block;margin-right:12px}
+.bar i{display:block;height:100%;width:0;background:var(--accent);border-radius:6px;transition:width .16s ease-out}
+/* intro: fast in, slow out (ease-out cubic), like the mp4 intro (rise 0-.45 s, slide .08-.62, fade .25-.7, buttons .15-.55) */
+.go .rise{animation:rise .45s cubic-bezier(.33,1,.68,1) both}.go .slide{animation:slide .54s .08s cubic-bezier(.33,1,.68,1) both}
+.go .fade{animation:fade .45s .25s cubic-bezier(.33,1,.68,1) both}.go .btn{animation:fade .4s .15s cubic-bezier(.33,1,.68,1) both}
+.step .fade{animation:fade .16s ease-out both}.step .slide{animation:slide2 .3s cubic-bezier(.33,1,.68,1) both}
+@keyframes rise{from{opacity:0;transform:translateY(40px)}}@keyframes slide{from{opacity:0;transform:translateX(260px)}}
+@keyframes slide2{from{opacity:0;transform:translateX(120px)}}@keyframes fade{from{opacity:0}}
+#streak{left:0;top:0;pointer-events:none}
+#streak rect{fill:none;stroke:var(--hi);stroke-linecap:round;animation:run 4s linear infinite}
+@keyframes run{from{stroke-dashoffset:0}to{stroke-dashoffset:-1000}}
+#dust{left:0;top:0}
+#vid{left:0;top:0;width:1920px;height:1080px;object-fit:cover;display:none;background:#000}
+#ld{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#05080a;z-index:20}
+#ld i{width:9vh;height:9vh;border-radius:50%;border:1.1vh solid rgba(255,190,90,.18);border-top-color:#ffbe5a;animation:r .8s linear infinite}@keyframes r{to{transform:rotate(360deg)}}
+#dbg{position:fixed;left:6px;top:6px;font:14px monospace;color:#ffbe5a;background:rgba(0,0,0,.6);padding:4px 8px;z-index:30;display:none}
+</style></head>
+<body><div id="stage"><canvas id="dust" class="abs" width="1920" height="1080"></canvas><div id="live"></div><video id="vid" class="abs" muted playsinline></video></div>
+<div id="ld"><i></i></div><div id="dbg"></div>
+<script>
+'use strict';
+var Q = new URLSearchParams(location.search), PAL = Q.get('pal') || 'e', DBG = Q.get('dbg') === '1';
+var LF = parseFloat(Q.get('lf')), LT = parseFloat(Q.get('lt'));
+var W = 1920, H = 1080, CARD = [420, 150, 1500, 800], CAT = null, prev = null, t0 = performance.now(), switches = 0, lastMs = 0;
+var loads = +(sessionStorage.getItem('kL') || 0) + 1; try { sessionStorage.setItem('kL', loads); } catch (e) {}
+var stage = document.getElementById('stage'), live = document.getElementById('live'), vid = document.getElementById('vid');
+function fitStage() { var s = Math.min(innerWidth / W, innerHeight / H); stage.style.transform = 'scale(' + s + ')'; }
+addEventListener('resize', fitStage); fitStage();
+
+// ---------- small drawing helpers (all coordinates = the 1920x1080 page, same numbers as build_kiosk_pages.py)
+function rgb(c) { return c[0] + ',' + c[1] + ',' + c[2]; }
+function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+function el(html) { var d = document.createElement('div'); d.innerHTML = html; return d.firstChild; }
+function box(x0, y0, x1, y1) { return 'left:' + x0 + 'px;top:' + y0 + 'px;width:' + (x1 - x0) + 'px;height:' + (y1 - y0) + 'px'; }
+function starPts(cx, cy, r, thin) { var p = []; for (var i = 0; i < 8; i++) { var a = Math.PI / 2 + i * Math.PI / 4, rr = i % 2 ? r * thin : r; p.push((cx + rr * Math.cos(a)).toFixed(1) + ',' + (cy - rr * Math.sin(a)).toFixed(1)); } return p.join(' '); }
+function star(cx, cy, r, col, thin, cls) { var s = r * 1.1; return '<svg class="abs ' + (cls || '') + '" style="left:' + (cx - s) + 'px;top:' + (cy - s) + 'px" width="' + 2 * s + '" height="' + 2 * s + '"><polygon points="' + starPts(s, s, r, thin || .28) + '" fill="' + col + '"/></svg>'; }
+function money(n) { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' '); }
+function fit(node, maxw, min) {     // shrink the font until the TEXT (not the box) fits maxw page px
+  var w0 = node.style.width, fs = parseFloat(getComputedStyle(node).fontSize); node.style.width = 'max-content';
+  while (fs > (min || 18) && node.offsetWidth > maxw) { fs -= 2; node.style.fontSize = fs + 'px'; }
+  node.style.width = w0;
+}
+
+function base(title, dots, extra) {
+  var h = '<div class="abs top"></div><div class="abs stripe"></div>' + star(70, 52, 26, 'var(--tt)') + '<div class="abs title" id="ttl">' + esc(title) + '</div>';
+  if (dots) for (var i = 0; i < dots[1]; i++) { var on = i === dots[0]; h += star(W - 70 - (dots[1] - 1 - i) * 44, 52, on ? 17 : 10, on ? 'var(--tt)' : 'rgba(var(--ttRGB),.47)', .4); }
+  if (extra && extra.vonly) h += '<div class="abs vonly" id="vonly">FOR THIS VEHICLE ONLY &nbsp;·&nbsp; OTHER VEHICLES BUY THEIR OWN</div>';
+  return h;
+}
+function card() { return '<div class="abs card rise"></div><svg id="streak" class="abs rise" width="1920" height="1080">' + streak() + '</svg>'; }
+function streak() {     // light streak running round the card (4 s): bright head + fading tail, as the mp4 idle loop
+  var s = '', x = CARD[0] + 2, y = CARD[1] + 2, w = CARD[2] - CARD[0] - 4, h = CARD[3] - CARD[1] - 4;
+  for (var i = 0; i < 6; i++) { var len = 110 - i * 18, a = (1 - i / 6) * (1 - i / 6); s += '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="30" pathLength="1000" stroke-width="' + (3 + 7 * a).toFixed(1) + '" stroke-opacity="' + a.toFixed(2) + '" stroke-dasharray="' + len + ' ' + (1000 - len) + '" stroke-dashoffset="' + (0) + '" style="filter:blur(' + (i ? 2 : 0) + 'px)"/>'; }
+  return s;
+}
+function carImg(render, b, cls) {  // cut-out render, bottom-centred in box b, glow pool under it in the garage glow colour
+  var cx = (b[0] + b[2]) / 2, w = b[2] - b[0];
+  return '<div class="abs ' + (cls || 'slide') + '"><div class="abs glow" style="' + box(cx - w * .42, b[3] - 56, cx + w * .42, b[3] + 14) + '"></div><img class="abs car" src="live/img/' + render + '.webp" style="' + box(b[0], b[1], b[2], b[3]) + '"></div>';
+}
+function tag(x1, y, text, withStar) { return '<div class="abs tag fade" data-r="' + x1 + '" style="top:' + y + 'px">' + (withStar ? star(0, 0, 20, 'var(--chip)').replace('class="abs ', 'style="position:static" class="') : '') + esc(text) + '</div>'; }
+function buttons(sel, arrows, back) {
+  var h = '', R = CAT.hitsPx;
+  if (arrows) ['left', 'right'].forEach(function (k) {
+    var r = R[k], cx = (r[0] + r[2]) / 2, cy = (r[1] + r[3]) / 2, s = k === 'left' ? -1 : 1;
+    h += '<div class="abs arrow btn" style="left:' + (cx - 124) + 'px;top:' + (cy - 124) + 'px"></div><svg class="abs btn" style="left:' + (cx - 60) + 'px;top:' + (cy - 60) + 'px" width="120" height="120"><polygon fill="var(--accent)" points="' +
+      [[60 - 30 * s, 4], [60 + 44 * s, 60], [60 - 30 * s, 116], [60 - 10 * s, 60]].map(function (p) { return p.join(','); }).join(' ') + '"/></svg>';
+  });
+  if (sel) h += '<div class="abs sel btn">' + esc(sel) + '</div>';
+  if (back) h += '<div class="abs back btn" id="bk">' + (back === 'BACK' ? '<svg width="30" height="46"><polygon points="0,23 28,1 28,45" fill="var(--chip)"/></svg>' : '') + '<span style="letter-spacing:' + (back.length <= 6 ? '.3em' : '0') + '">' + esc(back) + '</span></div>';
+  return h;
+}
+
+// ---------- pages
+function pageAttract() {
+  return base('GARAGE') + card() + '<div class="abs glow fade" style="' + box(840, 180, 1080, 420) + ';background:rgba(var(--accentRGB),.45);animation:tw 2s ease-in-out infinite"></div>' +
+    star(960, 300, 95, 'var(--accent)', .24, 'fade') +
+    '<div class="abs ctr brand hi fade" style="top:440px;font-size:116px">GLINTLINE</div>' +
+    '<div class="abs ctr fade" style="top:600px;font-size:56px">Step on the glowing square</div>' +
+    '<div class="abs ctr soft fade" style="top:676px;font-size:40px">then touch START to choose your car or bike</div>' + buttons('START', false, null);
+}
+function pageCar(kind, vid, f) {
+  var v = CAT.vehicles[vid], k = CAT.order.indexOf(vid), C = CARD;
+  if (kind === 'drive') return base('READY', [k, CAT.order.length]) + card() + carImg(v.render, [C[0] + 220, C[1] + 60, C[2] - 220, C[1] + 420]) +
+    '<div class="abs ctr fade" style="top:' + (C[1] + 456) + 'px;font-size:58px">Your ' + esc(title(v.name)) + ' waits on the start pad</div>' +
+    '<div class="abs ctr hi fade" style="top:' + (C[1] + 548) + 'px;font-size:46px">Walk to it and sit to drive</div>' + buttons(null, false, 'BACK');
+  var own = kind === 'own', h = base(own ? 'YOUR RIDE' : 'IN THE SHOP', [k, CAT.order.length]) + card() + carImg(v.render, [C[0] + 30, C[1] + 170, C[0] + 450, C[1] + 480]);
+  h += '<div class="abs brand fade" id="nm" style="left:' + (C[0] + 480) + 'px;top:' + (C[1] + 50) + 'px;font-size:66px;white-space:nowrap">' + esc(v.name) + '</div>';
+  h += '<div class="abs soft fade" style="left:' + (C[0] + 484) + 'px;top:' + (C[1] + 140) + 'px;font-size:36px">' + esc(v.line) + '</div>';
+  var names = CAT.stat_names, step = names.length <= 4 ? 84 : Math.floor(252 / (names.length - 1));
+  names.forEach(function (nm, i) {
+    var y = C[1] + 222 + i * step; h += '<div class="abs soft fade" style="left:' + (C[0] + 484) + 'px;top:' + (y + 2) + 'px;font-size:32px;width:190px;white-space:nowrap" data-fit="186">' + nm + '</div><div class="abs" style="left:' + (C[0] + 684) + 'px;top:' + (y + 4) + 'px;white-space:nowrap">';
+    for (var s = 0; s < 5; s++) h += '<span class="bar"><i data-on="' + (s < v.stats[i] ? 1 : 0) + '" data-d="' + (450 + s * 160) + '"></i></span>';
+    h += '</div>';
+  });
+  h += tag(C[2] - 30, C[3] - 100, own ? 'YOURS' : (v.price ? money(v.price) + ' glint' : 'FREE'), !own);
+  if (!own) h += '<div class="abs soft fade" style="left:' + (C[0] + 50) + 'px;top:' + (C[3] - 80) + 'px;font-size:34px">Paid from your banked glint</div>';
+  return h + buttons(own ? 'DRIVE' : 'BUY', true, own ? 'CUSTOMISE' : null);
+}
+function pageMenu(vid, i) {
+  var v = CAT.vehicles[vid], T = CAT.menu, n = T.length, C = CARD, gap = n <= 4 ? 30 : 14, tw = (C[2] - C[0] - 80 - gap * (n - 1)) / n, y0 = C[1] + 316, y1 = C[3] - 36;
+  var h = base('CUSTOMISE · ' + v.name, [i, n]) + card() + carImg(v.render, [C[0] + 400, C[1] + 24, C[2] - 400, C[1] + 290]);
+  T.forEach(function (t, j) {
+    var x0 = C[0] + 40 + j * (tw + gap), on = j === i, cx = tw / 2, col = on ? 'var(--accent)' : 'var(--soft)', ic = '';
+    if (t[0] === 'UPGRADES') ic = '<img src="live/img/motor.webp" style="position:absolute;left:10px;top:24px;width:' + (tw - 20) + 'px;height:100px;object-fit:contain;opacity:' + (on ? 1 : .55) + '">';
+    else if (t[0] === 'RIMS') ic = '<img src="live/img/blade5.webp" style="position:absolute;left:8px;top:18px;width:' + (tw - 16) + 'px;height:120px;object-fit:contain;opacity:' + (on ? 1 : .55) + '">';
+    else if (t[0] === 'PAINT') ic = [0, 1, 2].map(function (q) { return '<i style="position:absolute;left:' + (cx - 46 + q * 30) + 'px;top:56px;width:34px;height:52px;border-radius:50%;background:' + ['var(--accent)', 'var(--hi)', 'var(--soft)'][q] + ';opacity:' + (on ? 1 : .55) + '"></i>'; }).join('');
+    else if (t[0] === 'LIGHT LINE') ic = '<i style="position:absolute;left:16px;right:16px;top:72px;height:14px;border-radius:7px;background:linear-gradient(90deg,transparent,' + col + ');box-shadow:0 0 18px ' + col + '"></i>';
+    else if (t[0] === 'UNDERGLOW') ic = '<i style="position:absolute;left:' + (cx - 50) + 'px;top:80px;width:100px;height:40px;border-radius:50%;background:var(--accent);filter:blur(10px);opacity:' + (on ? 1 : .5) + '"></i><i style="position:absolute;left:' + (cx - 44) + 'px;top:50px;width:88px;height:30px;border-radius:14px;background:' + (on ? 'var(--text)' : 'var(--soft)') + '"></i>';
+    else if (t[0] === 'SHIELD') ic = '<i style="position:absolute;left:' + (cx - 48) + 'px;top:34px;width:96px;height:96px;box-sizing:border-box;border-radius:50%;border:6px solid ' + col + '"></i>' + star(cx, 82, 28, col).replace('class="abs ', 'style="position:absolute;left:' + (cx - 31) + 'px;top:51px" class="');
+    else if (t[0] === 'FAVOURITE') ic = star(cx, 82, 44, col, .4).replace(/class="abs [^"]*" style="[^"]*"/, 'style="position:absolute;left:' + (cx - 48) + 'px;top:34px"');
+    else ic = '<svg style="position:absolute;left:' + (cx - 40) + 'px;top:36px" width="84" height="92"><polygon fill="' + col + '" points="6,2 80,46 6,90 26,46"/></svg>';
+    h += '<div class="abs tile' + (on ? ' on' : '') + ' fade" style="' + box(x0, y0, x0 + tw, y1) + ';border-radius:22px;align-items:flex-start;background:rgba(var(--tabRGB),' + (on ? .94 : .67) + ')">' + ic +
+      '<div style="position:absolute;left:0;right:0;top:172px;text-align:center;font-size:36px;white-space:nowrap;color:' + (on ? 'var(--text)' : 'var(--soft)') + '" data-fit="' + (tw - 14) + '">' + esc(t[0]) + '</div>' +
+      '<div class="soft" style="position:absolute;left:0;right:0;top:250px;text-align:center;font-size:28px;white-space:nowrap" data-fit="' + (tw - 14) + '">' + esc(t[1]) + '</div></div>';
+  });
+  return h + buttons('OPEN', true, 'BACK');
+}
+function pagePaint(vid, i, f) {
+  var v = CAT.vehicles[vid], P = CAT.paints[vid] || [], C = CARD, n = P.length + 1, drive = i === 'drive';
+  var h = base('PAINT · ' + v.name, [drive ? P.length : +i, n], { vonly: !drive }) + card();
+  if (f.b) h += '<div class="abs bank" style="right:' + 430 + 'px">BANK ' + money(f.b) + ' glint</div>';
+  if (drive) {
+    h += '<div class="fade">' + [0, 1, 2].map(function (k) { var r = 130 + k * 16; return '<i class="abs" style="left:' + (960 - r) + 'px;top:' + (C[1] + 210 - r) + 'px;width:' + 2 * r + 'px;height:' + 2 * r + 'px;box-sizing:border-box;border-radius:50%;border:6px solid rgba(var(--accentRGB),' + ((200 - k * 60) / 255).toFixed(2) + ')"></i>'; }).join('') +
+      '<svg class="abs" style="left:900px;top:' + (C[1] + 130) + 'px" width="130" height="160"><polygon fill="var(--accent)" points="10,10 130,80 10,150 38,80"/></svg></div>' +
+      '<div class="abs ctr brand fade" style="top:' + (C[1] + 386) + 'px;font-size:76px">READY TO DRIVE</div>' +
+      '<div class="abs ctr hi fade" style="top:' + (C[1] + 490) + 'px;font-size:42px">Touch DRIVE · your ride waits on the start pad</div>' +
+      '<div class="abs ctr soft fade" style="top:' + (C[1] + 556) + 'px;font-size:34px">BACK for more paint, parts, lines, rims or a shield</div>';
+    return h + buttons('DRIVE', true, 'BACK');
+  }
+  var p = P[+i], owned = f.y === '1';
+  h += carImg(p.img, [C[0] + 170, C[1] + 40, C[2] - 170, C[1] + 360]);
+  h += '<div class="abs ctr brand fade" id="pn" style="top:' + (C[1] + 378) + 'px;font-size:66px">' + esc(p.name.toUpperCase()) + '</div>';
+  h += '<div class="abs ctr soft fade" style="top:' + (C[1] + 462) + 'px;font-size:38px">' + esc(owned && p.price ? 'Yours for this vehicle' : p.who) + '</div>';
+  h += tag(C[2] - 30, C[1] + 30, owned && p.price ? 'YOURS' : p.tag, p.price > 0 && !owned);
+  var tw = 150, th = 84, gap = 22, x = W / 2 - (n * tw + (n - 1) * gap) / 2, y = C[3] - th - 34;
+  P.forEach(function (q, j) { var x0 = x + j * (tw + gap); h += '<div class="abs tile' + (j === +i ? ' on' : '') + '" style="' + box(x0, y, x0 + tw, y + th) + '"><img src="live/img/' + q.img + '.webp" style="max-width:' + (tw - 16) + 'px;max-height:' + (th - 12) + 'px"></div>'; });
+  var xd = x + P.length * (tw + gap);
+  h += '<div class="abs tile drv" style="' + box(xd, y, xd + tw, y + th) + '"><svg width="24" height="30"><polygon points="0,1 22,15 0,29" fill="currentColor"/></svg>DRIVE</div>';
+  return h + buttons(owned || !p.price ? 'CHOOSE' : 'BUY', true, 'BACK');
+}
+function title(s) { return s.toLowerCase().replace(/\b\w/g, function (c) { return c.toUpperCase(); }); }
+
+// ---------- router: #p=<page>&... -> live page, or the page's mp4 inside this page (hybrid fallback)
+function parse() { var f = {}; new URLSearchParams(location.hash.slice(1)).forEach(function (v, k) { f[k] = v; }); f.p = f.p || 'attract'; return f; }
+function build(f) {
+  var p = f.p, a = p.split('_');
+  if (p === 'attract') return { key: 'attract', html: pageAttract() };
+  if ((a[0] === 'own' || a[0] === 'buy' || a[0] === 'drive') && a.length === 2 && CAT.vehicles[a[1]]) return { key: a[0] + a[1], car: a[1], html: pageCar(a[0], a[1], f) };
+  if (a[0] === 'menu' && a.length === 3 && CAT.vehicles[a[1]]) return { key: 'menu' + a[1], car: a[1], html: pageMenu(a[1], +a[2]) };
+  if (a[0] === 'paint' && a.length === 3 && CAT.paints[a[1]] && (a[2] === 'drive' || CAT.paints[a[1]][+a[2]])) return { key: 'paint' + a[1] + (a[2] === 'drive' ? 'd' : ''), car: a[1] + a[2], html: pagePaint(a[1], a[2], f) };
+  return null;
+}
+function show() {
+  var t = performance.now(), f = parse(), pg = build(f);
+  if (!pg) {                                                   // hybrid fallback: the existing mp4 page, played inside this page
+    live.style.display = 'none'; vid.style.display = 'block';
+    var src = PAL + '/' + f.p + '.mp4'; if (vid.getAttribute('src') !== src) { vid.src = src; vid.currentTime = 0; }
+    vid.loop = isNaN(LF); vid.play(); prev = null; done(t, 'mp4'); return;
+  }
+  vid.style.display = 'none'; if (!vid.paused) vid.pause(); live.style.display = 'block';
+  var same = prev && prev.key === pg.key, sameCar = same && prev.car === pg.car;
+  live.className = ''; live.innerHTML = pg.html;
+  if (same) live.querySelectorAll('.rise,.btn').forEach(function (n) { n.classList.remove('rise', 'btn'); });   // same page kind: only the changed parts move
+  if (sameCar) live.querySelectorAll('.slide').forEach(function (n) { n.classList.remove('slide'); });
+  live.querySelectorAll('[data-fit]').forEach(function (n) { fit(n, +n.dataset.fit, 14); });
+  live.querySelectorAll('.tag[data-r]').forEach(function (n) { n.style.left = (+n.dataset.r - n.offsetWidth) + 'px'; });
+  ['ttl', 'nm', 'pn'].forEach(function (id) { var n = document.getElementById(id); if (n) fit(n, id === 'ttl' ? (document.getElementById('vonly') ? 1490 - 112 - 760 : 1500) : id === 'nm' ? 560 : 960, 30); });
+  var bk = document.getElementById('bk'); if (bk) fit(bk.lastChild, 422 - 110, 24);
+  void live.offsetWidth; live.className = same ? 'step' : 'go';
+  live.querySelectorAll('.bar i').forEach(function (n) { if (n.dataset.on === '1') setTimeout(function () { n.style.width = '100%'; }, same ? 0 : +n.dataset.d); });
+  prev = pg; done(t, 'live');
+}
+function done(t, how) { requestAnimationFrame(function () { requestAnimationFrame(function () { lastMs = Math.round(performance.now() - t); switches++; dbg(how); }); }); }
+function dbg(how) { if (!DBG) return; var d = document.getElementById('dbg'); d.style.display = 'block'; d.textContent = 'L' + loads + ' S' + switches + ' ' + lastMs + 'ms ' + how + ' ' + parse().p + ' first ' + Math.round(firstMs) + 'ms'; }
+vid.addEventListener('timeupdate', function () { if (!isNaN(LT) && vid.currentTime >= LT - .05) { vid.currentTime = LF; vid.play(); } });
+vid.addEventListener('ended', function () { if (!isNaN(LF)) { vid.currentTime = LF; vid.play(); } });
+
+// ---------- dust: slow sparks drifting up in the hi colour (palettes with dust / VIP), 4 s cycle like the mp4 loop
+function dust() {
+  var cv = document.getElementById('dust'), g = cv.getContext('2d'), col = CAT.colors.hi, seed = 42, P = [];
+  if (!(CAT.colors.dust || CAT.colors.style === 'vip')) return;
+  function rnd() { seed = (seed * 16807) % 2147483647; return seed / 2147483647; }
+  for (var i = 0; i < 46; i++) P.push([60 + rnd() * (W - 120), 140 + rnd() * (H - 200), rnd() < .5 ? 1 : 2, 2 + rnd() * 3, rnd()]);
+  (function f(now) {
+    var ph = (now / 4000) % 1; g.clearRect(0, 0, W, H);
+    P.forEach(function (p) {
+      var y = 140 + (((p[1] - 140 - ph * p[2] * (H - 200)) % (H - 200)) + (H - 200)) % (H - 200), al = (90 + 120 * (.5 + .5 * Math.cos(2 * Math.PI * (ph * 2 + p[4])))) / 255;
+      g.fillStyle = 'rgba(' + rgb(col) + ',' + al.toFixed(2) + ')'; g.beginPath(); g.arc(p[0], y, p[3] / 2 + (p[3] > 4 ? 1.5 : 0), 0, 7); g.fill();
+    });
+    requestAnimationFrame(f);
+  })(0);
+}
+
+// ---------- start: catalog + fonts + every picture loaded ONCE, then every click is a pure redraw
+var firstMs = 0;
+fetch('live/catalog_' + PAL + '.json').then(function (r) { return r.json(); }).then(function (c) {
+  CAT = c; var C = c.colors, s = document.documentElement.style;
+  var set = { bg: C.bg, tab: C.tab, accent: C.accent, hi: C.hi, text: C.text, soft: C.soft, card: C.card, btnTxt: C.btn_text, glow: C.glow || C.accent,
+              tt: C.tab_text || C.hi, chip: C.chip_text || C.tab_text || C.hi, hiTxt: PAL === 'aurum' ? C.tab : C.hi };
+  for (var k in set) { s.setProperty('--' + k, 'rgb(' + rgb(set[k]) + ')'); s.setProperty('--' + k + 'RGB', rgb(set[k])); }
+  s.setProperty('--glowA', ((C.glow_a || 150) / 255).toFixed(2));
+  c.hitsPx = {}; for (var h in c.hits) c.hitsPx[h] = [c.hits[h][0] * W, c.hits[h][1] * H, c.hits[h][2] * W, c.hits[h][3] * H];
+  var imgs = ['motor', 'blade5']; c.order.forEach(function (v) { imgs.push(c.vehicles[v].render); }); for (var v in c.paints) c.paints[v].forEach(function (p) { imgs.push(p.img); });
+  return Promise.all(imgs.map(function (n) { return new Promise(function (ok) { var im = new Image(); im.onload = im.onerror = ok; im.src = 'live/img/' + n + '.webp'; }); }).concat([document.fonts.load('42px Brand'), document.fonts.load('42px UI')]));
+}).then(function () {
+  firstMs = performance.now() - t0; dust(); show(); document.getElementById('ld').style.display = 'none';
+  addEventListener('hashchange', show);
+}).catch(function (e) { document.getElementById('ld').innerHTML = '<p style="color:#ffbe5a;font:24px monospace">kiosk: ' + esc(e) + '</p>'; });
+</script></body></html>
