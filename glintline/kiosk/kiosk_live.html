@@ -269,6 +269,76 @@ function dust() {
   })(0);
 }
 
+// ---------- ?demo=1 (25 Nov owner 'I can't click it in the browser'): BROWSER TEST ONLY. In Sansar GlintKiosk.cs turns touches into #p=
+// pages; here a click on a hit zone does the same routing (copy of GlintKiosk touch switch: attract/own/buy/broker/rent/menu/paint + sub-pages).
+// Buying is pretend (this tab only, nothing saved, no glint). Keys: arrows = LEFT/RIGHT, Enter = SELECT, Backspace = BACK.
+function demo() {
+  var own = { heavy: 1, bike: 1 }, car = 0, menu = 0, sub = 0, kind = '', MENU_T = CAT.menu.filter(function (t) { return t[0] !== 'DRIVE'; }).length;
+  var cars = CAT.order.concat(CAT.air_order || [], CAT.ship_order || []).filter(function (k) { return CAT.vehicles[k]; });
+  var ugs = CAT.ug.pats.map(function (q) { return 'p_' + q[0]; }).concat(CAT.ug.tones.map(function (q) { return 't_' + q[0]; }));
+  var SUBS = { upg: function (i) { var q = CAT.upg.list[i]; return 'upg_' + q[0] + '_' + q[1]; }, trail: function (i) { return 'trail_' + i; },
+               rims: function (i) { return 'rims_' + CAT.rims[i].key; }, ug: function (i) { return 'ug_' + ugs[i]; }, shield: function () { return 'shield'; } };
+  var LEN = { upg: CAT.upg.list.length, trail: CAT.trails.length, rims: CAT.rims.length, ug: ugs.length, shield: 1 };
+  var toastEl = document.createElement('div');
+  toastEl.style.cssText = 'position:fixed;left:50%;top:14px;transform:translateX(-50%);background:rgba(0,0,0,.75);color:#ffd27a;font:18px sans-serif;padding:8px 16px;border-radius:8px;z-index:9;pointer-events:none;transition:opacity .4s';
+  document.body.appendChild(toastEl);
+  function toast(s) { toastEl.textContent = s; toastEl.style.opacity = 1; clearTimeout(toast.t); toast.t = setTimeout(function () { toastEl.style.opacity = 0; }, 2200); }
+  function c() { return cars[car]; }
+  function go(p, y) { location.hash = 'p=' + p + (y ? '&y=1' : ''); }
+  function details() { var v = CAT.vehicles[c()]; return own[c()] ? 'own_' + c() : (v.broker ? 'broker_' : 'buy_') + c(); }
+  function drive() { toast('DEMO: in Sansar your ' + CAT.vehicles[c()].name + ' now spawns on the start pad'); go('drive_' + c()); }
+  function paints() { return (CAT.paints[c()] || []).length; }
+  function press(b) {
+    var p = parse().p, k = p.split('_')[0], step = b === 'left' ? -1 : b === 'right' ? 1 : 0;
+    if (b === 'drive') { if (own[c()]) drive(); return; }
+    switch (k) {
+      case 'attract': if (b !== 'back') go(details()); break;
+      case 'own': case 'buy': case 'broker': case 'rent':
+        if (step) { car = (car + step + cars.length) % cars.length; go(details()); }
+        else if (b === 'back') { if (k === 'own' && CAT.vehicles[c()].kind !== 'plane') { menu = 0; go('menu_' + c() + '_0'); } else if (k === 'rent') go(details()); else if (CAT.vehicles[c()].rent) go('rent_' + c()); }
+        else if (b === 'select') {
+          if (k === 'own') drive();
+          else if (k === 'rent') toast('DEMO: rented for 5 min (' + CAT.vehicles[c()].rent + ' glint in Sansar)');
+          else { own[c()] = 1; toast('DEMO: bought ' + CAT.vehicles[c()].name + ' for ' + (CAT.vehicles[c()].price || 0).toLocaleString() + ' glint (pretend, this tab only)'); go(details()); }
+        }
+        break;
+      case 'menu':
+        if (step) { menu = (menu + step + MENU_T) % MENU_T; go('menu_' + c() + '_' + menu); }
+        else if (b === 'back') go(details());
+        else if (b === 'select') {
+          var t = CAT.menu[menu][0];
+          if (t === 'PAINT') { if (paints() > 1) { sub = 0; go('paint_' + c() + '_0'); } else toast('This ride keeps its signature paint'); }
+          else if (t === 'FAVOURITE') toast('DEMO: ' + CAT.vehicles[c()].name + ' is now your favourite');
+          else { kind = { UPGRADES: 'upg', 'LIGHT LINE': 'trail', RIMS: 'rims', SHIELD: 'shield', UNDERGLOW: 'ug' }[t]; sub = 0; if (kind) go(SUBS[kind](0)); }
+        }
+        break;
+      case 'paint':
+        if (step) { sub = (sub + step + paints() + 1) % (paints() + 1); go('paint_' + c() + '_' + (sub === paints() ? 'drive' : sub)); }
+        else if (b === 'back') go('menu_' + c() + '_' + menu);
+        else if (b === 'select') { if (sub === paints()) drive(); else toast('DEMO: paint picked'); }
+        break;
+      case 'drive': if (b === 'back') go(details()); break;
+      default:   // upg / trail / rims / shield / ug
+        if (!kind) { go(details()); break; }
+        if (step && LEN[kind] > 1) { sub = (sub + step + LEN[kind]) % LEN[kind]; go(SUBS[kind](sub)); }
+        else if (b === 'back') go('menu_' + c() + '_' + menu);
+        else if (b === 'select') { toast('DEMO: bought / picked (pretend)'); go(SUBS[kind](sub), true); }
+    }
+  }
+  stage.style.cursor = 'pointer';
+  stage.addEventListener('click', function (e) {
+    var r = stage.getBoundingClientRect(), x = (e.clientX - r.left) / r.width * W, y = (e.clientY - r.top) / r.height * H;
+    var hit = Object.keys(CAT.hitsPx).filter(function (h) { var z = CAT.hitsPx[h]; return x >= z[0] && x <= z[2] && y >= z[1] && y <= z[3]; })[0];
+    if (parse().p === 'attract' && !hit) hit = 'select';            // attract: touch anywhere = START
+    if (hit) press(hit);
+  });
+  addEventListener('keydown', function (e) {
+    var b = { ArrowLeft: 'left', ArrowRight: 'right', Enter: 'select', Backspace: 'back' }[e.key];
+    if (b) { e.preventDefault(); press(b); }
+  });
+  toast('DEMO mode: click LEFT / RIGHT / SELECT / BACK zones (or arrows, Enter, Backspace)');
+}
+
 // ---------- start: catalog + fonts + every picture loaded ONCE, then every click is a pure redraw
 var firstMs = 0;
 fetch('live/catalog_' + PAL + '.json').then(function (r) { return r.json(); }).then(function (c) {
@@ -284,5 +354,6 @@ fetch('live/catalog_' + PAL + '.json').then(function (r) { return r.json(); }).t
 }).then(function () {
   firstMs = performance.now() - t0; dust(); show(); document.getElementById('ld').style.display = 'none';
   addEventListener('hashchange', show);
+  if (Q.get('demo') === '1') demo();
 }).catch(function (e) { document.getElementById('ld').innerHTML = '<p style="color:#ffbe5a;font:24px monospace">kiosk: ' + esc(e) + '</p>'; });
 </script></body></html>
