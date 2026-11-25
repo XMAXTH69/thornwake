@@ -402,8 +402,8 @@
    "Line glow"
   ],
   [
-   "RIMS",
-   "Spinners"
+   "WHEELS",
+   "Tyres · rims · spinners"
   ],
   [
    "SHIELD",
@@ -675,22 +675,58 @@
     "Keeps turning after you stop",
     "One per car or bike · change free"
    ]
-  },
+  }
+ ],
+ "tyres": [
   {
    "key": "tyre_chevron",
    "name": "CHEVRON TYRES",
    "line": "Deep chevron tread",
-   "price": "FREE",
-   "hints": [],
-   "tyre": 1
+   "price": "FREE"
   },
   {
    "key": "tyre_plain",
    "name": "PLAIN TYRES",
    "line": "Fine all-round tread",
-   "price": "FREE",
-   "hints": [],
-   "tyre": 1
+   "price": "FREE"
+  }
+ ],
+ "rimset": [
+  {
+   "key": "rimd_standard",
+   "name": "STANDARD",
+   "line": "The wheel it came with",
+   "price": "FREE"
+  },
+  {
+   "key": "rimd_aero",
+   "name": "AERO DISC",
+   "line": "Smooth carbon disc",
+   "price": "1 500 glint"
+  },
+  {
+   "key": "rimd_split",
+   "name": "SPLIT",
+   "line": "Twin spokes, star cut",
+   "price": "2 000 glint"
+  },
+  {
+   "key": "rimd_mesh",
+   "name": "MESH",
+   "line": "Fine cross spokes",
+   "price": "2 500 glint"
+  },
+  {
+   "key": "rimd_turbine",
+   "name": "TURBINE",
+   "line": "Swirl vanes",
+   "price": "3 000 glint"
+  },
+  {
+   "key": "rimd_monoblock",
+   "name": "MONOBLOCK",
+   "line": "Five solid spokes",
+   "price": "4 000 glint"
   }
  ],
  "ug": {

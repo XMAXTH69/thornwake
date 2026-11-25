@@ -123,16 +123,30 @@ function startTrail(key, same, level, offs) {
 }
 
 // ---------- RIMS & SPINNER: rims_<key>
-function pageRims(key, f) {
-  var R = CAT.rims, i = R.findIndex(function (r) { return r.key === key; }), r = R[i], C = CARD, x = C[0] + 570, mw = C[2] - x - 40, kind = (key === 'none' || r.tyre) ? 'none' : (key === 'aurum' || key === 'null') ? 'faction' : 'shop', own = owned(f);
-  var h = base(r.tyre ? 'TYRES' : 'RIMS & SPINNER', dots(i, R.length), { vonly: 1 }) + card() + pool('rim_' + key, [C[0] + 40, C[1] + 100, C[0] + 520, C[1] + 470]);
+// 25 Nov owner: CUSTOMISE > WHEELS = hub (TYRES | RIMS | SPINNERS); each list = its own page. Any rim + a spinner on top.
+var WHEEL_LISTS = { tyre: ['TYRES', 'tyres'], rimd: ['RIMS', 'rimset'], rims: ['SPINNERS', 'rims'] };
+function pageWheels(i) {
+  var T3 = [['TYRES', 'tyre_chevron'], ['RIMS', 'rimd_split'], ['SPINNERS', 'blade5']], C = CARD, n = 3, gap = 40, tw = (C[2] - C[0] - 80 - gap * (n - 1)) / n, y0 = C[1] + 70, y1 = C[3] - 50;
+  var h = base('WHEELS', dots(i, n)) + card();
+  T3.forEach(function (t, j) {
+    var x0 = C[0] + 40 + j * (tw + gap), on = j === i;
+    h += '<div class="abs tile' + (on ? ' on' : '') + ' fade" style="' + box(x0, y0, x0 + tw, y1) + ';border-radius:22px;flex-direction:column;background:rgba(var(--tabRGB),' + (on ? .94 : .67) + ')">' +
+      imgFit0('rim_' + t[1], tw - 60, y1 - y0 - 150, on ? 1 : .55) +
+      '<div style="margin-top:24px;font-size:44px;letter-spacing:.12em;color:' + (on ? 'var(--text)' : 'var(--soft)') + '">' + t[0] + '</div></div>';
+  });
+  return h + buttons('OPEN', true, 'BACK', true);
+}
+function pageWheelItem(kindKey, key, f) {
+  var W2 = WHEEL_LISTS[kindKey], R = CAT[W2[1]], i = R.findIndex(function (r) { return r.key === key; }), r = R[i], C = CARD, x = C[0] + 570, mw = C[2] - x - 40, own = owned(f);
+  var free = r.price === 'FREE' || key === 'none', faction = key === 'aurum' || key === 'null';
+  var h = base(W2[0], dots(i, R.length)) + card() + pool('rim_' + key, [C[0] + 40, C[1] + 100, C[0] + 520, C[1] + 470]);
   h += T(x, C[1] + 150, esc(r.name), 70, 'brand', mw) + T(x, C[1] + 250, esc(r.line), 34, 'hi', mw);
-  // 25 Nov owner: rim hint lines removed (name, effect, price only)
-  h += ownedTag(own, r.price, kind === 'shop');
+  h += ownedTag(own, r.price, !free && !faction);
   var cw = 124, gap = 12, n = R.length, x0 = C[0] + (C[2] - C[0] - n * cw - (n - 1) * gap) / 2, y = C[3] - 110;
   R.forEach(function (q, j) { h += chip(x0 + j * (cw + gap), y, cw, 84, q.key === key, imgFit0('rim_' + q.key, cw - 24, 64, q.key === key ? 1 : .5)); });
-  return h + buttons(kind === 'shop' && !own ? 'BUY' : 'CHOOSE', true, 'BACK', true);
+  return h + buttons(!free && !faction && !own ? 'BUY' : 'CHOOSE', true, 'BACK', true);
 }
+function pageRims(key, f) { return pageWheelItem('rims', key, f); }
 function imgFit0(name, mw, mh, a) { return '<img src="live/img/' + name + '.webp" style="max-width:' + mw + 'px;max-height:' + mh + 'px;opacity:' + a + '">'; }
 
 // ---------- SHIELD
