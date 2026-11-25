@@ -94,6 +94,21 @@ var OPT = (function () {
     }
     return h + T(1120, y - 4, 26, 'lab', endText(o.end)) + T(1120, y + 30, 20, 'dim', 'naked (margin desk): 1 DAY and 3 DAYS only');
   }
+  function helpChip(x, y) { return '<div data-help="1" class="a c" style="left:' + x + 'px;top:' + y + 'px;width:200px;height:58px;font-size:22px;line-height:58px;border-radius:12px;box-sizing:border-box;border:2px solid var(--acc);color:var(--acc)">? HOW IT WORKS</div>'; }
+  function pHowto(S) {
+    var h = frame(S, '') + T(100, 106, 34, 'acc', 'HOW OPTIONS WORK', 0, 'letter-spacing:.14em') + TR(1820, 110, 24, 'dim', clockHtml());
+    var C = [['1', 'CALL', 'up', 'You win if the price goes UP past the strike.', 'Strike 100, price ends 130: you gain 30 a share.'],
+      ['2', 'PUT', 'dn', 'You win if the price goes DOWN past the strike.', 'Strike 100, price ends 70: you gain 30 a share.'],
+      ['3', 'LONG (buy)', 'up', 'You pay the premium now. Most you can lose = that premium.', 'Premium 5 a share, 1 contract: pay 500 ◆. Worst case you lose 500 ◆.'],
+      ['4', 'SHORT (sell)', 'dn', 'You get the premium now. If the price moves against you, you pay the difference. The margin desk holds glint for it.', 'Get 500 ◆ now. Price runs 30 past the strike: you pay 3,000 ◆.'],
+      ['5', 'ENDS', 'amb', 'At the end it settles by itself. Or close early, any time.', 'Ends at 20:00 UTC: paid out or expires, nothing to press.']];
+    C.forEach(function (c, i) {
+      var x = 100 + (i % 2) * 890, y = 160 + (i >> 1) * 232, w = i === 4 ? 1720 : 830;
+      h += A(x, y, w, 212, '', '', 'background:#04070F66;border:2px solid var(--line);border-left:8px solid var(--' + c[2] + ');border-radius:14px;box-sizing:border-box');
+      h += T(x + 30, y + 14, 44, c[2], c[0] + '  ' + c[1]) + T(x + 30, y + 72, 30, '', c[3], w - 60, 'white-space:normal;line-height:1.2') + T(x + 30, y + 156, 22, 'dim', 'e.g. ' + c[4], w - 60, 'white-space:normal;line-height:1.2');
+    });
+    return h;
+  }
   function pChain(S) {
     var o = parseO(S), k = S.k, spot = S.px[k], h = head(S, o, 'OPTIONS');
     h += tabs(o, 150);
@@ -115,6 +130,7 @@ var OPT = (function () {
     }
     h += A(100, y0 + VIS * P + 6, 1720, 2, '', '', 'background:var(--line)');
     h += T(100, 800, 24, 'dim', 'Prices are glint per SHARE · 1 contract = 100 shares · fee ' + o.fee + ' ◆ a contract each way') + TR(1820, 800, 24, 'dim', 'strike ' + (o.row + 1) + ' of ' + ROWS);
+    h += helpChip(1620, 150);
     h += T(100, 836, 24, 'lab', k < GAMELINKED ? 'The racing crews own a piece of ' + esc(NAMES[k]) + ': SELL only, at or out of the money.' : 'Grey side = in the money: BUY only. SELL needs at or out of the money.');
     return h;
   }
@@ -146,7 +162,9 @@ var OPT = (function () {
     var o = parseO(S), t = ticket(S, o), h = head(S, o, 'ORDER TICKET');
     h += T(100, 150, 30, 'lab', EXP[o.e] + ' · strike <span style="color:#fff">' + f2(t.K) + '</span> · ' + endText(o.end));
     h += pill(100, 196, 220, t.call, 'CALL', 'bet it goes UP', 'up') + pill(330, 196, 220, !t.call, 'PUT', 'bet it goes DOWN', 'dn');
-    h += pill(580, 196, 220, !t.sell, 'BUY', 'long: you pay', 'acc') + pill(810, 196, 220, t.sell, 'SELL', 'short: you are paid', 'amb');
+    var tb = ticket(S, Object.assign({}, o, { bs: 'b' })), ts = ticket(S, Object.assign({}, o, { bs: 's' }));
+    h += pill(580, 196, 220, !t.sell, 'LONG', (tb.px ? 'you pay ' + g(Math.abs(tb.net)) : 'no ask'), 'up') + pill(810, 196, 220, t.sell, 'SHORT', (ts.px ? 'you get ' + g(Math.abs(ts.net)) : 'no bid'), 'dn');
+    h += helpChip(780, 336);
     h += T(100, 316, 24, 'acc', 'CONTRACTS', 0, 'letter-spacing:.2em') + T(100, 344, 96, '', fmt(t.q) + ' <span class="dim" style="font-size:36px">= ' + fmt(t.q * 100) + ' shares</span>');
     h += modes(o, t, 470);
     h += summary(S, o, t, 150);
@@ -162,12 +180,13 @@ var OPT = (function () {
   function pReview(S) {
     var o = parseO(S), t = ticket(S, o), h = head(S, o, 'CHECK THE ORDER');
     var name = (t.sell ? 'SELL ' : 'BUY ') + fmt(t.q) + ' ' + (t.call ? 'CALL' : 'PUT') + (t.q > 1 ? 'S' : '') + ' · ' + f2(t.K) + ' · ' + EXP[o.e];
-    h += T(100, 150, 40, t.sell ? 'amb' : 'acc', name);
-    h += T(100, 206, 120, t.sell ? 'up' : '', (t.sell ? '+' : '−') + fmt(Math.abs(t.net)) + ' <span class="acc" style="font-size:60px">◆</span>') + T(100, 346, 32, 'lab', t.sell ? 'you are paid now' : 'you pay now') + T(100, 388, 22, 'dim', 'no fee if it runs to the end');
-    if (t.sell) h += T(100, 420, 30, 'lab', 'Mode: <span class="acc">' + (MODE[t.mode] || '-') + '</span>' + (t.modes.length > 1 ? ' <span class="dim" style="font-size:22px">(MODE changes it)</span>' : '')) + T(100, 466, 26, 'dim', 'Locked until expiry: ' + esc(t.lock));
+    h += T(100, 140, 80, t.sell ? 'dn' : 'up', t.sell ? 'SHORT' : 'LONG') + T(100, 226, 28, 'lab', (t.sell ? 'you get ' : 'you pay ') + g(Math.abs(t.net)) + ' premium now');
+    h += T(100, 270, 36, t.sell ? 'amb' : 'acc', name);
+    h += T(100, 316, 100, t.sell ? 'up' : '', (t.sell ? '+' : '−') + fmt(Math.abs(t.net)) + ' <span class="acc" style="font-size:60px">◆</span>') + T(100, 436, 32, 'lab', t.sell ? 'you are paid now' : 'you pay now') + T(100, 476, 22, 'dim', 'no fee if it runs to the end');
+    if (t.sell) h += T(100, 520, 30, 'lab', 'Mode: <span class="acc">' + (MODE[t.mode] || '-') + '</span>' + (t.modes.length > 1 ? ' <span class="dim" style="font-size:22px">(MODE changes it)</span>' : '')) + T(100, 562, 26, 'dim', 'Locked until expiry: ' + esc(t.lock));
     var plain = plainText(S, t);
-    h += T(100, 540, 30, '', esc(plain), 0, 'white-space:normal;width:940px;line-height:1.3');
-    if (t.sell && t.mode === 'naked') h += T(100, 680, 26, 'dn', 'Margin: if your account gets too thin the broker calls you, then closes it by force. Only Exchange glint is at risk.', 0, 'white-space:normal;width:940px;line-height:1.3');
+    h += T(100, 610, 30, '', esc(plain), 0, 'white-space:normal;width:940px;line-height:1.3');
+    if (t.sell && t.mode === 'naked') h += T(100, 740, 26, 'dn', 'Margin: if your account gets too thin the broker calls you, then closes it by force. Only Exchange glint is at risk.', 0, 'white-space:normal;width:940px;line-height:1.3');
     h += summary(S, o, t, 150);
     h += t.refuse ? TC(820, 30, 'dn', esc(t.refuse)) : TC(820, 30, 'lab', 'Press ' + (t.sell ? 'SELL NOW' : 'BUY NOW') + ', then Yes in the box');
     return h;
@@ -187,7 +206,7 @@ var OPT = (function () {
   }
 
   // ---------------- register pages + bars
-  PAGES.chain = pChain; PAGES.ticket = pTicket; PAGES.oreview = pReview; PAGES.oclose = pClose;
+  PAGES.chain = pChain; PAGES.ticket = pTicket; PAGES.oreview = pReview; PAGES.oclose = pClose; PAGES.howto = pHowto; BARS.howto = ['BACK', '', '', '', '', ''];
   BARS.stock = ['BACK', 'BUY', 'SELL', 'MY PORTFOLIO', 'OPTIONS', ''];
   BARS.chain = ['BACK', '▲', '▼', '◀ EXPIRY', 'EXPIRY ▶', 'TRADE'];
   BARS.ticket = ['BACK', 'CALL / PUT', 'BUY / SELL', '−1', '+1', 'REVIEW'];
@@ -254,6 +273,8 @@ var OPT = (function () {
     if (!D || D.p === 'wait' || pendingYes) return;
     if (D.oe === undefined) demoOpen();
     var p = D.p;
+    if (id === 'help' && (p === 'chain' || p === 'ticket')) { D.hp = p; D.p = 'howto'; return demoWrite(); }
+    if (p === 'howto') { if (id === 'back') D.p = D.hp || 'chain'; return demoWrite(); }
     if (p === 'stock' && id === 'plus') { D.p = 'chain'; D.orow = ATM; return demoWrite(); }
     if (p === 'stock' && id === 'minus') { D.p = 'myopt'; D.sel = 0; return demoWrite(); }
     if (p === 'chain') {
@@ -295,7 +316,7 @@ var OPT = (function () {
   };
   if (DEMO) {
     var H0 = typeof HASH0 === 'string' ? HASH0 : location.hash, sp = (H0.match(/[#&]p=(\w+)/) || [])[1];
-    if (sp && ['chain', 'ticket', 'oreview', 'myopt', 'oclose'].indexOf(sp) >= 0) {
+    if (sp && ['chain', 'ticket', 'oreview', 'myopt', 'oclose', 'howto'].indexOf(sp) >= 0) {
       demoOpen(); D.p = sp; var m = H0.match(/[#&]k=(\d+)/); if (m) D.k = +m[1];
       m = H0.match(/orow=(\d+)/); if (m) D.orow = +m[1]; m = H0.match(/oe=(\d)/); if (m) D.oe = +m[1];
       m = H0.match(/ocp=(\w)/); if (m) D.ocp = m[1]; m = H0.match(/obs=(\w)/); if (m) D.obs = m[1]; m = H0.match(/oq=(\d+)/); if (m) D.oq = +m[1];

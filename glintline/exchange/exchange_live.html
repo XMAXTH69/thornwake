@@ -454,10 +454,11 @@ if (DEMO) {
   demoInit();
   stage.addEventListener('click', function (e) {
     var t = e.target; var yn = t.getAttribute && t.getAttribute('data-yn'); if (yn) { answer(yn === 'y'); return; }
+    if (t.closest && t.closest('[data-help]')) { press('help'); return; }
     var b = t.closest ? t.closest('.btn') : null; if (b && !b.classList.contains('off') && !b.classList.contains('soon')) press(b.getAttribute('data-slot')); else if (D.p === 'attract') press('select');
   });
   addEventListener('keydown', function (e) {
-    var m = { Escape: 'back', ArrowUp: 'up', ArrowDown: 'down', PageUp: 'pgup', PageDown: 'pgdn', '-': 'minus', '+': 'plus', '=': 'plus', Enter: 'select' }[e.key];
+    var m = { Escape: 'back', ArrowUp: 'up', ArrowDown: 'down', PageUp: 'pgup', PageDown: 'pgdn', '-': 'minus', '+': 'plus', '=': 'plus', Enter: 'select', '?': 'help' }[e.key];
     if (e.key === 'P' && e.shiftKey) { D.pz = D.pz ? 0 : 1; demoWrite(); return; }   // demo: Shift+P toggles MARKET PAUSED
     if (pendingYes) { if (e.key === 'y' || e.key === 'Enter') answer(true); else if (e.key === 'n' || e.key === 'Escape') answer(false); return; }
     if (m) { e.preventDefault(); press(m); }
