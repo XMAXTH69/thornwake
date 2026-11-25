@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Glint Pickups Viewer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root { --bg:#0b1316; --panel:rgba(14,30,34,.82); --line:#2a4a50; --gold:#d9b46a; --text:#e8eef0; --dim:#9fb3b8; }
+* { box-sizing:border-box; }
+html,body { margin:0; height:100%; background:var(--bg); color:var(--text); font:14px/1.4 Inter,system-ui,sans-serif; overflow:hidden; }
+#view { position:fixed; inset:0; touch-action:none; }
+header { position:fixed; top:12px; left:16px; right:16px; display:flex; flex-wrap:wrap; gap:8px; align-items:center; pointer-events:none; z-index:2; }
+header > * { pointer-events:auto; }
+h1 { font:600 18px Cinzel,serif; letter-spacing:.12em; color:var(--gold); margin:0 12px 0 0; }
+.grp { display:flex; border:1px solid var(--line); background:var(--panel); }
+button { background:none; border:0; color:var(--dim); font:600 13px Inter,sans-serif; padding:8px 14px; cursor:pointer; letter-spacing:.06em; }
+button + button { border-left:1px solid var(--line); }
+button.on { background:var(--gold); color:#10181a; }
+.tag { position:fixed; top:96px; font:600 15px Cinzel,serif; color:var(--gold); letter-spacing:.14em; pointer-events:none; text-shadow:0 1px 4px #000; z-index:2; }
+#tagL { left:16px; } #tagR { right:16px; }
+#note { position:fixed; left:16px; right:16px; bottom:14px; max-width:620px; background:var(--panel); border:1px solid var(--line); padding:10px 14px; color:var(--dim); font-size:12px; z-index:2; }
+#note b { color:var(--gold); font-family:Cinzel,serif; letter-spacing:.08em; }
+#msg { position:fixed; inset:0; display:grid; place-items:center; color:var(--dim); pointer-events:none; }
+@media (max-width:640px){ h1{font-size:15px;} .tag{top:120px; font-size:13px;} #note{font-size:11px;} }
+</style>
+</head>
+<body>
+<div id="view"></div>
+<header>
+  <h1>GLINT PICKUPS</h1>
+  <div class="grp"><button data-k="glint" class="on">GLINT</button><button data-k="gold">GOLD</button></div>
+  <div class="grp"><button data-c="full" class="on">FULL</button><button data-c="tip">TIP CLOSE-UP</button><button data-c="top">FROM ABOVE</button></div>
+  <div class="grp"><button id="sweep" class="on">LIGHT SWEEP</button><button id="wire">WIREFRAME</button></div>
+</header>
+<div class="tag" id="tagL">BEFORE (v2)</div><div class="tag" id="tagR">AFTER (v3)</div>
+<div id="msg">loading models...</div>
+<div id="note"><b>The top of the gem.</b> BEFORE: the 16 table triangles all meet in one point and share one texture row, so the top smears into a pinwheel. AFTER: the table is one flat 16-gon and every facet has its own texture patch with a crisp edge. Drag to rotate (both sides together), pinch or wheel to zoom.</div>
+
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+const FILES = { glint: ['shard_v2_2x', 'shard_v3_2x'], gold: ['shard_gold_v2_2x', 'shard_gold_v3_2x'] };
+const GEM_Y = { glint: 1.2, gold: 1.35 };                       // gem centre height in the 2x models (y up)
+const TABLE_Y = { glint: 1.44, gold: 1.6 };
+const el = document.getElementById('view');
+const renderer = new THREE.WebGLRenderer({ antialias: true }); renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.setScissorTest(true); el.appendChild(renderer.domElement);
+const pm = new THREE.PMREMGenerator(renderer); const env = pm.fromScene(new RoomEnvironment(), 0.04).texture;
+const camera = new THREE.PerspectiveCamera(40, 1, 0.05, 100);
+const controls = new OrbitControls(camera, renderer.domElement); controls.enableDamping = true; controls.screenSpacePanning = true;
+const scenes = [new THREE.Scene(), new THREE.Scene()];
+for (const s of scenes) {
+  s.background = new THREE.Color(0x0b1316); s.environment = env; s.environmentIntensity = 0.6;
+  const g = new THREE.GridHelper(12, 24, 0x2a4a50, 0x15262b); g.position.y = 0; s.add(g);        // the road is at y = 0
+  const d = new THREE.DirectionalLight(0xffffff, 1.2); d.position.set(-3, 5, 4); s.add(d);
+}
+const loader = new GLTFLoader(); const cache = {}; const holders = [new THREE.Group(), new THREE.Group()]; scenes.forEach((s, i) => s.add(holders[i]));
+let kind = 'glint', cam = 'full', sweep = true, wire = false; const scrolls = [];
+
+function load(name) { return cache[name] ??= new Promise((res, rej) => loader.load(`models/${name}.glb`, g => res(g.scene), undefined, rej)); }
+async function show() {
+  document.getElementById('msg').style.display = 'grid'; scrolls.length = 0;
+  const roots = await Promise.all(FILES[kind].map(load));
+  roots.forEach((r, i) => {
+    holders[i].clear(); const c = r.clone(true); holders[i].add(c);
+    c.traverse(o => { if (!o.isMesh) return; const m = (o.material = o.material.clone());
+      m.wireframe = wire;
+      if (m.name === 'glint_fx') { m.blending = THREE.AdditiveBlending; m.transparent = true; m.depthWrite = false; m.side = THREE.DoubleSide; m.color.set(0); }
+      if (m.emissiveMap) { m.emissiveMap = m.emissiveMap.clone(); m.emissiveMap.needsUpdate = true; m.emissiveMap.wrapS = m.emissiveMap.wrapT = THREE.RepeatWrapping;
+        scrolls.push({ m, rate: m.name === 'glint_fx' ? [0.30, 0] : [0, 0.35] }); } });
+  });
+  document.getElementById('msg').style.display = 'none'; setCam(cam, true);
+}
+function setCam(c, snap) {
+  cam = c; const ty = cam === 'full' ? GEM_Y[kind] : TABLE_Y[kind]; controls.target.set(0, ty, 0);
+  const d = cam === 'full' ? 7.5 : 3.0; const el_ = cam === 'top' ? 80 : 30; const a = Math.atan2(camera.position.x, camera.position.z) || 0.6;
+  const r = d, e = el_ * Math.PI / 180; camera.position.set(r * Math.cos(e) * Math.sin(a), ty + r * Math.sin(e), r * Math.cos(e) * Math.cos(a)); controls.update();
+}
+const clock = new THREE.Clock();
+function frame() {
+  const dt = clock.getDelta(); requestAnimationFrame(frame); controls.update();
+  if (sweep) for (const s of scrolls) { s.m.emissiveMap.offset.x += s.rate[0] * dt; s.m.emissiveMap.offset.y += s.rate[1] * dt; }
+  const w = innerWidth, h = innerHeight, narrow = w < 700; renderer.setSize(w, h, false);
+  const cells = narrow ? [[0, h / 2, w, h / 2], [0, 0, w, h / 2]] : [[0, 0, w / 2, h], [w / 2, 0, w / 2, h]];
+  cells.forEach(([x, y, cw, ch], i) => { renderer.setViewport(x, y, cw, ch); renderer.setScissor(x, y, cw, ch); camera.aspect = cw / ch; camera.updateProjectionMatrix(); renderer.render(scenes[i], camera); });
+  const tl = document.getElementById('tagL'), tr = document.getElementById('tagR');
+  if (narrow) { tl.style.left = '16px'; tl.style.right = 'auto'; tl.style.top = '112px'; tr.style.right = 'auto'; tr.style.left = '16px'; tr.style.top = (h / 2 + 8) + 'px'; }
+  else { tl.style.top = tr.style.top = '96px'; tr.style.left = 'auto'; tr.style.right = '16px'; }
+}
+document.querySelectorAll('[data-k]').forEach(b => b.onclick = () => { document.querySelectorAll('[data-k]').forEach(x => x.classList.toggle('on', x === b)); kind = b.dataset.k; show(); });
+document.querySelectorAll('[data-c]').forEach(b => b.onclick = () => { document.querySelectorAll('[data-c]').forEach(x => x.classList.toggle('on', x === b)); setCam(b.dataset.c); });
+document.getElementById('sweep').onclick = e => { sweep = !sweep; e.target.classList.toggle('on', sweep); };
+document.getElementById('wire').onclick = e => { wire = !wire; e.target.classList.toggle('on', wire); scrolls.length && holders.forEach(h => h.traverse(o => { if (o.isMesh) o.material.wireframe = wire; })); };
+camera.position.set(4, 3, 6); show().then(frame).catch(e => { document.getElementById('msg').textContent = 'could not load models: ' + e; });
+</script>
+</body>
+</html>
