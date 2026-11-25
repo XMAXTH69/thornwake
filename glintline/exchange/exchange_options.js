@@ -6,7 +6,7 @@
 // Pages   chain    options chain: expiry tabs, CALLS left | STRIKE | PUTS right, bid / ask / open interest, ITM greyed for SELL
 //         ticket   order ticket: CALL/PUT + BUY/SELL toggles, contracts, premium, fee, max loss, break-even, collateral mode
 //         oreview  check the total + MODE (covered / cash-secured / naked) -> SELECT -> Yes/No box
-//         myopt    MY OPTIONS: open positions, P&L, close early       oclose  close-early check
+//         oclose   close-early check (reached from MY PORTFOLIO, exchange_portfolio.js: the old MY OPTIONS page was merged into it 25 Nov)
 // Fragment keys (live; all prices CENTS PER SHARE; 1 contract = 100 shares)
 //   oe 0..3 expiry (1 day, 3 days, 1 week, 4 weeks)   orow 0..20 selected strike row (10 = ATM)   oatm ATM strike   ost strike step
 //   ocb oca oco   21 call bids / asks / open interest      opb opa opo   21 put bids / asks / open interest   (bid 0 = no bid)
@@ -173,26 +173,6 @@ var OPT = (function () {
     return h;
   }
   function pl(p) { return (p.bs === 's' ? p.open - p.mark : p.mark - p.open) * p.q; }      // glint
-  function pMyopt(S) {
-    var o = parseO(S), h = frame(S, ''), L = o.pos, tot = 0;
-    h += T(100, 108, 30, 'dim', 'MY OPTIONS') + TR(1820, 110, 24, 'dim', clockHtml());
-    var X = [120, 520, 820, 1000, 1180, 1360, 1560, 1800];
-    h += T(X[0], 160, 26, 'dim', 'Stock') + T(X[1], 160, 26, 'dim', 'Position') + TR(X[3], 160, 26, 'dim', 'contracts') + TR(X[4], 160, 26, 'dim', 'opened') + TR(X[5], 160, 26, 'dim', 'now') + TR(X[6], 160, 26, 'dim', 'P / L') + TR(X[7], 160, 26, 'dim', 'ends · mode');
-    h += A(100, 200, 1720, 2, '', '', 'background:var(--line)');
-    if (!L.length) return h + TC(400, 50, 'dim', 'No open options.') + TC(480, 34, 'dim', 'Open a stock, then OPTIONS.');
-    L.forEach(function (p, n) {
-      var y = 218 + n * 62, v = pl(p); tot += v;
-      if (n === S.sel) h += A(80, y - 6, 1760, 58, '', '', 'background:#7FD4FF33;border-left:8px solid var(--acc);box-sizing:border-box');
-      h += A(X[0], y + 3, 36, 36, '', logo(p.k, 36)) + T(X[0] + 48, y, 30, '', esc(NAMES[p.k]), 0, 'width:330px;overflow:hidden;text-overflow:ellipsis');
-      h += T(X[1], y, 30, p.bs === 's' ? 'amb' : 'acc', kind(p.cp, p.bs) + ' ' + f2(p.K)) + TR(X[3], y, 30, 'lab', fmt(p.q)) + TR(X[4], y, 30, 'lab', f2(p.open)) + TR(X[5], y, 30, '', f2(p.mark));
-      h += TR(X[6], y, 30, v >= 0 ? 'up' : 'dn', sg(v) + ' ◆') + TR(X[7], y + 4, 22, 'dim', EXP[p.e] + ' · ' + (MODE[p.m] || 'LONG').split(' ')[0]);
-    });
-    // owner 25 Nov: ONE plain number = the glint that moves if every position is closed now (buy-back / sell-back and fee already in it, no explanation line)
-    var net = 0;
-    L.forEach(function (p) { var c = p.mark * p.q; net += (p.bs === 's' ? -c : c) - o.fee * p.q; });
-    h += A(100, 790, 1720, 2, '', '', 'background:var(--line)') + T(120, 804, 32, '', 'If you close all now') + TR(X[6], 804, 34, net >= 0 ? 'up' : 'dn', sg(net) + ' ◆');
-    return h;
-  }
   function pClose(S) {
     var o = parseO(S), p = o.pos[Math.min(S.sel, o.pos.length - 1)], h = frame(S, '');
     if (!p) return h + TC(400, 50, 'dim', 'No position picked');
@@ -207,12 +187,11 @@ var OPT = (function () {
   }
 
   // ---------------- register pages + bars
-  PAGES.chain = pChain; PAGES.ticket = pTicket; PAGES.oreview = pReview; PAGES.myopt = pMyopt; PAGES.oclose = pClose;
-  BARS.stock = ['BACK', 'BUY', 'SELL', 'MY OPTIONS', 'OPTIONS', ''];
+  PAGES.chain = pChain; PAGES.ticket = pTicket; PAGES.oreview = pReview; PAGES.oclose = pClose;
+  BARS.stock = ['BACK', 'BUY', 'SELL', 'MY PORTFOLIO', 'OPTIONS', ''];
   BARS.chain = ['BACK', '▲', '▼', '◀ EXPIRY', 'EXPIRY ▶', 'TRADE'];
   BARS.ticket = ['BACK', 'CALL / PUT', 'BUY / SELL', '−1', '+1', 'REVIEW'];
   BARS.oreview = ['BACK', '', '', '−1', 'MODE ▸', 'CONFIRM'];
-  BARS.myopt = ['BACK', '▲', '▼', '', 'CHAIN', 'CLOSE EARLY'];
   BARS.oclose = ['BACK', '', '', '', '', 'CLOSE NOW'];
   var baseBar = bar;
   bar = function (S) {
@@ -293,12 +272,6 @@ var OPT = (function () {
       if (id === 'back') D.p = 'ticket'; else if (id === 'minus') D.oq = Math.max(1, D.oq - 1);
       else if (id === 'plus' && t.modes.length > 1) D.om = t.modes[(t.modes.indexOf(t.mode) + 1) % t.modes.length];
       else if (id === 'select' && !t.refuse) { dlgKind = 'open'; showDlg(); return; }
-      return demoWrite();
-    }
-    if (p === 'myopt') {
-      var n = D.pos.length;
-      if (id === 'back') D.p = 'stock'; else if (id === 'up' && n) D.sel = (D.sel + n - 1) % n; else if (id === 'down' && n) D.sel = (D.sel + 1) % n;
-      else if (id === 'plus') { D.k = n ? D.pos[Math.min(D.sel, n - 1)].k : D.k; D.p = 'chain'; } else if (id === 'select' && n) D.p = 'oclose';
       return demoWrite();
     }
     if (p === 'oclose') { if (id === 'back') D.p = 'myopt'; else if (id === 'select') { dlgKind = 'close'; showDlg(); return; } return demoWrite(); }

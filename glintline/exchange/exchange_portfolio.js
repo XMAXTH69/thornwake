@@ -1,15 +1,22 @@
-// Glint Exchange - MY PORTFOLIO + MY RESULTS pages (26 Nov 2026; design Glintline/design/GLINT-EXCHANGE.md sec 16b, 18, 24, 27, 28, 29).
+// Glint Exchange - MY PORTFOLIO (the ONE account page: shares + options, merged 25 Nov 2026) + MY RESULTS pages (26 Nov 2026; design Glintline/design/GLINT-EXCHANGE.md sec 16b, 18, 24, 27, 28, 29).
 // ONE job: read the fragment and draw the two account pages on the broker screen. Loaded AFTER exchange_options.js and exchange_charts.js;
 // it adds pages to PAGES/BARS like exchange_options.js does. Demo wiring lives in exchange_portfolio_demo.js. The game sends every number.
 // MECHANIC: let the player see what they hold (shares + options per stock, the wheel pair) and what the Exchange earned them over time.
 //
 // DATA RULE: the screen gets its state ONLY from the #fragment sent by GlintBroker (media URL). Compact aggregates, never daily data.
-//   Pages          p=portfolio   p=results
+//   Pages          p=portfolio   p=results      (old p=shares / p=myopt are NOT pages any more: they draw p=portfolio with pf=1 / pf=2)
+//   FILTER  pf 0 ALL (default, missing = 0) | 1 SHARES only | 2 OPTIONS only    drawn as 3 tabs next to the title; the bottom bar FILTER key cycles it.
+//   SEL RULE (portfolio): 'sel' = index into the FILTERED flat row list, 0-based. Flat list = groups sorted by exposure DESC (= shares x px / 100 + strike x contracts of its options; stable, ties keep first-seen order: shares groups by stock id, then option-only groups in mo order; NEVER re-sorted after filtering),
+//     inside a group the SHARES row first, then its options in the order of 'mo'; pf=1 drops the option rows, pf=2 drops the shares rows (empty groups vanish,
+//     the group order of the rest is unchanged). ALL = every row. sel is clamped to the list; the page shows the page that holds sel.
+//     SELL (shares row) / CLOSE EARLY (option row) act on that row; for CLOSE EARLY the game then shows p=oclose with sel = index of that option inside 'mo'.
+//   Bottom lines: 'If you sell all now: X' (pf 0/1; sum floor(h*fillSell/100) - f per stock over the FREE shares h) and 'If you close all now: +X' (pf 0/2; options, fee 'of' per contract, default 2).
 // Re-used core keys (already sent on every page):  c free glint   px 50 prices   h 50 FREE shares   cb 50 cost x100 of the FREE shares   sel selected row/slice
 // Re-used option key (same text as MY OPTIONS):     mo  'stock:c|p:b|s:strike:oe:qty:open:mark:mode:endUnix' joined by '~'  (cents per share)
 // NEW keys, all optional (missing = 0 / empty):
 //   hk   shares locked by covered calls (the desk moves them OUT of h):  'stock:shares:costx100' joined '~'          <= 8 entries (8 positions)
 //   pl   glint locked now: cash-secured puts + naked margin (int)         pd  result today in glint (signed int, GlintExchangeDesk day net)
+//   pf portfolio filter 0|1|2 (see above)   of option fee per contract (same key as the options pages, default 2)
 //   rv   results view 0 overview | 1 sectors | 2 top earners             ri  line chart 1 = VALUE (default) | 0 = INCOME added up
 //   rm   monthly history, OLDEST first, up to 13 rows joined '~':  'ym:puts:calls:div:gains:value:inv:disc:dte'
 //        ym = YYMM (2611 = Nov 2026)   puts calls div gains = glint earned that month (signed int)   value = account value at month end (glint)
@@ -31,7 +38,7 @@ var PF = (function () {
     var h = location.hash.replace(/^#/, ''), Q = {};
     h.split('&').forEach(function (kv) { var i = kv.indexOf('='); if (i > 0) Q[kv.slice(0, i)] = kv.slice(i + 1); });
     function list(key, n) { return Q[key] ? decodeURIComponent(Q[key]).split('~').map(function (t) { return t.split(':').map(Number); }).filter(function (f) { return f.length >= n; }) : []; }
-    var P = { pos: [], lock: {}, pl: parseInt(Q.pl) || 0, hasPl: Q.pl !== undefined, pd: parseInt(Q.pd) || 0, rtt: parseInt(Q.rtt) || 0,
+    var P = { pos: [], lock: {}, pf: Math.max(0, Math.min(2, parseInt(Q.pf) || 0)), fee: Q.of !== undefined && Q.of !== '' ? parseInt(Q.of) : 2, pl: parseInt(Q.pl) || 0, hasPl: Q.pl !== undefined, pd: parseInt(Q.pd) || 0, rtt: parseInt(Q.rtt) || 0,
       view: Math.max(0, Math.min(2, parseInt(Q.rv) || 0)), val: Q.ri !== '0', mon: [], top: [] };
     if (Q.mo) decodeURIComponent(Q.mo).split('~').forEach(function (t) {
       var f = t.split(':'); if (f.length < 10) return;
@@ -56,7 +63,7 @@ var PF = (function () {
   function chipTxt(x, y, w, hh, col, label, size) { return A(x, y, w, hh, 'c', label, 'font-size:' + size + 'px;line-height:' + hh + 'px;border-radius:7px;background:' + col + ';color:#04070F'); }
 
   // ---------------- table model: groups per stock (shares row first, option rows under it), pages that never split a group
-  function build(S, P) {
+  function build(S, P, nof) {                                         // nof = ignore the pf filter (KPI cards, sunburst)
     var by = {}, ks = [], i;
     function grp(k) { if (!by[k]) { by[k] = { k: k, rows: [], exp: 0 }; ks.push(k); } return by[k]; }
     for (i = 0; i < STOCKS; i++) { var t = total(S, P, i); if (t.sh > 0) { var gg = grp(i), val = t.sh * S.px[i] / 100; gg.exp += val; gg.rows.push({ st: 'SH', k: i, sh: t.sh, open: t.cost / t.sh, mark: S.px[i], val: val, pl: val - t.cost / 100, pct: t.cost ? (val - t.cost / 100) / (t.cost / 100) * 100 : 0 }); } }
@@ -66,11 +73,16 @@ var PF = (function () {
       gg.exp += p.K * q; gg.rows.push({ st: st, k: p.k, p: p, q: q, open: p.open, mark: p.mark, val: (short ? -1 : 1) * p.mark * q, pl: plv, pct: p.open ? plv / (p.open * q) * 100 : 0, itm: itm,
         ret: short ? p.open / p.K * 365 / (EXPD[p.e] || 7) * 100 : null });
     });
-    ks.sort(function (a, b) { return by[b].exp - by[a].exp; });
+    var ord = {}; ks.forEach(function (k, i) { ord[k] = i; });                // STABLE: ties keep first-seen order (shares groups by stock id, then option-only groups in mo order) = the game's order
+    ks.sort(function (a, b) { return by[b].exp - by[a].exp || ord[a] - ord[b]; });
     var groups = ks.map(function (k) { return by[k]; }), flat = [], pages = [], a = 0, n = 0;
+    groups.forEach(function (gr) { var ho = gr.rows.some(function (r) { return r.st !== 'SH'; }), hs = gr.rows.some(function (r) { return r.st === 'SH'; }), w = hs && gr.rows.some(function (r) { return r.st === 'SC'; }); gr.rows.forEach(function (r) { r.hasOpt = ho; r.wheel = w; }); });
+    if (!nof && P.pf) {
+      groups = groups.map(function (gr) { return { k: gr.k, exp: gr.exp, rows: gr.rows.filter(function (r) { return (r.st === 'SH') === (P.pf === 1); }) }; }).filter(function (gr) { return gr.rows.length; });
+    }
     groups.forEach(function (gr) {
       if (n && n + gr.rows.length > PG) { pages.push([a, flat.length]); a = flat.length; n = 0; }
-      gr.rows.forEach(function (r, j) { r.first = j === 0; r.last = j === gr.rows.length - 1; r.n = gr.rows.length; r.wheel = gr.rows.some(function (x) { return x.st === 'SH'; }) && gr.rows.some(function (x) { return x.st === 'SC'; }); flat.push(r); });
+      gr.rows.forEach(function (r, j) { r.first = j === 0; r.last = j === gr.rows.length - 1; r.n = gr.rows.length; flat.push(r); });
       n += gr.rows.length;
     });
     if (flat.length > a) pages.push([a, flat.length]);
@@ -86,19 +98,23 @@ var PF = (function () {
 
   // ---------------- PAGE 1: MY PORTFOLIO
   function pPortfolio(S) {
-    var P = parseP(S), M = build(S, P), h = title(S, 'MY PORTFOLIO'), sv = 0, locked = 0, prem = 0, opts = 0, stocks = 0, plAll = 0;
-    M.flat.forEach(function (r) { if (r.st === 'SH') { sv += r.val; stocks++; } else { opts++; if (r.st[0] === 'S') { prem += r.open * r.q; if (r.p.m === 'cash') locked += r.p.K * r.q; } } plAll += r.pl; });
+    var P = parseP(S); if (S.p === 'shares') P.pf = 1; else if (S.p === 'myopt') P.pf = 2;      // old pages = the portfolio with a filter
+    var A0 = build(S, P, true), M = build(S, P), h = title(S, 'MY PORTFOLIO'), sv = 0, locked = 0, prem = 0, opts = 0, stocks = 0, plAll = 0;
+    A0.flat.forEach(function (r) { if (r.st === 'SH') { sv += r.val; stocks++; } else { opts++; if (r.st[0] === 'S') { prem += r.open * r.q; if (r.p.m === 'cash') locked += r.p.K * r.q; } } });
+    M.flat.forEach(function (r) { plAll += r.pl; });
     if (P.hasPl) locked = P.pl;
-    M.groups.forEach(function (gr) { var ho = gr.rows.some(function (r) { return r.st !== 'SH'; }); gr.rows.forEach(function (r) { r.hasOpt = ho; }); });
+    ['ALL ' + A0.flat.length, 'SHARES ' + stocks, 'OPTIONS ' + opts].forEach(function (lb, i) {
+      h += A(450 + i * 210, 102, 196, 38, 'c', lb, 'font-size:22px;line-height:34px;border-radius:7px;box-sizing:border-box;' + (i === P.pf ? 'background:var(--acc);color:#04070F' : 'border:2px solid var(--line);color:var(--dim)'));
+    });
     var inv = sv + locked, acct = S.c + inv, pct = function (v) { return acct > 0 ? v / acct * 100 : 0; };
     var K = [['EXCHANGE BALANCE', g(S.c), '', 'free glint to trade', 'dim'], ['INVESTED', g(inv), '', pc(pct(inv), 0).replace('+', '') + ' of your account · shares + locked', 'dim'],
-      ['OPEN POSITIONS', fmt(M.flat.length), '', stocks + ' stocks · ' + opts + ' options', 'dim'], ['PREMIUM COLLECTED', g(prem), 'amb', pc(pct(prem), 1).replace('+', '') + ' of your account · short options', 'dim'],
+      ['OPEN POSITIONS', fmt(A0.flat.length), '', stocks + ' stocks · ' + opts + ' options', 'dim'], ['PREMIUM COLLECTED', g(prem), 'amb', pc(pct(prem), 1).replace('+', '') + ' of your account · short options', 'dim'],
       ['RESULT TODAY', sg(P.pd) + ' ◆', P.pd >= 0 ? 'up' : 'dn', sg(pct(P.pd), 1) + ' % of your account', P.pd >= 0 ? 'up' : 'dn']];
     K.forEach(function (c, i) { var x = 100 + i * 347; h += card(x, 146, 331, 124) + T(x + 18, 158, 19, 'acc', c[0], 0, 'letter-spacing:.14em') + T(x + 18, 184, 52, c[2], c[1]) + T(x + 18, 240, 18, c[4], c[3], 296, 'overflow:hidden;text-overflow:ellipsis'); });
     var yH = 286, X = { st: 120, lg: 278, nm: 324, sec: 640, op: 1065, ry: 1195, rp: 1226, vl: 1590, pl: 1745 };
     h += T(X.st, yH, 19, 'dim', 'STRATEGY', 0, 'letter-spacing:.1em') + T(X.lg, yH, 19, 'dim', 'STOCK · STRIKE · ENDS', 0, 'letter-spacing:.1em') + T(X.sec, yH, 19, 'dim', 'SECTOR · PEERS', 0, 'letter-spacing:.1em') + TR(X.op, yH, 19, 'dim', 'OPEN · QTY') + TR(X.ry, yH, 19, 'dim', 'A YEAR') +
       T(X.rp, yH, 19, 'dim', 'NEXT REPORT', 0, 'letter-spacing:.1em') + TR(X.vl, yH, 19, 'dim', 'VALUE') + TR(X.pl, yH, 19, 'dim', 'P / L') + A(100, yH + 28, 1720, 2, '', '', 'background:var(--line)');
-    if (!M.flat.length) return h + TC(470, 50, 'dim', 'No open positions.') + TC(550, 32, 'dim', 'Buy shares or sell an option first.');
+    if (!M.flat.length) return h + TC(470, 50, 'dim', P.pf === 1 ? 'You own no shares.' : P.pf === 2 ? 'No open options.' : 'No open positions.') + TC(550, 32, 'dim', 'Buy shares or sell an option first.');
     var sel = Math.max(0, Math.min(M.flat.length - 1, S.sel)), pi = 0;
     M.pages.forEach(function (pg, i) { if (sel >= pg[0] && sel < pg[1]) pi = i; });
     var pg = M.pages[pi], y0 = 322;
@@ -119,14 +135,22 @@ var PF = (function () {
       h += TR(X.pl, y + 1, 25, up ? 'up' : 'dn', sg(r.pl) + ' ◆') + TR(X.pl, y + 29, 18, up ? 'up' : 'dn', pc(r.pct) + (opt && r.st[0] === 'S' ? ' kept' : ''));
       if (hn) h += chipTxt(1752, y + 6, 68, 32, hn[1], hn[0], 18);
     }
-    h += T(100, 800, 22, 'dim', 'page ' + (pi + 1) + '/' + M.pages.length + ' · ▲▼ move, past the end = next page') + TR(1820, 800, 26, 'lab', 'all open P / L <span class="' + (plAll >= 0 ? 'up' : 'dn') + '">' + sg(plAll) + ' ◆</span>');
-    h += A(100, 842, 10, 22, '', '', 'background:var(--amb);border-radius:3px') + T(120, 840, 20, 'dim', 'amber bar = wheel: shares with a short call on them') + T(740, 840, 20, 'dim', 'ALERT report within 48 h') + T(1030, 840, 20, 'dim', 'ITM short option ends inside the money') + T(1470, 840, 20, 'dim', 'CLOSE 80 % of premium kept');
+    h += T(100, 800, 22, 'dim', 'page ' + (pi + 1) + '/' + M.pages.length + ' · ▲▼ move, past the end = next page') + TR(1820, 800, 26, 'lab', 'open P / L <span class="' + (plAll >= 0 ? 'up' : 'dn') + '">' + sg(plAll) + ' ◆</span>');
+    var cur = M.flat[sel], act = cur.st === 'SH' ? ['SELL ' + TICKS[cur.k], 'var(--dn)'] : ['CLOSE EARLY', 'var(--amb)'];
+    h += chipTxt(820, 794, 280, 36, act[1], act[0], 22);                // action of the selected row = the SELECT key
+    // owner 25 Nov: ONE plain number each (fees already in it, no explanation line)
+    var sn = 0, cn = 0;
+    for (var j = 0; j < STOCKS; j++) if (S.h[j] > 0) sn += Math.floor(S.h[j] * fillSell(S.px[j], j) / 100) - S.f;
+    P.pos.forEach(function (p) { var c = p.mark * p.q; cn += (p.bs === 's' ? -c : c) - P.fee * p.q; });
+    if (P.pf !== 2 && stocks) h += T(100, 842, 32, '', 'If you sell all now: ' + fmt(sn) + ' ◆');
+    if (P.pf !== 1 && opts) h += TR(1820, 842, 32, '', 'If you close all now: <span class="' + (cn >= 0 ? 'up' : 'dn') + '">' + sg(cn) + ' ◆</span>');
+    h += A(100, 896, 10, 22, '', '', 'background:var(--amb);border-radius:3px') + T(120, 892, 20, 'dim', 'amber bar = wheel: shares with a short call on them') + T(740, 892, 20, 'dim', 'ALERT report within 48 h') + T(1030, 892, 20, 'dim', 'ITM short option ends inside the money') + T(1470, 892, 20, 'dim', 'CLOSE 80 % of premium kept');
     return h;
   }
 
   // ---------------- sunburst model (sector = inner ring, stock = outer ring) from shares + cash put collateral
   function slices(S, P) {
-    var M = build(S, P), bySec = {}, secs = [], tot = 0, flat = [];
+    var M = build(S, P, true), bySec = {}, secs = [], tot = 0, flat = [];
     M.groups.forEach(function (gr) {
       var k = gr.k, v = 0, names = [];
       gr.rows.forEach(function (r) { if (r.st === 'SH') { v += r.val; names.push('SHARES'); } else { names.push(STRAT[r.st][0]); if (r.st === 'SP' && r.p.m === 'cash') v += r.p.K * r.q; } });
@@ -220,12 +244,17 @@ var PF = (function () {
   }
 
   // ---------------- register pages + bars (entry buttons only in free slots)
-  PAGES.portfolio = pPortfolio; PAGES.results = pResults;
-  BARS.portfolio = ['BACK', '▲', '▼', 'MY SHARES', 'RESULTS', 'OPEN'];
+  PAGES.portfolio = PAGES.shares = PAGES.myopt = pPortfolio; PAGES.results = pResults;      // shares / myopt = old names, same page
+  BARS.portfolio = ['BACK', '▲', '▼', 'FILTER', 'RESULTS', ''];
   BARS.results = ['BACK', '', '', '◀ VIEW', 'VIEW ▶', ''];
-  BARS.shares[3] = 'PORTFOLIO'; BARS.shares[4] = 'RESULTS'; BARS.myopt[3] = 'PORTFOLIO';
   var baseBar = bar;
   bar = function (S) {
+    if (S.p === 'portfolio' || S.p === 'shares' || S.p === 'myopt') {                       // SELECT = the action of the picked row
+      var Pp = parseP(S), Mm = build(S, Pp), r0 = Mm.flat[Math.max(0, Math.min(Mm.flat.length - 1, S.sel))];
+      if (S.p === 'shares') Pp.pf = 1; else if (S.p === 'myopt') Pp.pf = 2;
+      Mm = build(S, Pp); r0 = Mm.flat[Math.max(0, Math.min(Mm.flat.length - 1, S.sel))];
+      BARS[S.p] = ['BACK', '▲', '▼', 'FILTER', 'RESULTS', r0 ? (r0.st === 'SH' ? 'SELL' : 'CLOSE EARLY') : ''];
+    }
     if (S.p === 'results') { var P = parseP(S); BARS.results = ['BACK', P.view ? '▲' : '', P.view ? '▼' : '', '◀ VIEW', 'VIEW ▶', P.view ? '' : (P.val ? 'SHOW INCOME' : 'SHOW VALUE')]; }
     return baseBar(S);
   };

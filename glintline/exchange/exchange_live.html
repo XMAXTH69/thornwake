@@ -4,8 +4,8 @@
 /* Glint Exchange LIVE page (25 Nov 2026). Look = flow_B mock-up (TWS-style, palette A Midnight Floor). ONE page per player screen, 1920x1080.
    The game only changes the URL #fragment -> hashchange -> redraw, no reload (same pattern as kiosk_live.html).
    URL   exchange_live.html[?demo=1][&dbg=1]#p=<page>&c=..&b=..&px=..&pv=..&sel=..&k=..&side=buy|sell&q=..&h=..&cb=..&ch=..&r=..&f=..&n=..
-   p    attract|market|stock|amount|total|wait|result|shares|move  + OPTIONS pages chain|ticket|oreview|myopt|oclose (keys: exchange_options.js) + ACCOUNT pages portfolio|results (keys: exchange_portfolio.js)      c free glint (int)   b banked glint (int)
-   px   50 prices in CENTS, board order   pv 50 prices 24 h ago (cents)   sel highlighted row (market: stock id; shares: row in the owned list)
+   p    attract|market|stock|amount|total|wait|result|move  + OPTIONS pages chain|ticket|oreview|oclose (keys: exchange_options.js) + ACCOUNT pages portfolio|results (keys: exchange_portfolio.js)      c free glint (int)   b banked glint (int)
+   px   50 prices in CENTS, board order   pv 50 prices 24 h ago (cents)   sel highlighted row (market: stock id; portfolio: row in the FILTERED list, see exchange_portfolio.js)
    k    stock id   side buy|sell   q shares   h 50 owned counts   cb 50 cost bases (glint x 100, fee included)   ch 13 chart prices (cents)
    r    ok|kind|qty|glint|fee|text   (kind buy|sell|in|out; text URL-encoded; on ok results text = optional result line, e.g. "+12 glint result")
    pz   1 = MARKET PAUSED (the price script waits for the game-link numbers): amber strip on every page + text on the wait page; 0/missing = normal
@@ -147,9 +147,9 @@ function parse() {
 var SLOTS = ['back', 'up', 'down', 'minus', 'plus', 'select'], GAP = (W - 6 * 260) / 7;
 function barX(i) { return Math.round(GAP * (i + 1) + 260 * i); }
 var BARS = {
-  market: ['CLOSE', '▲', '▼', 'MY SHARES', 'MOVE GLINT', 'OPEN'], stock: ['BACK', 'BUY', 'SELL', '', 'OPTIONS (soon)', ''],
-  amount: ['BACK', '+10', '−10', '−1', '+1', 'NEXT'], total: ['BACK', '', '', '', '', 'BUY NOW'], result: ['MARKET', '', '', 'MY SHARES', '', 'BACK TO STOCK'],
-  shares: ['BACK', '▲', '▼', '', '', 'OPEN'], move: ['BACK', 'IN 100', 'OUT 100', 'OUT 1,000', 'IN 1,000', 'OUT ALL'], wait: ['', '', '', '', '', '']
+  market: ['CLOSE', '▲', '▼', 'MY PORTFOLIO', 'MOVE GLINT', 'OPEN'], stock: ['BACK', 'BUY', 'SELL', '', 'OPTIONS (soon)', ''],
+  amount: ['BACK', '+10', '−10', '−1', '+1', 'NEXT'], total: ['BACK', '', '', '', '', 'BUY NOW'], result: ['MARKET', '', '', 'MY PORTFOLIO', '', 'BACK TO STOCK'],
+  move: ['BACK', 'IN 100', 'OUT 100', 'OUT 1,000', 'IN 1,000', 'OUT ALL'], wait: ['', '', '', '', '', '']
 };
 function bar(S) {
   var L = (BARS[S.p] || BARS.wait).slice();
@@ -297,23 +297,6 @@ function pResult(S) {
   rows.forEach(function (rw, i) { var y = 420 + i * 78; h += T(100, y, 36, 'lab', rw[0]) + TR(1760, y, 40, '', esc(rw[1])) + A(100, y + 58, 1660, 2, '', '', 'background:var(--line)'); });
   return h;
 }
-function ownedList(S) { var o = []; for (var i = 0; i < STOCKS; i++) if (S.h[i] > 0) o.push(i); return o; }
-function pShares(S) {
-  var h = frame(S, ''), L = ownedList(S), tv = 0, tc = 0;
-  h += T(100, 108, 30, 'dim', 'MY SHARES') ;
-  h += T(100, 152, 34, 'dim', 'Stock') + TR(900, 152, 34, 'dim', 'shares') + TR(1200, 152, 34, 'dim', 'value') + TR(1480, 152, 34, 'dim', 'cost') + TR(1780, 152, 34, 'dim', 'profit / loss') + A(100, 196, 1700, 2, '', '', 'background:var(--line)');
-  if (!L.length) h += TC(400, 50, 'dim', 'You own no shares yet.') + TC(480, 34, 'dim', 'Open a stock and press BUY.');
-  L.forEach(function (i, n) {
-    var y = 212 + n * 56, val = S.h[i] * S.px[i] / 100, cost = S.cb[i] / 100, pl = cost ? (val - cost) / cost * 100 : 0; tv += val; tc += cost;
-    if (n === S.sel) h += A(80, y - 4, 1760, 54, '', '', 'background:#7FD4FF33;border-left:8px solid var(--acc);box-sizing:border-box');
-    h += T(120, y, 32, '', esc(NAMES[i])) + TR(900, y, 32, 'lab', fmt(S.h[i])) + TR(1200, y, 32, '', fmt(val) + ' ◆') + TR(1480, y, 32, 'lab', fmt(cost) + ' ◆') + TR(1780, y, 32, pl >= 0 ? 'up' : 'dn', sg(pl, 1) + ' %');
-  });
-  if (L.length) { var tp = tc ? (tv - tc) / tc * 100 : 0; h += A(100, 784, 1700, 2, '', '', 'background:var(--line)') + T(100, 796, 34, '', 'Total') + TR(1200, 796, 34, '', fmt(tv) + ' ◆') + TR(1480, 796, 34, 'lab', fmt(tc) + ' ◆') + TR(1780, 796, 34, tp >= 0 ? 'up' : 'dn', sg(tp, 1) + ' %');
-    // owner 25 Nov: ONE plain number = glint a sale of everything gives now (spread + fee per order already in it, no explanation line)
-    var sn = 0; L.forEach(function (i) { sn += Math.floor(S.h[i] * fillSell(S.px[i], i) / 100) - S.f; });
-    h += T(100, 842, 32, '', 'If you sell all now: ' + fmt(sn) + ' ◆'); }
-  return h;
-}
 function pMove(S) {
   var h = frame(S, '');
   h += T(100, 108, 30, 'dim', 'MOVE GLINT · Exchange account ⇄ vault');
@@ -323,7 +306,7 @@ function pMove(S) {
   h += T(100, 480, 36, 'lab', 'Only free glint can buy shares. Banked glint is safe in the vault.') + T(100, 540, 30, 'dim', 'IN = vault → Exchange   ·   OUT = Exchange → vault') + T(100, 640, 30, 'dim', 'Shares are not moved: only glint.');
   return h;
 }
-var PAGES = { attract: pAttract, market: pMarket, stock: pStock, amount: pAmount, total: pTotal, wait: pWait, result: pResult, shares: pShares, move: pMove };
+var PAGES = { attract: pAttract, market: pMarket, stock: pStock, amount: pAmount, total: pTotal, wait: pWait, result: pResult, move: pMove };      // MY PORTFOLIO (+ old p=shares / p=myopt) = exchange_portfolio.js
 
 // ---------- renderer (fragment only)
 var lastS = null;
@@ -347,7 +330,6 @@ function demoInit() {
   for (var i = 0; i < STOCKS; i++) { var h = [BASE[i]], v = BASE[i]; for (var j = 0; j < 12; j++) { v = Math.max(100, Math.round(v * (1 + rnd(-.03, .03)))); h.push(v); } D.hist.push(h); D.px[i] = h[12]; D.pv[i] = h[0]; D.h.push(0); D.cb.push(0); }
   [[2, 100], [3, 400], [6, 50]].forEach(function (o) { D.h[o[0]] = o[1]; D.cb[o[0]] = Math.round(o[1] * D.px[o[0]] * (1 + rnd(-.04, .05)) + 500); });
 }
-function ownedD() { var o = []; for (var i = 0; i < STOCKS; i++) if (D.h[i] > 0) o.push(i); return o; }
 function demoWrite() {
   var u = 'p=' + D.p + '&c=' + D.c + '&b=' + D.b + '&px=' + D.px.join(',') + '&pv=' + D.pv.join(',') + '&sel=' + D.sel + '&k=' + D.k + '&side=' + D.side + '&q=' + D.q + '&h=' + D.h.join(',') + '&cb=' + D.cb.join(',') + '&ch=' + D.hist[D.k].slice(-13).join(',') + '&f=' + D.f + '&n=' + (D.n = (D.n || 0) + 1) + (D.pz ? '&pz=1' : '');
   if (D.r) u += '&r=' + D.r;
@@ -371,7 +353,7 @@ function press(id) {
   if (p === 'attract') { go('market'); }
   else if (p === 'market') {
     if (id === 'back') go('attract'); else if (id === 'up') D.sel = (D.sel + STOCKS - 1) % STOCKS; else if (id === 'down') D.sel = (D.sel + 1) % STOCKS; else if (id === 'pgup') D.sel = (D.sel + STOCKS - 10) % STOCKS; else if (id === 'pgdn') D.sel = (D.sel + 10) % STOCKS;
-    else if (id === 'minus') { D.sel = 0; go('shares'); } else if (id === 'plus') go('move'); else if (id === 'select') { D.k = D.sel; go('stock'); }
+    else if (id === 'minus') { D.sel = 0; go('portfolio'); } else if (id === 'plus') go('move'); else if (id === 'select') { D.k = D.sel; go('stock'); }
   } else if (p === 'stock') {
     if (id === 'back') go('market');
     else if (id === 'up') { D.side = 'buy'; D.q = Math.min(1, maxBuy()) || 1; go('amount'); }
@@ -384,11 +366,7 @@ function press(id) {
     if (id === 'back') go('amount'); else if (id === 'select') { showDlg(); return; }
   } else if (p === 'result') {
     var mv = /\|(in|out)\|/.test(D.r);
-    if (id === 'back') { D.r = ''; go('market'); } else if (id === 'minus') { D.r = ''; D.sel = 0; go('shares'); } else if (id === 'select') { D.r = ''; go(mv ? 'move' : 'stock'); }
-  } else if (p === 'shares') {
-    var L = ownedD();
-    if (id === 'back') go('market'); else if (id === 'up' && L.length) D.sel = (D.sel + L.length - 1) % L.length; else if (id === 'down' && L.length) D.sel = (D.sel + 1) % L.length;
-    else if (id === 'select' && L.length) { D.k = L[Math.min(D.sel, L.length - 1)]; go('stock'); }
+    if (id === 'back') { D.r = ''; go('market'); } else if (id === 'minus') { D.r = ''; D.sel = 0; go('portfolio'); } else if (id === 'select') { D.r = ''; go(mv ? 'move' : 'stock'); }
   } else if (p === 'move') {
     var amt = { up: ['in', 100], down: ['out', 100], minus: ['out', 1000], plus: ['in', 1000], select: ['out', -1] }[id];
     if (id === 'back') go('market');

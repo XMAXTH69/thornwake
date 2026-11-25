@@ -1,6 +1,7 @@
 // Glint Exchange - DEMO state for MY PORTFOLIO + MY RESULTS (26 Nov 2026). ONE job: make the two pages clickable in ?demo=1 with FAKE numbers.
 // The game never loads any of this: it only sends the real fragment (keys at the top of exchange_portfolio.js). Loaded AFTER exchange_portfolio.js.
-// Demo ways in: MY SHARES -> PORTFOLIO / RESULTS buttons, MY OPTIONS -> PORTFOLIO, or start with  exchange_live.html?demo=1#p=portfolio  (also #p=results&rv=1&ri=0&sel=2).
+// Demo ways in: market / stock page MY PORTFOLIO button, or start with  exchange_live.html?demo=1#p=portfolio&pf=1  (pf 0 ALL | 1 SHARES | 2 OPTIONS; also #p=results&rv=1&ri=0&sel=2).
+// FILTER key cycles pf, SELL (shares row) goes to the sell amount page, CLOSE EARLY (option row) to p=oclose. Old p=shares / p=myopt in the demo state = portfolio with pf 1 / 2.
 (function () {
   'use strict';
   if (!DEMO) return;
@@ -36,8 +37,10 @@
   var TOP = [[3, 820, 310, 90, 540], [2, 300, 760, 140, 210], [12, 260, 410, 260, -90], [6, 150, 90, 20, 380], [34, 120, 60, 310, 40], [24, 480, 0, 0, -310], [31, 90, 130, 210, 30], [0, 60, 120, 80, 60], [20, 140, 40, 30, -50], [40, 70, 20, 0, 60]];
 
   var prevWrite = demoWrite;
+  var legacyPf;                                                      // pf to use when a core/options path still says D.p = shares / myopt
   demoWrite = function () {
     if (!D) return prevWrite();
+    if (D.p === 'shares' || D.p === 'myopt') { D.pf = legacyPf !== undefined ? legacyPf : D.p === 'shares' ? 1 : 2; D.p = 'portfolio'; D.sel = 0; }
     prevWrite();
     if (D.p !== 'portfolio' && D.p !== 'results') return;
     ensure();
@@ -49,7 +52,8 @@
     });
     u = setKey(setKey(u, 'h', free.join(',')), 'cb', cbf.join(','));
     u += '&mo=' + encodeURIComponent(D.pos.map(function (p) { return [p.k, p.cp, p.bs, p.K, p.e, p.q, p.open, p.mark, p.m, p.end].join(':'); }).join('~'));
-    u += '&hk=' + hk.join('~') + '&pl=' + locked + '&pd=186';
+    u += '&hk=' + hk.join('~') + '&pl=' + locked + '&pd=186&of=2';
+    if (D.p === 'portfolio') u += '&pf=' + (D.pf || 0);
     if (D.p === 'results') {
       TOP.forEach(function (r) { sum += r[1] + r[2] + r[3] + r[4]; });
       u += '&rm=' + history() + '&rt=' + TOP.map(function (r) { return r.join(':'); }).join('~') + '&rtt=' + (sum + 640) + '&rv=' + D.rv + '&ri=' + D.ri;
@@ -61,15 +65,17 @@
   press = function (id) {
     if (!D || D.p === 'wait' || pendingYes) return;
     var p = D.p;
-    if (p === 'shares' && (id === 'minus' || id === 'plus')) { ensure(); D.p = id === 'minus' ? 'portfolio' : 'results'; D.sel = 0; D.rv = 0; return demoWrite(); }
-    if (p === 'myopt' && id === 'minus') { ensure(); D.p = 'portfolio'; D.sel = 0; return demoWrite(); }
-    if (p !== 'portfolio' && p !== 'results') return prevPress(id);
+    if (p !== 'portfolio' && p !== 'results') { legacyPf = D.pf || 0; try { return prevPress(id); } finally { legacyPf = undefined; } }
     var S = parse(), P = PF.parse(S);
     if (p === 'portfolio') {
       var M = PF.build(S, P), n = M.flat.length;
-      if (id === 'back' || id === 'minus') { D.p = 'shares'; D.sel = 0; } else if (id === 'plus') { D.p = 'results'; D.sel = 0; D.rv = 0; }
+      if (id === 'back') { D.p = 'market'; D.sel = 0; } else if (id === 'minus') { D.pf = ((D.pf || 0) + 1) % 3; D.sel = 0; } else if (id === 'plus') { D.p = 'results'; D.sel = 0; D.rv = 0; }
       else if (id === 'up' && n) D.sel = (D.sel + n - 1) % n; else if (id === 'down' && n) D.sel = (D.sel + 1) % n;
-      else if (id === 'select' && n) { D.k = M.flat[Math.min(D.sel, n - 1)].k; D.p = 'stock'; }
+      else if (id === 'select' && n) {
+        var row = M.flat[Math.min(D.sel, n - 1)];
+        if (row.st === 'SH') { D.k = row.k; if (D.h[row.k] > 0) { D.side = 'sell'; D.q = 1; D.p = 'amount'; } else refuse('sell', 'Your ' + NAMES[row.k] + ' shares are locked by a covered call.'); }
+        else { D.k = row.k; D.sel = P.pos.indexOf(row.p); D.p = 'oclose'; }
+      }
       return demoWrite();
     }
     var cnt = P.view === 1 ? PF.slices(S, P).flat.length : Math.min(10, P.top.length);
@@ -82,7 +88,7 @@
 
   var H0 = typeof HASH0 === 'string' ? HASH0 : location.hash, sp = (H0.match(/[#&]p=(\w+)/) || [])[1];
   if (sp === 'portfolio' || sp === 'results') {
-    ensure(); D.p = sp; if (/[#&]pz=1/.test(H0)) D.pz = 1; var m = H0.match(/sel=(\d+)/); D.sel = m ? +m[1] : 0; m = H0.match(/rv=(\d)/); if (m) D.rv = +m[1]; m = H0.match(/ri=(\d)/); if (m) D.ri = +m[1];
+    ensure(); D.p = sp; m = H0.match(/[#&]pf=(\d)/); D.pf = m ? +m[1] : 0; if (/[#&]pz=1/.test(H0)) D.pz = 1; var m = H0.match(/sel=(\d+)/); D.sel = m ? +m[1] : 0; m = H0.match(/rv=(\d)/); if (m) D.rv = +m[1]; m = H0.match(/ri=(\d)/); if (m) D.ri = +m[1];
     demoWrite();
   }
 })();
