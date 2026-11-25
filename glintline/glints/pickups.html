@@ -30,6 +30,7 @@ button.on { background:var(--gold); color:#10181a; }
 <div id="view"></div>
 <header>
   <h1>GLINT PICKUPS</h1>
+  <div class="grp"><button data-m="ground" class="on">GROUND</button><button data-m="air">AIR</button></div>
   <div class="grp"><button data-k="glint" class="on">GLINT</button><button data-k="gold">GOLD</button></div>
   <div class="grp"><button data-c="full" class="on">FULL</button><button data-c="tip">TIP CLOSE-UP</button><button data-c="top">FROM ABOVE</button></div>
   <div class="grp"><button id="sweep" class="on">LIGHT SWEEP</button><button id="wire">WIREFRAME</button></div>
@@ -47,8 +48,13 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
-const FILES = { glint: ['shard_v2_2x', 'shard_v3_2x'], gold: ['shard_gold_v2_2x', 'shard_gold_v3_2x'] };
-const GEM_Y = { glint: 1.2, gold: 1.35 };                       // gem centre height in the 2x models (y up)
+const FILES = { ground: { glint: ['shard_v2_2x', 'shard_v3_2x'], gold: ['shard_gold_v2_2x', 'shard_gold_v3_2x'] },
+                air: { glint: ['shard_v3_2x', 'shard_sky_v3_2x'], gold: ['shard_gold_v3_2x', 'shard_sky_gold_v3_2x'] } };
+const TAGS = { ground: ['BEFORE (v2)', 'AFTER (v3)'], air: ['GROUND look (v3)', 'AIR look (sky v3)'] };
+const NOTES = { ground: document.getElementById('note').innerHTML,
+  air: '<b>Air crystals.</b> Same gem, no ground dial. Instead: a faint aura shell, two crossed orbit rings that circle at the gem height, and a light streak along local +X that the game yaws toward the next crystal. All motion is shader UV scroll. The sky models have the gem centre at the item origin.' };
+let mode = new URLSearchParams(location.search).get('mode') === 'air' ? 'air' : 'ground'; document.querySelectorAll('[data-m]').forEach(x => x.classList.toggle('on', x.dataset.m === mode));
+const GEM_Y = { glint: 1.2, gold: 1.35 }; const AIR_Y = 1.2;                       // gem centre height in the 2x models (y up)
 const TABLE_Y = { glint: 1.44, gold: 1.6 };
 const el = document.getElementById('view');
 const renderer = new THREE.WebGLRenderer({ antialias: true }); renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
@@ -68,14 +74,15 @@ let kind = 'glint', cam = 'full', sweep = true, wire = false; const scrolls = []
 function load(name) { return cache[name] ??= new Promise((res, rej) => loader.load(`models/${name}.glb`, g => res(g.scene), undefined, rej)); }
 async function show() {
   document.getElementById('msg').style.display = 'grid'; scrolls.length = 0;
-  const roots = await Promise.all(FILES[kind].map(load));
+  const roots = await Promise.all(FILES[mode][kind].map(load));
+  document.getElementById('tagL').textContent = TAGS[mode][0]; document.getElementById('tagR').textContent = TAGS[mode][1]; document.getElementById('note').innerHTML = NOTES[mode];
   roots.forEach((r, i) => {
-    holders[i].clear(); const c = r.clone(true); holders[i].add(c);
+    holders[i].clear(); const c = r.clone(true); holders[i].add(c); const isSky = FILES[mode][kind][i].includes('sky'); c.position.y = isSky ? GEM_Y[kind] : 0;
     c.traverse(o => { if (!o.isMesh) return; const m = (o.material = o.material.clone());
       m.wireframe = wire;
-      if (m.name === 'glint_fx') { m.blending = THREE.AdditiveBlending; m.transparent = true; m.depthWrite = false; m.side = THREE.DoubleSide; m.color.set(0); }
+      if (['glint_fx', 'glint_halo', 'glint_streak'].includes(m.name)) { m.blending = THREE.AdditiveBlending; m.transparent = true; m.depthWrite = false; m.side = THREE.DoubleSide; m.color.set(0); }
       if (m.emissiveMap) { m.emissiveMap = m.emissiveMap.clone(); m.emissiveMap.needsUpdate = true; m.emissiveMap.wrapS = m.emissiveMap.wrapT = THREE.RepeatWrapping;
-        scrolls.push({ m, rate: m.name === 'glint_fx' ? [0.30, 0] : [0, 0.35] }); } });
+        scrolls.push({ m, rate: m.name === 'glint_fx' ? [0.30, 0] : m.name === 'glint_halo' ? [0.04, 0] : m.name === 'glint_streak' ? [-0.6, 0] : [0, 0.35] }); } });
   });
   document.getElementById('msg').style.display = 'none'; setCam(cam, true);
 }
@@ -96,6 +103,7 @@ function frame() {
   else { tl.style.top = tr.style.top = '96px'; tr.style.left = 'auto'; tr.style.right = '16px'; }
 }
 document.querySelectorAll('[data-k]').forEach(b => b.onclick = () => { document.querySelectorAll('[data-k]').forEach(x => x.classList.toggle('on', x === b)); kind = b.dataset.k; show(); });
+document.querySelectorAll('[data-m]').forEach(b => b.onclick = () => { document.querySelectorAll('[data-m]').forEach(x => x.classList.toggle('on', x === b)); mode = b.dataset.m; show(); });
 document.querySelectorAll('[data-c]').forEach(b => b.onclick = () => { document.querySelectorAll('[data-c]').forEach(x => x.classList.toggle('on', x === b)); setCam(b.dataset.c); });
 document.getElementById('sweep').onclick = e => { sweep = !sweep; e.target.classList.toggle('on', sweep); };
 document.getElementById('wire').onclick = e => { wire = !wire; e.target.classList.toggle('on', wire); scrolls.length && holders.forEach(h => h.traverse(o => { if (o.isMesh) o.material.wireframe = wire; })); };
