@@ -204,11 +204,11 @@ function pageTwin(p) {
 }
 
 // ---------- BROKER (EXCHANGE window spec 27 Nov): broker_<ship> = ship sold only by the BROKER; own palette (.brk), amber price. Select does nothing here (GlintKiosk DoBuy only posts a HUD), BACK -> rent page
-function pageBroker(key) {
-  var v = CAT.vehicles[key], C = CARD, rentable = v.rent > 0;
+function pageBroker(key, f) {
+  var v = CAT.vehicles[key], C = CARD, rentable = v.rent > 0, pr = f && +f.bp > 0 ? +f.bp : v.price;   // &bp = live broker price (GlintKiosk, 25 Nov)
   var h = base('GLINT EXCHANGE', null) + card() + carImg(v.render, [C[0] + 220, C[1] + 10, C[2] - 220, C[1] + 260]) +
     TC(C[1] + 272, esc(v.name), 62, 'brand', 960) + TC(C[1] + 346, 'SOLD BY THE BROKER', 50, 'brand hi') +
     TC(C[1] + 416, 'at the GLINT EXCHANGE, behind the spawn beside the Museum', 36, 'text') + TC(C[1] + 474, 'The broker only sells to clients. Put your glint to work at the Exchange first.', 30, 'soft', 1000);
-  h += tag(C[2] - 30, C[3] - 100, money(v.price) + ' ◆', false).replace('class="abs tag fade"', 'class="abs tag fade" ').replace('style="top:', 'style="color:#FFB02E;top:');
+  h += tag(C[2] - 30, C[3] - 100, money(pr) + ' ◆', false).replace('class="abs tag fade"', 'class="abs tag fade" ').replace('style="top:', 'style="color:#FFB02E;top:');
   return h + buttons(null, true, 'BACK');
 }

@@ -6,7 +6,7 @@
    URL   kiosk_live.html?pal=<e|vip|aurum|null>[&dbg=1][&still=1]#p=<page>[&y=1][&b=<glint>][&s=<n>]
    p     page name, SAME names GlintKiosk.cs sends (it is unchanged), ALL drawn live:
          attract | own_<car> | buy_<car> | drive_<car> | menu_<car>_<tile> | paint_<car>_<i> | paint_<car>_drive |
-         own_/buy_/rent_/drive_/browse_<plane> (airport) | own_/buy_/rent_/drive_<ship> | broker_<ship> (own BROKER palette, never palette E) |
+         own_/buy_/rent_/drive_/browse_<plane> (airport) | own_/buy_/rent_/drive_<ship> | broker_<ship> (own BROKER palette, never palette E; &bp=<n> = live indexed price from GL_BrokerPrice, else table price) |
          upg_<kind>_<mk> | trail_<i> | rims_<key> | shield | ug_p_<pattern>[_own] | ug_t_<tone>[_own] | twin_buy_<price> | twin_on | twin_off |
          <upg|trail|rims|shield|ug>_drive      (sub-pages + ships: live/kiosk_pages.js; LIGHT LINE + TWIN ribbons = animated canvas).
          An unknown page name draws the attract page and logs a console warning (no video fallback any more).
@@ -197,7 +197,7 @@ function build(f) {
   if ((a[0] === 'own' || a[0] === 'buy' || a[0] === 'drive' || a[0] === 'browse' || a[0] === 'rent') && a.length === 2 && CAT.vehicles[a[1]]) return { key: a[0] + a[1], car: a[1], html: pageCar(a[0], a[1], f) };
   if (a[0] === 'menu' && a.length === 3 && CAT.vehicles[a[1]]) return { key: 'menu' + a[1], car: a[1], html: pageMenu(a[1], +a[2]) };
   if (a[0] === 'paint' && a.length === 3 && CAT.paints[a[1]] && (a[2] === 'drive' || CAT.paints[a[1]][+a[2]])) return { key: 'paint' + a[1] + (a[2] === 'drive' ? 'd' : ''), car: a[1] + a[2], html: pagePaint(a[1], a[2], f) };
-  if (a[0] === 'broker' && a.length === 2 && CAT.vehicles[a[1]] && CAT.vehicles[a[1]].kind === 'ship') return { key: 'broker', car: a[1], html: pageBroker(a[1]), brk: 1 };
+  if (a[0] === 'broker' && a.length === 2 && CAT.vehicles[a[1]] && CAT.vehicles[a[1]].kind === 'ship') return { key: 'broker', car: a[1], html: pageBroker(a[1], f), brk: 1 };
   if (p === 'twin_on' || p === 'twin_off' || /^twin_buy_\d+$/.test(p)) return { key: 'twin', car: p, html: pageTwin(p), start: function (same) { startTrail('STEADY', same, p === 'twin_off' ? .3 : 1, [-26, 26]); } };
   if (a[0] === 'upg' && a.length === 3 && CAT.upg.list.some(function (q) { return q[0] === a[1] && q[1] === +a[2]; })) return { key: 'upg', car: a[1] + a[2], html: pageUpg(a[1], +a[2], f) };
   if (a[0] === 'trail' && a.length === 2 && CAT.trails[+a[1]]) return { key: 'trail', car: a[1], html: pageTrail(+a[1], f), start: function (same) { startTrail(CAT.trails[+a[1]], same); } };
