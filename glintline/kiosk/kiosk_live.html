@@ -171,9 +171,9 @@ function pageCar(kind, vid, f) {       // own_ / buy_ / drive_ / browse_ / rent_
     h += '</div>';
   });
   h += tag(C[2] - 30, C[3] - 100, price, !own);
-  if (kind === 'buy') h += '<div class="abs soft fade" style="left:' + (C[0] + 50) + 'px;top:' + (C[3] - 80) + 'px;font-size:34px">' + (plane && (v.kind !== 'ship' || v.rent) ? 'Banked glint  ·  arrows: rent' : 'Paid from your banked glint') + '</div>';
-  if (kind === 'rent') h += '<div class="abs soft fade" style="left:' + (C[0] + 50) + 'px;top:' + (C[3] - 80) + 'px;font-size:34px">5 minutes  ·  arrows: buy</div>';
-  return h + buttons(own ? (plane ? 'FLY' : 'DRIVE') : kind === 'rent' ? 'RENT' : 'BUY', true, plane ? 'BACK' : own ? 'CUSTOMISE' : null);
+  if (kind === 'buy') h += '<div class="abs soft fade" style="left:' + (C[0] + 50) + 'px;top:' + (C[3] - 80) + 'px;font-size:34px">' + (plane && (v.kind !== 'ship' || v.rent) ? 'Or rent it for 5 minutes  ·  touch RENT' : 'Paid from your banked glint') + '</div>';
+  if (kind === 'rent') h += '<div class="abs soft fade" style="left:' + (C[0] + 50) + 'px;top:' + (C[3] - 80) + 'px;font-size:34px">Rent for 5 minutes  ·  touch BUY to own it</div>';
+  return h + buttons(own ? (plane ? 'FLY' : 'DRIVE') : kind === 'rent' ? 'RENT' : 'BUY', true, plane ? (kind === 'buy' && (v.kind !== 'ship' || v.rent) ? 'RENT' : kind === 'rent' ? 'BUY' : 'BACK') : own ? 'CUSTOMISE' : null);   // 25 Nov owner: 'arrows: rent' unclear -> the chip names where it goes
 }
 function pageMenu(vid, i) {
   var v = CAT.vehicles[vid], T = CAT.menu.filter(function (t) { return t[0] !== 'DRIVE'; }), n = T.length, C = CARD, gap = n <= 4 ? 30 : 14, tw = (C[2] - C[0] - 80 - gap * (n - 1)) / n, y0 = C[1] + 316, y1 = C[3] - 36;
