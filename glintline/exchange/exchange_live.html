@@ -13,7 +13,7 @@
 @font-face{font-family:Brand;src:url(../kiosk/live/fonts/Cinzel.ttf);font-weight:400 900}
 @font-face{font-family:UI;src:url(../kiosk/live/fonts/BarlowSemiCondensed-Bold.ttf)}
 :root{--bg:#070C18;--bg2:#16264A;--pan:#101A33;--line:#2C3E66;--tick:#04070F;--acc:#7FD4FF;--lab:#DCE3EE;--txt:#fff;--up:#2EE59D;--dn:#FF4F64;--dim:#8C9AB5;--amb:#FFB02E}
-html,body{margin:0;height:100%;background:#000;overflow:hidden}
+html,body{margin:0;width:100%;height:100%;background:#04070F;overflow:hidden;position:fixed;inset:0}
 #stage{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0;overflow:hidden;contain:paint;background:var(--bg);font-family:UI,'Segoe UI',Arial,sans-serif;color:var(--txt)}
 #stage::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 70% 70% at 50% 40%,#16264A55,transparent 70%)}
 .a{position:absolute;white-space:nowrap}
@@ -153,8 +153,14 @@ var BASE = [4520,3910,2500,835,910,1980,605,1240,700,1500,880,1100,2200,1650].co
 var T0 = Date.UTC(2026, 10, 25, 0, 0, 0), TICK = 300000;      // price ticks every 5 min UTC (month index 10 = November)
 if (DBG) dbgEl.style.display = 'block';
 var loads = 0, switches = 0; try { loads = +(sessionStorage.getItem('xL') || 0) + 1; sessionStorage.setItem('xL', loads); } catch (e) { loads = 1; }
-function fitStage() { stage.style.transform = 'scale(' + Math.min(innerWidth / W, innerHeight / H) + ')'; }
-addEventListener('resize', fitStage); fitStage();
+function fitStage() {
+  var vv = window.visualViewport, w = document.documentElement.clientWidth || innerWidth, h = innerHeight;
+  if (vv && vv.scale === 1) { w = Math.min(w, vv.width) || w; h = vv.height || h; }
+  var k = Math.min(w / W, h / H), dpr = devicePixelRatio || 1;
+  var x = Math.round((w - W * k) / 2 * dpr) / dpr, y = Math.round((h - H * k) / 2 * dpr) / dpr;
+  stage.style.transform = 'translate(' + x + 'px,' + y + 'px) scale(' + k + ')';
+}
+addEventListener('resize', fitStage); if (window.visualViewport) visualViewport.addEventListener('resize', fitStage); fitStage();
 if (DEMO) stage.className = 'demo';
 
 // ---------- helpers
