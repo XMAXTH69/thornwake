@@ -30,7 +30,7 @@
 <header>
   <h1>BASEMENT</h1>
   <div class="grp" id="vers">
-    <button data-v="v1">V1</button><button data-v="v2">V2</button><button data-v="v3">V3</button><button data-v="v4">V4</button><button data-v="cmp" class="on">V3 | V4</button><button data-v="all">ALL</button>
+    <button data-v="v1">V1</button><button data-v="v2">V2</button><button data-v="v3" class="on">V3</button><button data-v="v4">V4</button><button data-v="cmp">V3 | V4</button><button data-v="all">ALL</button>
   </div>
   <div class="grp"><button id="gear">GEAR UP</button><button id="wire">WIREFRAME</button><button id="reset">RESET VIEW</button></div>
 </header>
@@ -52,7 +52,7 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 const LABELS = {
   v1:  '<b>V1</b> — entry light fighter + trainer: Northstar arrow with canards, tandem two-seat bubble canopy, armoured ram nose, one engine with cheek intakes, big fin and line stinger. Built from flat plates.',
   v2:  '<b>V2 · SMOOTH HARD-SURFACE</b> — the KB7 V11 recipe: longer sharp ram nose, slimmer body, smooth curved skins with a crisp chine line nose to tail, gold beltline, one glass bubble over both seats, swept wing tips and fin, panel grooves that follow the curve. GEAR UP folds the wheels away and closes the doors.',
-  v3:  '<b>V3 · LOW COCKPIT</b> — V2 with the cockpit rule: the spine rises from the nose into one long, low tandem glass (19 % of the body depth above the spine line, was 67 %), a thin 2 cm bow between the seats instead of the wide gold band, smaller reclined pilots, instructor seat still a little higher.',
+  v3:  '<b>V3 · LOW COCKPIT</b> — V2 with the cockpit rule: the spine rises from the nose into one long, low tandem glass (19 % of the body depth above the spine line, was 67 %), a thin 2 cm bow between the seats instead of the wide gold band, smaller reclined pilots, instructor seat still a little higher. Fin root now sits in the spine (it hovered a few cm).',
   v4:  '<b>V4 · SHORT TOP GLASS</b> — V3 still read like the old cockpit, so the glass is now 1.9 m long instead of 2.3 m, sits only on top (it no longer wraps down the sides), and is 14 % of the body depth above the spine. Body-coloured sill walls make a real cockpit tub, and the bow between the seats is dark instead of gold.',
   cmp: '<b>V3 | V4</b> — same ship: the long side-wrapping tandem glass (left) vs the short low glass on top only (right).',
   all: '<b>ALL</b> — every version, same light and scale: V1 · V2 · V3 · V4.'
@@ -149,7 +149,7 @@ function resize() {
   const w = innerWidth, h = innerHeight; renderer.setSize(w, h); camera.aspect = w / h; camera.updateProjectionMatrix();
 }
 addEventListener('resize', () => { resize(); show(mode); });
-resize(); show('cmp');
+resize(); show('v3');
 
 const p = new THREE.Vector3();
 renderer.setAnimationLoop(() => {
