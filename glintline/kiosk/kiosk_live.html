@@ -176,8 +176,8 @@ function pageCar(kind, vid, f) {       // own_ / buy_ / drive_ / browse_ / rent_
   return h + buttons(own ? (plane ? 'FLY' : 'DRIVE') : kind === 'rent' ? 'RENT' : 'BUY', true, plane ? (kind === 'buy' && (v.kind !== 'ship' || v.rent) ? 'RENT' : kind === 'rent' ? 'BUY' : 'BACK') : own ? 'CUSTOMISE' : null);   // 25 Nov owner: 'arrows: rent' unclear -> the chip names where it goes
 }
 function pageMenu(vid, i) {
-  var v = CAT.vehicles[vid], T = CAT.menu.filter(function (t) { return t[0] !== 'DRIVE'; }), n = T.length, C = CARD, gap = n <= 4 ? 30 : 14, tw = (C[2] - C[0] - 80 - gap * (n - 1)) / n, y0 = C[1] + 316, y1 = C[3] - 36;
-  var h = base('CUSTOMISE · ' + v.name, [i, n]) + card() + carImg(v.render, [C[0] + 400, C[1] + 24, C[2] - 400, C[1] + 290]);
+  var v = CAT.vehicles[vid], T = CAT.menu.filter(function (t) { return t[0] !== 'DRIVE'; }), n = T.length, C = CARD, gap = n <= 4 ? 30 : 14, tw = (C[2] - C[0] - 80 - gap * (n - 1)) / n, y0 = C[1] + 226, y1 = C[3] - 30;   // 25 Nov owner: taller tiles so stacked words fit
+  var h = base('CUSTOMISE · ' + v.name, [i, n]) + card() + carImg(v.render, [C[0] + 420, C[1] + 18, C[2] - 420, C[1] + 210]);
   T.forEach(function (t, j) {
     var x0 = C[0] + 40 + j * (tw + gap), on = j === i, cx = tw / 2, col = on ? 'var(--accent)' : 'var(--soft)', ic = '';
     if (t[0] === 'UPGRADES') ic = '<img src="live/img/motor.webp" style="position:absolute;left:10px;top:24px;width:' + (tw - 20) + 'px;height:100px;object-fit:contain;opacity:' + (on ? 1 : .55) + '">';
@@ -189,8 +189,10 @@ function pageMenu(vid, i) {
     else if (t[0] === 'FAVOURITE') ic = star(cx, 82, 44, col, .4).replace(/class="abs [^"]*" style="[^"]*"/, 'style="position:absolute;left:' + (cx - 48) + 'px;top:34px"');
     else ic = '<svg style="position:absolute;left:' + (cx - 40) + 'px;top:36px" width="84" height="92"><polygon fill="' + col + '" points="6,2 80,46 6,90 26,46"/></svg>';
     h += '<div class="abs tile' + (on ? ' on' : '') + ' fade" style="' + box(x0, y0, x0 + tw, y1) + ';border-radius:22px;align-items:flex-start;background:rgba(var(--tabRGB),' + (on ? .94 : .67) + ')">' + ic +
-      '<div style="position:absolute;left:0;right:0;top:172px;text-align:center;font-size:36px;white-space:nowrap;color:' + (on ? 'var(--text)' : 'var(--soft)') + '" data-fit="' + (tw - 14) + '">' + esc(t[0]) + '</div>' +
-      '<div class="soft" style="position:absolute;left:0;right:0;top:250px;text-align:center;font-size:28px;white-space:nowrap" data-fit="' + (tw - 14) + '">' + esc(t[1]) + '</div></div>';
+      '<div style="position:absolute;left:0;right:0;top:182px;text-align:center;font-size:36px;white-space:nowrap;color:' + (on ? 'var(--text)' : 'var(--soft)') + '" data-fit="' + (tw - 14) + '">' + esc(t[0]) + '</div>' +
+      (t[1].indexOf(' · ') > 0   // 25 Nov owner: 'Tyres · rims · spinners' was squeezed onto one tiny line -> one word per line, normal size
+        ? t[1].split(' · ').map(function (w, k, A) { return '<div class="soft" style="position:absolute;left:0;right:0;top:' + (244 + k * 36) + 'px;text-align:center;font-size:30px;white-space:nowrap" data-fit="' + (tw - 14) + '">' + esc(w.charAt(0).toUpperCase() + w.slice(1)) + '</div>'; }).join('')
+        : '<div class="soft" style="position:absolute;left:0;right:0;top:262px;text-align:center;font-size:30px;white-space:nowrap" data-fit="' + (tw - 14) + '">' + esc(t[1]) + '</div>') + '</div>';
   });
   return h + buttons('OPEN', true, 'BACK', true);
 }
