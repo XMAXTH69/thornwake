@@ -179,8 +179,102 @@
     1
    ],
    "render": "car_rocket"
+  },
+  "swift": {
+   "name": "SWIFT",
+   "kind": "plane",
+   "line": "Forgiving. Hard to stall.",
+   "price": 8000,
+   "stats": [
+    3,
+    3,
+    3,
+    5,
+    2
+   ],
+   "render": "plane_swift",
+   "rent": 50,
+   "stat_names": [
+    "SPEED",
+    "CLIMB",
+    "TURN",
+    "SLOW FLY",
+    "RAM POWER"
+   ]
+  },
+  "kestrel": {
+   "name": "KESTREL",
+   "kind": "plane",
+   "line": "Tightest turns. Built for hoops.",
+   "price": 12000,
+   "stats": [
+    4,
+    3,
+    5,
+    2,
+    2
+   ],
+   "render": "plane_kestrel",
+   "rent": 75,
+   "stat_names": [
+    "SPEED",
+    "CLIMB",
+    "TURN",
+    "SLOW FLY",
+    "RAM POWER"
+   ]
+  },
+  "halo": {
+   "name": "HALO",
+   "kind": "plane",
+   "line": "Hovers. Lands anywhere. Tough.",
+   "price": 16000,
+   "stats": [
+    2,
+    5,
+    3,
+    5,
+    4
+   ],
+   "render": "plane_halo",
+   "rent": 100,
+   "stat_names": [
+    "SPEED",
+    "CLIMB",
+    "TURN",
+    "SLOW FLY",
+    "RAM POWER"
+   ]
+  },
+  "meridian": {
+   "name": "MERIDIAN",
+   "kind": "plane",
+   "line": "Fastest plane. Wide in turns.",
+   "price": 40000,
+   "stats": [
+    5,
+    4,
+    2,
+    1,
+    3
+   ],
+   "render": "plane_meridian",
+   "rent": 150,
+   "stat_names": [
+    "SPEED",
+    "CLIMB",
+    "TURN",
+    "SLOW FLY",
+    "RAM POWER"
+   ]
   }
  },
+ "air_order": [
+  "swift",
+  "kestrel",
+  "halo",
+  "meridian"
+ ],
  "menu": [
   [
    "PAINT",

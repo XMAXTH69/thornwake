@@ -7,8 +7,8 @@
    p     page name, SAME names as the mp4 set (GlintKiosk.cs unchanged):  attract | own_<car> | buy_<car> | drive_<car> |
          menu_<car>_<tile> | paint_<car>_<i> | paint_<car>_drive |
          upg_<kind>_<mk> | trail_<i> | rims_<key> | shield | ug_p_<pattern>[_own] | ug_t_<tone>[_own] | <upg|trail|rims|shield|ug>_drive
-         (26 Nov: drawn live by live/kiosk_pages.js; LIGHT LINE ribbon = animated canvas). Every other page (planes: browse/own/buy/rent/drive_<plane>)
-         = HYBRID fallback: the page's existing mp4 <pal>/<page>.mp4 plays INSIDE this page (lf/lt loop), no reload.
+         (26 Nov: drawn live by live/kiosk_pages.js; LIGHT LINE ribbon = animated canvas). browse_/own_/buy_/rent_/drive_<plane> (air_order, airport kiosk) go through the same car renderer. Every other page
+         = HYBRID fallback (26 Nov kept only for pages that could still arrive: broker_*, twin_*, ships, unknown): the page's existing mp4 <pal>/<page>.mp4 plays INSIDE this page (lf/lt loop), no reload.
    DRIVE  25 Nov: own DRIVE button bottom-right (hit zone 'drive' = mirror of BACK) on CUSTOMISE + sub-pages; no DRIVE tiles in lists.
    y=1   optional: this paint/item is already owned -> tag YOURS, button CHOOSE.     b=<n>  optional: banked glint shown in the top bar.
    s=<n> optional send counter, ignored (lets the script re-send the same page).     Unknown keys are ignored (format reusable, e.g. EXCHANGE).
@@ -124,23 +124,30 @@ function pageAttract() {
     '<div class="abs ctr fade" style="top:600px;font-size:56px">Step on the glowing square</div>' +
     '<div class="abs ctr soft fade" style="top:676px;font-size:40px">then touch START to choose your car or bike</div>' + buttons('START', false, null);
 }
-function pageCar(kind, vid, f) {
-  var v = CAT.vehicles[vid], k = CAT.order.indexOf(vid), C = CARD;
-  if (kind === 'drive') return base('READY', [k, CAT.order.length]) + card() + carImg(v.render, [C[0] + 220, C[1] + 60, C[2] - 220, C[1] + 420]) +
-    '<div class="abs ctr fade" style="top:' + (C[1] + 456) + 'px;font-size:58px">Your ' + esc(title(v.name)) + ' waits on the start pad</div>' +
-    '<div class="abs ctr hi fade" style="top:' + (C[1] + 548) + 'px;font-size:46px">Walk to it and sit to drive</div>' + buttons(null, false, 'BACK');
-  var own = kind === 'own', h = base(own ? 'YOUR RIDE' : 'IN THE SHOP', [k, CAT.order.length]) + card() + carImg(v.render, [C[0] + 30, C[1] + 170, C[0] + 450, C[1] + 480]);
+function pageCar(kind, vid, f) {       // own_ / buy_ / drive_ / browse_ / rent_ <car or plane>; planes (kind 'plane') only switch titles, texts, bar names, dots and buttons
+  var v = CAT.vehicles[vid], plane = v.kind === 'plane', ord = plane ? CAT.air_order : CAT.order, k = ord.indexOf(vid), C = CARD, own = kind === 'own';
+  var ttl = { browse: plane ? 'CHOOSE YOUR PLANE' : 'CHOOSE YOUR RIDE', own: plane ? 'YOUR PLANE' : 'YOUR RIDE', buy: plane ? 'IN THE HANGAR' : 'IN THE SHOP', drive: 'READY', rent: 'RENT A PLANE' }[kind];
+  var price = kind === 'rent' ? money(v.rent) + ' · 5 MIN' : own ? 'YOURS' : (v.price ? money(v.price) + ' glint' : 'FREE');
+  if (kind === 'drive') return base(ttl, [k, ord.length]) + card() + carImg(v.render, [C[0] + 220, C[1] + 60, C[2] - 220, C[1] + 420]) +
+    '<div class="abs ctr fade" style="top:' + (C[1] + 456) + 'px;font-size:58px">Your ' + esc(title(v.name)) + (plane ? ' waits on the apron' : ' waits on the start pad') + '</div>' +
+    '<div class="abs ctr hi fade" style="top:' + (C[1] + 548) + 'px;font-size:46px">' + (plane ? 'Walk to it and sit to fly' : 'Walk to it and sit to drive') + '</div>' + buttons(null, false, 'BACK');
+  var h = base(ttl, [k, ord.length]);
+  if (kind === 'browse') return h + card() + carImg(v.render, [C[0] + 140, C[1] + 70, C[2] - 140, C[1] + 460]) +
+    '<div class="abs ctr brand fade" id="nm" style="top:' + (C[1] + 478) + 'px;font-size:80px">' + esc(v.name) + '</div>' +
+    '<div class="abs ctr soft fade" style="top:' + (C[1] + 585) + 'px;font-size:42px">' + esc(v.line) + '</div>' + tag(C[2] - 30, C[1] + 30, price, v.price > 0) + buttons('DETAILS', true, 'BACK');
+  h += card() + carImg(v.render, [C[0] + 30, C[1] + 170, C[0] + 450, C[1] + 480]);
   h += '<div class="abs brand fade" id="nm" style="left:' + (C[0] + 480) + 'px;top:' + (C[1] + 50) + 'px;font-size:66px;white-space:nowrap">' + esc(v.name) + '</div>';
   h += '<div class="abs soft fade" style="left:' + (C[0] + 484) + 'px;top:' + (C[1] + 140) + 'px;font-size:36px">' + esc(v.line) + '</div>';
-  var names = CAT.stat_names, step = names.length <= 4 ? 84 : Math.floor(252 / (names.length - 1));
+  var names = v.stat_names || CAT.stat_names, step = names.length <= 4 ? 84 : Math.floor(252 / (names.length - 1));
   names.forEach(function (nm, i) {
     var y = C[1] + 222 + i * step; h += '<div class="abs soft fade" style="left:' + (C[0] + 484) + 'px;top:' + (y + 2) + 'px;font-size:32px;width:190px;white-space:nowrap" data-fit="186">' + nm + '</div><div class="abs" style="left:' + (C[0] + 684) + 'px;top:' + (y + 4) + 'px;white-space:nowrap">';
     for (var s = 0; s < 5; s++) h += '<span class="bar"><i data-on="' + (s < v.stats[i] ? 1 : 0) + '" data-d="' + (450 + s * 160) + '"></i></span>';
     h += '</div>';
   });
-  h += tag(C[2] - 30, C[3] - 100, own ? 'YOURS' : (v.price ? money(v.price) + ' glint' : 'FREE'), !own);
-  if (!own) h += '<div class="abs soft fade" style="left:' + (C[0] + 50) + 'px;top:' + (C[3] - 80) + 'px;font-size:34px">Paid from your banked glint</div>';
-  return h + buttons(own ? 'DRIVE' : 'BUY', true, own ? 'CUSTOMISE' : null);
+  h += tag(C[2] - 30, C[3] - 100, price, !own);
+  if (kind === 'buy') h += '<div class="abs soft fade" style="left:' + (C[0] + 50) + 'px;top:' + (C[3] - 80) + 'px;font-size:34px">' + (plane ? 'Banked glint  ·  arrows: rent' : 'Paid from your banked glint') + '</div>';
+  if (kind === 'rent') h += '<div class="abs soft fade" style="left:' + (C[0] + 50) + 'px;top:' + (C[3] - 80) + 'px;font-size:34px">5 minutes  ·  arrows: buy</div>';
+  return h + buttons(own ? (plane ? 'FLY' : 'DRIVE') : kind === 'rent' ? 'RENT' : 'BUY', true, plane ? 'BACK' : own ? 'CUSTOMISE' : null);
 }
 function pageMenu(vid, i) {
   var v = CAT.vehicles[vid], T = CAT.menu.filter(function (t) { return t[0] !== 'DRIVE'; }), n = T.length, C = CARD, gap = n <= 4 ? 30 : 14, tw = (C[2] - C[0] - 80 - gap * (n - 1)) / n, y0 = C[1] + 316, y1 = C[3] - 36;
@@ -185,7 +192,7 @@ function parse() { var f = {}; new URLSearchParams(location.hash.slice(1)).forEa
 function build(f) {
   var p = f.p, a = p.split('_');
   if (p === 'attract') return { key: 'attract', html: pageAttract() };
-  if ((a[0] === 'own' || a[0] === 'buy' || a[0] === 'drive') && a.length === 2 && CAT.vehicles[a[1]]) return { key: a[0] + a[1], car: a[1], html: pageCar(a[0], a[1], f) };
+  if ((a[0] === 'own' || a[0] === 'buy' || a[0] === 'drive' || a[0] === 'browse' || a[0] === 'rent') && a.length === 2 && CAT.vehicles[a[1]]) return { key: a[0] + a[1], car: a[1], html: pageCar(a[0], a[1], f) };
   if (a[0] === 'menu' && a.length === 3 && CAT.vehicles[a[1]]) return { key: 'menu' + a[1], car: a[1], html: pageMenu(a[1], +a[2]) };
   if (a[0] === 'paint' && a.length === 3 && CAT.paints[a[1]] && (a[2] === 'drive' || CAT.paints[a[1]][+a[2]])) return { key: 'paint' + a[1] + (a[2] === 'drive' ? 'd' : ''), car: a[1] + a[2], html: pagePaint(a[1], a[2], f) };
   if (a[0] === 'upg' && a.length === 3 && CAT.upg.list.some(function (q) { return q[0] === a[1] && q[1] === +a[2]; })) return { key: 'upg', car: a[1] + a[2], html: pageUpg(a[1], +a[2], f) };
@@ -253,7 +260,7 @@ fetch('live/catalog_' + PAL + '.json').then(function (r) { return r.json(); }).t
   for (var k in set) { s.setProperty('--' + k, 'rgb(' + rgb(set[k]) + ')'); s.setProperty('--' + k + 'RGB', rgb(set[k])); }
   s.setProperty('--glowA', ((C.glow_a || 150) / 255).toFixed(2));
   c.hitsPx = {}; for (var h in c.hits) c.hitsPx[h] = [c.hits[h][0] * W, c.hits[h][1] * H, c.hits[h][2] * W, c.hits[h][3] * H];
-  var imgs = ['motor', 'blade5']; c.upg.kinds.forEach(function (k) { imgs.push('part_' + k); }); c.rims.forEach(function (r) { imgs.push('rim_' + r.key); }); c.order.forEach(function (v) { imgs.push(c.vehicles[v].render); }); for (var v in c.paints) c.paints[v].forEach(function (p) { imgs.push(p.img); });
+  var imgs = ['motor', 'blade5']; c.upg.kinds.forEach(function (k) { imgs.push('part_' + k); }); c.rims.forEach(function (r) { imgs.push('rim_' + r.key); }); c.order.concat(c.air_order = c.air_order || []).forEach(function (v) { imgs.push(c.vehicles[v].render); }); for (var v in c.paints) c.paints[v].forEach(function (p) { imgs.push(p.img); });
   return Promise.all(imgs.map(function (n) { return new Promise(function (ok) { var im = new Image(); im.onload = function () { IMGDIM[n] = [im.naturalWidth, im.naturalHeight]; ok(); }; im.onerror = ok; im.src = 'live/img/' + n + '.webp'; }); }).concat([document.fonts.load('42px Brand'), document.fonts.load('42px UI')]));
 }).then(function () {
   firstMs = performance.now() - t0; dust(); show(); document.getElementById('ld').style.display = 'none';
