@@ -30,7 +30,7 @@
 <header>
   <h1>KB3 CORSAIR</h1>
   <div class="grp" id="vers">
-    <button data-v="v2" class="on">V2</button><button data-v="v3">V3</button><button data-v="cmp">V2 | V3</button><button data-v="all">ALL</button>
+    <button data-v="v2" class="on">V2</button><button data-v="v3">V3</button><button data-v="v4">V4</button><button data-v="cmp">V3 | V4</button><button data-v="all">ALL</button>
   </div>
   <div class="grp"><button id="gear">GEAR UP</button><button id="wire">WIREFRAME</button><button id="reset">RESET VIEW</button></div>
 </header>
@@ -52,10 +52,11 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 const LABELS = {
   v2:  '<b>V2</b> — low-level striker: stepped wings, one big rear nozzle in a faceted shroud, armoured belly, droop nose, teardrop canopy.',
   v3:  '<b>V3 · SMOOTH HARD-SURFACE</b> — the KB7 V11 recipe: longer sharp nose, slimmer body, smooth curved skins with a crisp chine line nose to tail, gold beltline, one glass canopy bubble, round engine shroud, swept wing tips and fins, panel grooves that follow the curve.',
-  cmp: '<b>V2 | V3</b> — same ship: V2 (left) is built from flat plates, V3 (right) has smooth curved skins with crisp flowing edges.',
-  all: '<b>ALL</b> — every version, same light and scale: V2 · V3.'
+  v4:  '<b>V4</b> — V3 body, wings and gear unchanged, with the V2 cockpit back: faceted teardrop glass, thin gold hoop and gold sill rails.',
+  cmp: '<b>V3 | V4</b> — same ship: V3 (left) with the smooth glass bubble, V4 (right) with the V2 cockpit you picked.',
+  all: '<b>ALL</b> — every version, same light and scale: V2 · V3 · V4.'
 };
-const VERS = ['v2', 'v3'], CMP = ['v2', 'v3'];
+const VERS = ['v2', 'v3', 'v4'], CMP = ['v3', 'v4'];
 
 const el = document.getElementById('view');
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -146,7 +147,7 @@ function resize() {
   const w = innerWidth, h = innerHeight; renderer.setSize(w, h); camera.aspect = w / h; camera.updateProjectionMatrix();
 }
 addEventListener('resize', () => { resize(); show(mode); });
-resize(); show('v2');
+resize(); show('cmp');
 
 const p = new THREE.Vector3();
 renderer.setAnimationLoop(() => {
