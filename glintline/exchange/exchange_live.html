@@ -1,0 +1,335 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Glint Exchange (live)</title>
+<style>
+/* Glint Exchange LIVE page (25 Nov 2026). Look = flow_B mock-up (TWS-style, palette A Midnight Floor). ONE page per player screen, 1920x1080.
+   The game only changes the URL #fragment -> hashchange -> redraw, no reload (same pattern as kiosk_live.html).
+   URL   exchange_live.html[?demo=1][&dbg=1]#p=<page>&c=..&b=..&px=..&pv=..&sel=..&k=..&side=buy|sell&q=..&h=..&cb=..&ch=..&r=..&f=..&n=..
+   p    attract|market|stock|amount|total|wait|result|shares|move      c free glint (int)   b banked glint (int)
+   px   14 prices in CENTS, board order   pv 14 prices 24 h ago (cents)   sel highlighted row (market: stock id; shares: row in the owned list)
+   k    stock id   side buy|sell   q shares   h 14 owned counts   cb 14 cost bases (glint x 100, fee included)   ch 13 chart prices (cents)
+   r    ok|kind|qty|glint|fee|text   (kind buy|sell|in|out; text URL-encoded; on ok results text = optional result line, e.g. "+12 glint result")
+   f    fee per order (default 5)   n send counter (ignored)   unknown keys ignored.   ?demo=1 = fake state + clickable buttons/keys.   ?dbg=1 = counter. */
+@font-face{font-family:Brand;src:url(../kiosk/live/fonts/Cinzel.ttf);font-weight:400 900}
+@font-face{font-family:UI;src:url(../kiosk/live/fonts/BarlowSemiCondensed-Bold.ttf)}
+:root{--bg:#070C18;--bg2:#16264A;--pan:#101A33;--line:#2C3E66;--tick:#04070F;--acc:#7FD4FF;--lab:#DCE3EE;--txt:#fff;--up:#2EE59D;--dn:#FF4F64;--dim:#8C9AB5;--amb:#FFB02E}
+html,body{margin:0;height:100%;background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0;overflow:hidden;background:var(--bg);font-family:UI,'Segoe UI',Arial,sans-serif;color:var(--txt)}
+#stage::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 70% 70% at 50% 40%,#16264A55,transparent 70%)}
+.a{position:absolute;white-space:nowrap}
+.r{text-align:right}.c{text-align:center}
+.dim{color:var(--dim)}.lab{color:var(--lab)}.up{color:var(--up)}.dn{color:var(--dn)}.amb{color:var(--amb)}.acc{color:var(--acc)}
+.brand{font-family:Brand,serif;font-weight:700;letter-spacing:.3em;font-size:36px;color:var(--acc)}
+.panel{background:var(--pan);border:2px solid var(--line);border-radius:18px;box-sizing:border-box}
+.row{height:44px;line-height:44px;font-size:28px}
+.chip{height:38px;line-height:38px;border-radius:6px;color:#04070F;text-align:center;font-size:28px}
+.btn{width:260px;height:110px;top:940px;box-sizing:border-box;border-radius:20px;background:var(--bg2);border:3px solid var(--acc);color:var(--acc);font-size:38px;display:flex;align-items:center;justify-content:center;white-space:nowrap;position:absolute;padding:0 16px}
+.btn.off{background:transparent;border:3px dashed #2C3E6688;color:transparent}
+.btn.soon{opacity:.45;border-color:var(--line);color:var(--dim)}
+.btn.g{background:var(--up);color:#04070F;border-color:var(--up)}.btn.rd{background:var(--dn);color:#04070F;border-color:var(--dn)}
+.demo .btn:not(.off){cursor:pointer}.demo .btn:not(.off):hover{filter:brightness(1.25)}
+.spin{width:110px;height:110px;border-radius:50%;border:12px solid #2C3E66;border-top-color:var(--acc);animation:sp .9s linear infinite}@keyframes sp{to{transform:rotate(360deg)}}
+.pulse{animation:pu 1.6s ease-in-out infinite}@keyframes pu{50%{opacity:.55}}
+#dlg{position:absolute;left:600px;top:330px;width:720px;height:360px;background:#20242C;border-top:8px solid var(--acc);box-shadow:0 20px 60px #000;display:none;z-index:9;font-size:34px;text-align:center}
+#dlg b{display:block;margin:54px 30px 0;font-weight:400;white-space:normal;line-height:1.35}
+#dlg i{position:absolute;bottom:40px;width:200px;height:72px;line-height:72px;font-style:normal;cursor:pointer}
+#dbg{position:fixed;left:6px;top:6px;font:14px monospace;color:#FFB02E;background:#000a;padding:4px 8px;z-index:30;display:none}
+</style></head>
+<body><div id="stage"></div><div id="dbg"></div>
+<script>
+'use strict';
+var Q = new URLSearchParams(location.search), DEMO = Q.get('demo') === '1', DBG = Q.get('dbg') === '1';
+var W = 1920, H = 1080, stage = document.getElementById('stage'), dbgEl = document.getElementById('dbg');
+var NAMES = ['AURUM','NULL WAKE','ECHOES','GLINTLINE','WRENCH','SAFEGUARD','TYRELAB','VOLT','NIGHTLINE','GLTV','PAINTWORKS','KERB TRUST','PETROL & CO','HALO AIR'];
+var BANDS = ['CALM','BUMPY','BUMPY','CALM','BUMPY','CALM','BUMPY','WILD','BUMPY','BUMPY','BUMPY','CALM','CALM','WILD'];
+var SPREAD = { CALM: .25, BUMPY: .5, WILD: 1 }, BCOL = { CALM: 'up', BUMPY: 'amb', WILD: 'dn' };
+var BASE = [4520,3910,2500,835,910,1980,605,1240,700,1500,880,1100,2200,1650];
+var T0 = Date.UTC(2026, 10, 25, 0, 0, 0), TICK = 300000;      // price ticks every 5 min UTC (month index 10 = November)
+if (DBG) dbgEl.style.display = 'block';
+var loads = 0, switches = 0; try { loads = +(sessionStorage.getItem('xL') || 0) + 1; sessionStorage.setItem('xL', loads); } catch (e) { loads = 1; }
+function fitStage() { stage.style.transform = 'scale(' + Math.min(innerWidth / W, innerHeight / H) + ')'; }
+addEventListener('resize', fitStage); fitStage();
+if (DEMO) stage.className = 'demo';
+
+// ---------- helpers
+function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+function fmt(n) { n = Math.round(n); return (n < 0 ? '−' : '') + String(Math.abs(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+function f2(cents) { var v = Math.abs(cents) / 100, s = v.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','); return s; }
+function sg(v, d) { d = d || 0; var s = Math.abs(v).toFixed(d).replace(/\B(?=(\d{3})+(?!\d))/g, ','); return (v < 0 ? '−' : '+') + s; }
+function A(x, y, w, h, cls, html, st) { return '<div class="a ' + (cls || '') + '" style="left:' + x + 'px;top:' + y + 'px;' + (w ? 'width:' + w + 'px;' : '') + (h ? 'height:' + h + 'px;' : '') + (st || '') + '">' + (html == null ? '' : html) + '</div>'; }
+function T(x, y, size, cls, html, w, st) { return A(x, y, w, 0, cls, html, 'font-size:' + size + 'px;line-height:' + Math.round(size * 1.1) + 'px;' + (st || '')); }
+function TR(xr, y, size, cls, html, st) { return A(xr - 900, y, 900, 0, cls + ' r', html, 'font-size:' + size + 'px;line-height:' + Math.round(size * 1.1) + 'px;' + (st || '')); }
+function TC(y, size, cls, html, st) { return A(0, y, 1920, 0, cls + ' c', html, 'font-size:' + size + 'px;line-height:' + Math.round(size * 1.1) + 'px;' + (st || '')); }
+function arr(a, n, d) { var o = []; for (var i = 0; i < n; i++) { var v = a && a[i] !== undefined && a[i] !== '' ? +a[i] : d; o.push(isNaN(v) ? d : v); } return o; }
+function spreadOf(k) { var s = SPREAD[BANDS[k]]; return k <= 3 ? Math.max(s, .5) : s; }
+function fillBuy(px, k) { return Math.ceil(px * (1 + spreadOf(k) / 100) - 1e-9); }
+function fillSell(px, k) { return Math.floor(px * (1 - spreadOf(k) / 100) + 1e-9); }
+
+// ---------- state from the fragment
+function parse() {
+  var S = {}, h = location.hash.replace(/^#/, '');
+  h.split('&').forEach(function (kv) { var i = kv.indexOf('='); if (i < 0) return; S[kv.slice(0, i)] = kv.slice(i + 1); });
+  function dec(s) { try { return decodeURIComponent(String(s).replace(/\+/g, ' ')); } catch (e) { return s; } }
+  function lst(key, n, d) { return arr(S[key] ? S[key].split(',') : null, n, d); }
+  var o = { p: dec(S.p || 'attract'), c: parseInt(S.c) || 0, b: parseInt(S.b) || 0, sel: parseInt(S.sel) || 0, k: Math.max(0, Math.min(13, parseInt(S.k) || 0)),
+    side: S.side === 'sell' ? 'sell' : 'buy', q: Math.max(0, parseInt(S.q) || 0), f: S.f !== undefined && S.f !== '' ? parseInt(S.f) : 5, r: null };
+  o.px = lst('px', 14, 0).map(function (v, i) { return v > 0 ? v : BASE[i]; });
+  o.pv = lst('pv', 14, 0).map(function (v, i) { return v > 0 ? v : o.px[i]; });
+  o.h = lst('h', 14, 0); o.cb = lst('cb', 14, 0);
+  o.ch = S.ch ? S.ch.split(',').map(Number).filter(function (v) { return v > 0; }) : [];
+  if (S.r) { var pr = S.r.split('|'); o.r = { ok: pr[0] === '1', kind: dec(pr[1] || ''), qty: parseInt(pr[2]) || 0, glint: parseInt(pr[3]) || 0, fee: parseInt(pr[4]) || 0, text: dec(pr.slice(5).join('|')) }; }
+  return o;
+}
+
+// ---------- bottom bar (6 fixed slots; ids back,up,down,minus,plus,select)
+var SLOTS = ['back', 'up', 'down', 'minus', 'plus', 'select'], GAP = (W - 6 * 260) / 7;
+function barX(i) { return Math.round(GAP * (i + 1) + 260 * i); }
+var BARS = {
+  market: ['CLOSE', '▲', '▼', 'MY SHARES', 'MOVE GLINT', 'OPEN'], stock: ['BACK', 'BUY', 'SELL', '', 'OPTIONS (soon)', ''],
+  amount: ['BACK', '+10', '−10', '−1', '+1', 'NEXT'], total: ['BACK', '', '', '', '', 'BUY NOW'], result: ['MARKET', '', '', 'MY SHARES', '', 'BACK TO STOCK'],
+  shares: ['BACK', '▲', '▼', '', '', 'OPEN'], move: ['BACK', 'IN 100', 'OUT 100', 'OUT 1,000', 'IN 1,000', 'OUT ALL'], wait: ['', '', '', '', '', '']
+};
+function bar(S) {
+  var L = (BARS[S.p] || BARS.wait).slice();
+  if (S.p === 'total' && S.side === 'sell') L[5] = 'SELL NOW';
+  if (S.p === 'result' && S.r && (S.r.kind === 'in' || S.r.kind === 'out')) L[5] = 'BACK TO MOVE';
+  var h = '';
+  for (var i = 0; i < 6; i++) {
+    var cl = 'btn' + (L[i] === '' ? ' off' : '') + (/soon/.test(L[i]) ? ' soon' : '');
+    if (S.p === 'total' && i === 5) cl += S.side === 'sell' ? ' rd' : ' g';
+    h += '<div class="' + cl + '" data-slot="' + SLOTS[i] + '" style="left:' + barX(i) + 'px">' + esc(L[i]) + '</div>';
+  }
+  if (S.p === 'amount' || S.p === 'move') h += TC(896, 26, 'dim', 'or type in nearby chat: /x 500 · /x max');
+  return h;
+}
+
+// ---------- chrome shared by all pages
+function frame(S, title) {
+  return A(0, 0, 1920, 84, '', '', 'background:var(--tick);border-bottom:3px solid var(--line)') + T(60, 22, 36, 'brand', 'GLINT EXCHANGE') +
+    (title ? TR(1860, 26, 30, 'dim', title) : '') + A(60, 100, 1800, 780, 'panel', '');
+}
+function clockHtml() { return '<span id="clk"></span>'; }
+function clockText() { var left = TICK - ((Date.now() - T0) % TICK + TICK) % TICK, s = Math.ceil(left / 1000); return 'next price in ' + Math.floor(s / 60) + ':' + ('0' + s % 60).slice(-2); }
+function worth(S) { var w = 0; for (var i = 0; i < 14; i++) w += S.h[i] * S.px[i]; return w / 100; }
+function pct(S, i) { return (S.px[i] - S.pv[i]) / S.pv[i] * 100; }
+function bandWord(k, size) { return '<span class="' + BCOL[BANDS[k]] + '" style="font-size:' + size + 'px">' + BANDS[k] + '</span>'; }
+
+// ---------- pages
+function pAttract() {
+  return A(0, 0, 1920, 84, '', '', 'background:var(--tick);border-bottom:3px solid var(--line)') + TC(300, 110, 'brand', 'GLINT EXCHANGE', 'font-size:110px;letter-spacing:.22em') +
+    TC(480, 60, 'lab', 'Touch to start', 'color:var(--acc);font-size:64px') + TC(580, 36, 'dim', 'Buy and sell shares with your glint ◆') + TC(940, 28, 'dim', 'CALM · BUMPY · WILD: every stock says how much it moves');
+}
+function pMarket(S) {
+  var h = frame(S, ''), shares = worth(S);
+  h += T(100, 108, 26, 'dim', 'GLINT EXCHANGE · your account') + T(100, 134, 92, '', fmt(S.c) + ' <span class="acc" style="font-size:54px">◆</span>');
+  h += TR(1820, 150, 34, 'lab', 'shares worth <b style="font-weight:400" class="acc">' + fmt(shares) + ' ◆</b> · total <span style="color:#fff">' + fmt(S.c + shares) + ' ◆</span>');
+  h += TR(1820, 108, 24, 'dim', clockHtml());
+  var y0 = 246;
+  for (var i = 0; i < 14; i++) {
+    var y = y0 + i * 44, ch = pct(S, i), up = S.px[i] >= S.pv[i], sel = i === S.sel;
+    if (sel) h += A(80, y, 1760, 44, '', '', 'background:#7FD4FF33;border-left:8px solid var(--acc);box-sizing:border-box');
+    h += T(120, y, 28, 'row', esc(NAMES[i]), 0, 'color:#fff') + T(430, y + 4, 22, 'row', bandWord(i, 22), 0, 'height:36px;line-height:36px');
+    h += TR(1000, y, 26, 'row ' + (up ? 'up' : 'dn'), sg(ch, 2) + ' %') + T(1060, y, 28, 'row ' + (up ? 'up' : 'dn'), up ? '▲' : '▼');
+    h += TR(1500, y, 22, 'row dim', 'spread ' + spreadOf(i) + ' %');
+    h += A(1560, y + 3, 230, 38, 'chip', f2(S.px[i]) + ' ◆', 'background:var(--' + (up ? 'up' : 'dn') + ')');
+  }
+  return h;
+}
+function pStock(S) {
+  var k = S.k, px = S.px[k], pv = S.pv[k], d = px - pv, up = d >= 0, h = frame(S, '');
+  h += T(100, 108, 30, 'dim', esc(NAMES[k]) + ' · ' + bandWord(k, 30)) + TR(1820, 110, 24, 'dim', clockHtml());
+  h += T(100, 150, 120, '', f2(px) + ' <span class="acc" style="font-size:60px">◆</span>');
+  h += T(100, 290, 36, up ? 'up' : 'dn', sg(d / 100, 2) + ' ◆  (' + sg(d / pv * 100, 2) + ' %) in 24 h');
+  var ch = S.ch.slice(-13), cx = 100, cw = 1000, cy1 = 700, chh = 300, bw = cw / 13;
+  if (ch.length > 1) {
+    var lo = Math.min.apply(0, ch), hi = Math.max.apply(0, ch), rg = (hi - lo) || 1, base = lo - rg * .15;
+    for (var i = 0; i < ch.length; i++) {
+      var top = cy1 - chh * (ch[i] - base) / (hi - base), col = i === 0 ? 'dim' : (ch[i] >= ch[i - 1] ? 'up' : 'dn');
+      h += A(cx + i * bw + 6, top, bw - 12, cy1 - top, '', '', 'background:var(--' + col + ');opacity:.92;border-radius:3px 3px 0 0');
+    }
+    h += A(cx, cy1, cw, 2, '', '', 'background:var(--line)') + T(cx, cy1 + 10, 22, 'dim', '24 h ago') + TR(cx + cw, cy1 + 10, 22, 'dim', 'now') + TR(cx + cw, 344, 24, 'lab', 'high ' + f2(hi) + '   low ' + f2(lo));
+  }
+  var own = S.h[k], fs = fillSell(px, k), x = 1180;
+  h += A(x - 30, 350, 700, 460, '', '', 'background:#04070F66;border:2px solid var(--line);border-radius:14px');
+  if (own > 0) {
+    var net = own * fs / 100 - S.f, pl = net - S.cb[k] / 100;
+    h += T(x, 376, 34, '', 'You own ' + fmt(own) + ' shares') + T(x, 428, 28, 'lab', 'paid ' + f2(S.cb[k] / own) + ' each') +
+      T(x, 500, 28, 'dim', 'If you sold now:') + T(x, 540, 48, pl >= 0 ? 'up' : 'dn', sg(pl) + ' ◆') + T(x, 604, 24, 'dim', '(after spread + fee)');
+  } else h += T(x, 376, 34, '', 'You own no shares') + T(x, 428, 28, 'dim', 'Press BUY to get some');
+  h += T(x, 690, 26, 'lab', 'Spread ' + spreadOf(k) + ' % each way') + T(x, 728, 26, 'dim', 'buy ' + f2(fillBuy(px, k)) + ' · sell ' + f2(fs) + ' · fee ' + S.f + ' ◆');
+  h += T(100, 770, 26, 'dim', 'Your free glint: <span style="color:#fff">' + fmt(S.c) + ' ◆</span>');
+  return h;
+}
+function pAmount(S) {
+  var k = S.k, sell = S.side === 'sell', px = S.px[k], fill = sell ? fillSell(px, k) : fillBuy(px, k), col = sell ? 'dn' : 'up', h = frame(S, '');
+  var max = sell ? S.h[k] : Math.max(0, Math.floor((S.c * 100 - S.f * 100) / fill));
+  h += T(100, 108, 30, 'dim', '<span class="' + col + '">' + (sell ? 'SELL' : 'BUY') + '</span> · ' + esc(NAMES[k]) + ' · ' + bandWord(k, 30) + ' · ' + f2(fill) + ' ◆ a share');
+  h += TC(250, 240, '', fmt(S.q)) + TR(560, 290, 160, 'acc', '−') + T(1360, 290, 160, 'acc', '+') + TC(500, 40, 'lab', 'shares');
+  h += TC(600, 34, 'lab', sell ? 'You own ' + fmt(S.h[k]) + ' · max to sell ' + fmt(max) + ' · ' + fmt(Math.max(0, S.h[k] - S.q)) + ' left after' : 'Free glint ' + fmt(S.c) + ' ◆ · max ' + fmt(max) + ' shares with the fee');
+  h += TC(670, 40, '', (sell ? 'you get about ' : 'about ') + '<b style="font-weight:400;color:var(--' + col + ')">' + fmt(S.q * fill / 100) + ' ◆</b> before the fee');
+  h += TC(760, 28, 'dim', 'quick picks on the buttons: +10 · −10 · −1 · +1');
+  return h;
+}
+function pTotal(S) {
+  var k = S.k, sell = S.side === 'sell', px = S.px[k], fill = sell ? fillSell(px, k) : fillBuy(px, k), q = S.q, col = sell ? 'dn' : 'up', h = frame(S, '');
+  var mid = q * px, gross = q * fill, feeC = S.f * 100, tot = sell ? Math.max(0, Math.floor((gross - feeC) / 100 + 1e-9)) : Math.ceil((gross + feeC) / 100 - 1e-9);
+  h += T(100, 108, 30, 'dim', '<span class="' + col + '">' + (sell ? 'SELL' : 'BUY') + '</span> ' + fmt(q) + ' ' + esc(NAMES[k]) + ' · check the total');
+  h += T(100, 150, 120, sell ? 'up' : '', (sell ? '+' : '−') + fmt(tot) + ' <span class="acc" style="font-size:60px">◆</span>') + T(100, 292, 32, 'lab', sell ? 'you get, fee taken' : 'you pay, fee included');
+  var rows = [[fmt(q) + ' shares × ' + f2(px) + ' (mid price)', f2(mid) + ' ◆', 'lab'], ['Spread ' + spreadOf(k) + ' % ' + (sell ? '(taken off)' : '(added)'), sg((gross - mid) / 100, 2) + ' ◆', 'amb'],
+    ['Broker fee', sg((sell ? -1 : 1) * S.f) + ' ◆', 'amb'], ['Total ' + (sell ? 'to you' : '') + ' (' + (sell ? 'rounded down' : 'rounded up') + ')', fmt(tot) + ' ◆', '']];
+  for (var i = 0; i < 4; i++) { var y = 370 + i * 62 + (i === 3 ? 16 : 0); h += T(100, y, 32, i === 3 ? '' : 'lab', rows[i][0]) + TR(1300, y, 34, rows[i][2], rows[i][1]); if (i === 2) h += A(100, y + 52, 1200, 3, '', '', 'background:var(--line)'); }
+  if (sell) { var cost = S.h[k] > 0 ? S.cb[k] / 100 * q / S.h[k] : 0, pl = tot - cost; h += T(100, 680, 34, pl >= 0 ? 'up' : 'dn', 'Result on these ' + fmt(q) + ': ' + sg(pl) + ' ◆ (you paid ' + (S.h[k] ? f2(S.cb[k] / S.h[k]) : '0.00') + ' each)') + T(100, 730, 28, 'dim', 'Glint after: ' + fmt(S.c + tot) + ' ◆ free'); }
+  else { var be = q ? Math.ceil((tot * 100 + feeC) / (q * (1 - spreadOf(k) / 100))) : 0; h += T(100, 680, 34, 'amb', 'Break-even: price must reach ' + f2(be) + ' to sell without a loss') + T(100, 730, 28, 'dim', 'Glint after: ' + fmt(S.c - tot) + ' ◆ free'); }
+  h += TC(800, 30, 'lab', 'Press SELECT, then Yes in the box');
+  return h;
+}
+function pWait(S) { return frame(S, '') + A(905, 300, 110, 110, 'spin', '') + TC(470, 70, '', 'Booking…', '') + TC(570, 30, 'dim', 'one moment'); }
+function pResult(S) {
+  var r = S.r, h = frame(S, ''), k = S.k, ix = r ? r.kind : '';
+  if (!r) return h + TC(400, 50, 'dim', 'No result');
+  if (!r.ok) return h + T(100, 108, 30, 'dim', 'Not booked' + (ix === 'buy' || ix === 'sell' ? ' · ' + esc(NAMES[k]) : '')) + T(100, 200, 100, 'dn', 'Refused') + T(100, 350, 46, 'dn', esc(r.text || 'The order was not booked'), 0, 'white-space:normal;width:1600px;line-height:1.25') + T(100, 700, 28, 'dim', 'Nothing was taken from your glint.');
+  var rows = [], big = '', sub = '', bc = '';
+  if (ix === 'buy') { big = '+' + fmt(r.qty) + ' <span class="acc" style="font-size:54px">shares</span>'; sub = '−' + fmt(r.glint) + ' ◆ (fee ' + r.fee + ' included)'; bc = '';
+    rows = [['You own now', fmt(S.h[k]) + ' ' + NAMES[k]], ['Paid each (average)', S.h[k] ? f2(S.cb[k] / S.h[k]) : '–'], ['Free glint', fmt(S.c) + ' ◆']]; }
+  else if (ix === 'sell') { big = '+' + fmt(r.glint) + ' <span class="up" style="font-size:54px">◆ in</span>'; bc = 'up'; sub = r.text || ('fee ' + r.fee + ' ◆ taken');
+    rows = [['You own now', fmt(S.h[k]) + ' ' + NAMES[k]], ['Paid each', S.h[k] ? f2(S.cb[k] / S.h[k]) : '–'], ['Free glint', fmt(S.c) + ' ◆']]; }
+  else { var inn = ix === 'in'; big = (inn ? '+' : '−') + fmt(r.glint) + ' <span class="acc" style="font-size:54px">◆</span>'; bc = inn ? 'up' : ''; sub = inn ? 'moved into your Exchange account' : 'moved out to your vault'; rows = [['Free glint (Exchange)', fmt(S.c) + ' ◆'], ['Banked glint (vault)', fmt(S.b) + ' ◆']]; }
+  var title = ix === 'buy' ? 'Bought' : ix === 'sell' ? 'Sold' : 'Moved';
+  h += T(100, 108, 30, 'dim', title + (ix === 'buy' || ix === 'sell' ? ' · ' + esc(NAMES[k]) : ' · glint'));
+  h += T(100, 150, 120, bc, big);
+  var st = sub.charAt(0), sc = (st === '+' ) ? 'up' : (st === '−' || st === '-') ? 'dn' : 'lab';
+  if (r.text && ix === 'sell') { sc = /^[−-]/.test(r.text) ? 'dn' : /^\+/.test(r.text) ? 'up' : 'lab'; }
+  h += T(100, 296, 36, ix === 'sell' ? sc : 'lab', esc(sub));
+  rows.forEach(function (rw, i) { var y = 420 + i * 78; h += T(100, y, 36, 'lab', rw[0]) + TR(1760, y, 40, '', esc(rw[1])) + A(100, y + 58, 1660, 2, '', '', 'background:var(--line)'); });
+  return h;
+}
+function ownedList(S) { var o = []; for (var i = 0; i < 14; i++) if (S.h[i] > 0) o.push(i); return o; }
+function pShares(S) {
+  var h = frame(S, ''), L = ownedList(S), tv = 0, tc = 0;
+  h += T(100, 108, 30, 'dim', 'MY SHARES') ;
+  h += T(100, 152, 34, 'dim', 'Stock') + TR(900, 152, 34, 'dim', 'shares') + TR(1200, 152, 34, 'dim', 'value') + TR(1480, 152, 34, 'dim', 'cost') + TR(1780, 152, 34, 'dim', 'profit / loss') + A(100, 196, 1700, 2, '', '', 'background:var(--line)');
+  if (!L.length) h += TC(400, 50, 'dim', 'You own no shares yet.') + TC(480, 34, 'dim', 'Open a stock and press BUY.');
+  L.forEach(function (i, n) {
+    var y = 212 + n * 56, val = S.h[i] * S.px[i] / 100, cost = S.cb[i] / 100, pl = cost ? (val - cost) / cost * 100 : 0; tv += val; tc += cost;
+    if (n === S.sel) h += A(80, y - 4, 1760, 54, '', '', 'background:#7FD4FF33;border-left:8px solid var(--acc);box-sizing:border-box');
+    h += T(120, y, 32, '', esc(NAMES[i]) + ' ' + bandWord(i, 20)) + TR(900, y, 32, 'lab', fmt(S.h[i])) + TR(1200, y, 32, '', fmt(val) + ' ◆') + TR(1480, y, 32, 'lab', fmt(cost) + ' ◆') + TR(1780, y, 32, pl >= 0 ? 'up' : 'dn', sg(pl, 1) + ' %');
+  });
+  if (L.length) { var tp = tc ? (tv - tc) / tc * 100 : 0; h += A(100, 800, 1700, 2, '', '', 'background:var(--line)') + T(100, 818, 34, '', 'Total') + TR(1200, 818, 34, '', fmt(tv) + ' ◆') + TR(1480, 818, 34, 'lab', fmt(tc) + ' ◆') + TR(1780, 818, 34, tp >= 0 ? 'up' : 'dn', sg(tp, 1) + ' %'); }
+  return h;
+}
+function pMove(S) {
+  var h = frame(S, '');
+  h += T(100, 108, 30, 'dim', 'MOVE GLINT · Exchange account ⇄ vault');
+  h += T(100, 200, 34, 'lab', 'Free glint (Exchange)') + T(100, 250, 110, '', fmt(S.c) + ' <span class="acc" style="font-size:56px">◆</span>');
+  h += T(1000, 200, 34, 'lab', 'Banked glint (vault)') + T(1000, 250, 110, 'amb', fmt(S.b) + ' <span style="font-size:56px">◆</span>');
+  h += A(100, 440, 1700, 3, '', '', 'background:var(--line)');
+  h += T(100, 480, 36, 'lab', 'Only free glint can buy shares. Banked glint is safe in the vault.') + T(100, 540, 30, 'dim', 'IN = vault → Exchange   ·   OUT = Exchange → vault') + T(100, 640, 30, 'dim', 'Shares are not moved: only glint.');
+  return h;
+}
+var PAGES = { attract: pAttract, market: pMarket, stock: pStock, amount: pAmount, total: pTotal, wait: pWait, result: pResult, shares: pShares, move: pMove };
+
+// ---------- renderer (fragment only)
+var lastS = null;
+function render() {
+  var t = performance.now(), S = parse(); lastS = S;
+  var fn = PAGES[S.p] || pAttract; if (!PAGES[S.p]) S.p = 'attract';
+  stage.innerHTML = fn(S) + (S.p === 'attract' ? '' : bar(S)) + '<div id="dlg"></div>';
+  fitText(); tickClock(); if (DEMO) demoAfterRender();
+  switches++; if (DBG) requestAnimationFrame(function () { dbgEl.textContent = 'L' + loads + ' S' + switches + ' ' + Math.round(performance.now() - t) + 'ms'; });
+}
+function fitText() { var b = stage.querySelectorAll('.btn'); for (var i = 0; i < b.length; i++) { var fs = 38; while (b[i].scrollWidth > b[i].clientWidth + 1 && fs > 20) { fs -= 2; b[i].style.fontSize = fs + 'px'; } } }
+function tickClock() { var e = document.getElementById('clk'); if (e) e.textContent = clockText(); }
+setInterval(tickClock, 1000);
+addEventListener('hashchange', render);
+
+// ================= DEMO MODE: state machine that ONLY writes location.hash =================
+var D = null, pendingYes = false;
+function rnd(a, b) { return a + Math.random() * (b - a); }
+function demoInit() {
+  D = { p: 'attract', c: 2000, b: 5000, sel: 0, k: 0, side: 'buy', q: 1, h: [], cb: [], px: BASE.slice(), pv: [], hist: [], r: '', f: 5, lst: 0 };
+  for (var i = 0; i < 14; i++) { var h = [BASE[i]], v = BASE[i]; for (var j = 0; j < 12; j++) { v = Math.max(100, Math.round(v * (1 + rnd(-.03, .03)))); h.push(v); } D.hist.push(h); D.px[i] = h[12]; D.pv[i] = h[0]; D.h.push(0); D.cb.push(0); }
+  [[2, 100], [3, 400], [6, 50]].forEach(function (o) { D.h[o[0]] = o[1]; D.cb[o[0]] = Math.round(o[1] * D.px[o[0]] * (1 + rnd(-.04, .05)) + 500); });
+}
+function ownedD() { var o = []; for (var i = 0; i < 14; i++) if (D.h[i] > 0) o.push(i); return o; }
+function demoWrite() {
+  var u = 'p=' + D.p + '&c=' + D.c + '&b=' + D.b + '&px=' + D.px.join(',') + '&pv=' + D.pv.join(',') + '&sel=' + D.sel + '&k=' + D.k + '&side=' + D.side + '&q=' + D.q + '&h=' + D.h.join(',') + '&cb=' + D.cb.join(',') + '&ch=' + D.hist[D.k].slice(-13).join(',') + '&f=' + D.f + '&n=' + (D.n = (D.n || 0) + 1);
+  if (D.r) u += '&r=' + D.r;
+  location.hash = u;
+}
+function maxBuy() { var f = fillBuy(D.px[D.k], D.k); return Math.max(0, Math.floor((D.c * 100 - D.f * 100) / f)); }
+function refuse(kind, text) { D.r = '0|' + kind + '|0|0|0|' + encodeURIComponent(text); D.p = 'result'; }
+function demoTick() { if (!D || pendingYes || D.p === 'wait') return; for (var i = 0; i < 14; i++) { var v = Math.max(100, Math.round(D.px[i] * (1 + rnd(-.02, .02)))); D.hist[i].push(v); D.hist[i].shift(); D.px[i] = v; D.pv[i] = D.hist[i][0]; } demoWrite(); }
+function bookNow() {
+  var k = D.k, px = D.px[k], sell = D.side === 'sell', q = D.q;
+  if (sell) { var fill = fillSell(px, k), net = Math.max(0, Math.floor((q * fill - D.f * 100) / 100)), cost = D.h[k] ? D.cb[k] * q / D.h[k] / 100 : 0, pl = net - cost;
+    D.cb[k] = Math.round(D.cb[k] * (D.h[k] - q) / D.h[k]); D.h[k] -= q; D.c += net; D.r = '1|sell|' + q + '|' + net + '|' + D.f + '|' + encodeURIComponent(sg(pl) + ' ◆ result on ' + q + ' shares');
+  } else { var f2c = fillBuy(px, k), tot = Math.ceil((q * f2c + D.f * 100) / 100); D.c -= tot; D.h[k] += q; D.cb[k] += tot * 100; D.r = '1|buy|' + q + '|' + tot + '|' + D.f + '|'; }
+  D.p = 'wait'; demoWrite();
+  setTimeout(function () { D.p = 'result'; demoWrite(); }, 700);
+}
+function press(id) {
+  if (!D || D.p === 'wait' || pendingYes) return;
+  var p = D.p, k = D.k;
+  function go(np) { D.p = np; }
+  if (p === 'attract') { go('market'); }
+  else if (p === 'market') {
+    if (id === 'back') go('attract'); else if (id === 'up') D.sel = (D.sel + 13) % 14; else if (id === 'down') D.sel = (D.sel + 1) % 14;
+    else if (id === 'minus') { D.sel = 0; go('shares'); } else if (id === 'plus') go('move'); else if (id === 'select') { D.k = D.sel; go('stock'); }
+  } else if (p === 'stock') {
+    if (id === 'back') go('market');
+    else if (id === 'up') { D.side = 'buy'; D.q = Math.min(1, maxBuy()) || 1; go('amount'); }
+    else if (id === 'down') { if (D.h[k] > 0) { D.side = 'sell'; D.q = 1; go('amount'); } else refuse('sell', 'You own no shares of ' + NAMES[k] + ' to sell.'); }
+  } else if (p === 'amount') {
+    var max = D.side === 'sell' ? D.h[k] : maxBuy(), d = { up: 10, down: -10, minus: -1, plus: 1 }[id];
+    if (id === 'back') go('stock'); else if (d) D.q = Math.max(0, Math.min(max, D.q + d));
+    else if (id === 'select') { if (D.q < 1) refuse(D.side, 'Pick at least 1 share.'); else if (D.q > max) refuse(D.side, 'Not enough ' + (D.side === 'sell' ? 'shares' : 'free glint') + ' for that amount.'); else go('total'); }
+  } else if (p === 'total') {
+    if (id === 'back') go('amount'); else if (id === 'select') { showDlg(); return; }
+  } else if (p === 'result') {
+    var mv = /\|(in|out)\|/.test(D.r);
+    if (id === 'back') { D.r = ''; go('market'); } else if (id === 'minus') { D.r = ''; D.sel = 0; go('shares'); } else if (id === 'select') { D.r = ''; go(mv ? 'move' : 'stock'); }
+  } else if (p === 'shares') {
+    var L = ownedD();
+    if (id === 'back') go('market'); else if (id === 'up' && L.length) D.sel = (D.sel + L.length - 1) % L.length; else if (id === 'down' && L.length) D.sel = (D.sel + 1) % L.length;
+    else if (id === 'select' && L.length) { D.k = L[Math.min(D.sel, L.length - 1)]; go('stock'); }
+  } else if (p === 'move') {
+    var amt = { up: ['in', 100], down: ['out', 100], minus: ['out', 1000], plus: ['in', 1000], select: ['out', -1] }[id];
+    if (id === 'back') go('market');
+    else if (amt) { var n = amt[1] < 0 ? D.c : amt[1]; if (amt[0] === 'in') n = Math.min(n, D.b); else n = Math.min(n, D.c);
+      if (n < 1) refuse(amt[0], amt[0] === 'in' ? 'The vault has no glint to move in.' : 'No free glint to move out.');
+      else { if (amt[0] === 'in') { D.b -= n; D.c += n; } else { D.c -= n; D.b += n; } D.r = '1|' + amt[0] + '|0|' + n + '|0|'; D.p = 'result'; } }
+  }
+  D.sel = D.sel || 0; demoWrite();
+}
+function showDlg() {
+  var d = document.getElementById('dlg'), k = D.k, sell = D.side === 'sell', px = D.px[k], fill = sell ? fillSell(px, k) : fillBuy(px, k), g = D.q * fill, tot = sell ? Math.floor((g - D.f * 100) / 100) : Math.ceil((g + D.f * 100) / 100);
+  d.innerHTML = '<b>' + (sell ? 'Sell ' : 'Buy ') + fmt(D.q) + ' ' + esc(NAMES[k]) + ' at ' + f2(fill) + '?<br>' + (sell ? 'You get ' : 'You pay ') + fmt(tot) + ' glint with the fee.</b>' +
+    '<i style="left:120px;background:var(--acc);color:#04070F" data-yn="y">Yes</i><i style="right:120px;background:#3A4050;color:#fff" data-yn="n">No</i>';
+  d.style.display = 'block'; pendingYes = true;
+}
+function answer(y) { if (!pendingYes) return; pendingYes = false; var d = document.getElementById('dlg'); if (d) d.style.display = 'none'; if (y) bookNow(); }
+function demoAfterRender() { /* dialog is rebuilt by render(); keep it closed unless pending */ if (pendingYes) showDlg(); }
+if (DEMO) {
+  demoInit();
+  stage.addEventListener('click', function (e) {
+    var t = e.target; var yn = t.getAttribute && t.getAttribute('data-yn'); if (yn) { answer(yn === 'y'); return; }
+    var b = t.closest ? t.closest('.btn') : null; if (b && !b.classList.contains('off') && !b.classList.contains('soon')) press(b.getAttribute('data-slot')); else if (D.p === 'attract') press('select');
+  });
+  addEventListener('keydown', function (e) {
+    var m = { Escape: 'back', ArrowUp: 'up', ArrowDown: 'down', '-': 'minus', '+': 'plus', '=': 'plus', Enter: 'select' }[e.key];
+    if (pendingYes) { if (e.key === 'y' || e.key === 'Enter') answer(true); else if (e.key === 'n' || e.key === 'Escape') answer(false); return; }
+    if (m) { e.preventDefault(); press(m); }
+  });
+  setInterval(demoTick, 30000);
+  // demo start: honour a starting #p= in the URL (so screenshots can jump to a page), else begin at the attract page
+  var sp = (location.hash.match(/p=(\w+)/) || [])[1];
+  if (sp && PAGES[sp]) {
+    D.p = sp; var m = location.hash.match(/k=(\d+)/); if (m) D.k = +m[1]; m = location.hash.match(/side=(\w+)/); if (m) D.side = m[1]; m = location.hash.match(/q=(\d+)/); if (m) D.q = +m[1];
+    m = location.hash.match(/sel=(\d+)/); if (m) D.sel = +m[1];
+    if (sp === 'result') { D.r = ''; var ok = location.hash.match(/res=(\w+)/); if (ok && ok[1] === 'no') refuse('buy', 'Not enough free glint for that amount.'); else { D.q = D.q || 5; D.side = 'buy'; bookNowQuiet(); } }
+  }
+  demoWrite();
+}
+function bookNowQuiet() { var k = D.k, f = fillBuy(D.px[k], k), tot = Math.ceil((D.q * f + D.f * 100) / 100); D.c -= tot; D.h[k] += D.q; D.cb[k] += tot * 100; D.r = '1|buy|' + D.q + '|' + tot + '|' + D.f + '|'; D.p = 'result'; }
+if (!DEMO) render();
+else render();
+</script></body></html>
