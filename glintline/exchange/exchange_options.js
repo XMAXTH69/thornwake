@@ -92,13 +92,13 @@ var OPT = (function () {
       var on = i === o.e, x = 100 + i * 250;
       h += A(x, y, 230, 58, '', '<div class="c" style="line-height:58px;font-size:30px">' + EXP[i] + '</div>', 'border-radius:12px;box-sizing:border-box;' + (on ? 'background:var(--acc);color:#04070F' : 'border:2px solid var(--line);color:var(--lab)'));
     }
-    return h + T(1120, y - 4, 26, 'lab', endText(o.end)) + T(1120, y + 30, 20, 'dim', 'naked (margin desk): 1 DAY and 3 DAYS only') + (o.rep ? T(1520, y + 30, 20, 'amb', '◆ REPORT inside: premiums include it') : '');
+    return h + T(1120, y - 4, 26, 'lab', endText(o.end)) + T(1120, y + 30, 20, 'dim', 'naked (margin desk): 1 DAY and 3 DAYS only');
   }
   function pChain(S) {
     var o = parseO(S), k = S.k, spot = S.px[k], h = head(S, o, 'OPTIONS');
     h += tabs(o, 150);
     var yH = 252, C = { cOI: 300, cB: 520, cA: 720, kx: 830, kw: 260, pB: 1300, pA: 1500, pOI: 1720 };
-    h += T(120, yH - 32, 24, 'up', 'CALLS <span class="dim" style="font-size:20px">· a bet it goes UP</span>') + TR(1780, yH - 32, 24, 'dn', '<span class="dim" style="font-size:20px">a bet it goes DOWN ·</span> PUTS');
+    h += T(120, yH - 32, 24, 'up', 'CALLS') + TR(1780, yH - 32, 24, 'dn', 'PUTS');
     h += TR(C.cOI, yH, 22, 'dim', 'OPEN INT.') + TR(C.cB, yH, 22, 'dim', 'BID (you sell)') + TR(C.cA, yH, 22, 'dim', 'ASK (you buy)') + A(C.kx, yH, C.kw, 0, 'c dim', 'STRIKE', 'font-size:22px');
     h += TR(C.pB, yH, 22, 'dim', 'BID (you sell)') + TR(C.pA, yH, 22, 'dim', 'ASK (you buy)') + TR(C.pOI, yH, 22, 'dim', 'OPEN INT.') + A(100, yH + 32, 1720, 2, '', '', 'background:var(--line)');
     var top = Math.max(0, Math.min(ROWS - VIS, o.row - 5)), y0 = yH + 44, P = 44, spotDrawn = false;
