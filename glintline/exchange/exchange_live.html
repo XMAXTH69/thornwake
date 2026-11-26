@@ -220,6 +220,7 @@ function parse() {
   o.ch = S.ch ? S.ch.split(',').map(Number).filter(function (v) { return v > 0; }) : [];
   NEWS = (S.nw ? dec(S.nw) : (DEMO ? DEMO_NEWS() : '')).split(';').filter(Boolean).map(function (x) { var a = x.split(':').map(Number); return { s: a[0], t: a[1], j: a[2] }; }).filter(function (n) { return n.s >= 0 && n.s < STOCKS; });
   LIVE_SP = S.sp ? S.sp.split(',').map(Number) : null; LIVE_SW = S.sw ? S.sw.split(',').map(Number) : null;
+  DAY_DY = S.dy ? S.dy.split(',').map(Number) : null;   // 26 Nov LINKED ECONOMY E: today's market,parts,shield factors x1000 (GlintBroker fragment key dy)
   if (S.r) { var pr = S.r.split('|'); o.r = { ok: pr[0] === '1', kind: dec(pr[1] || ''), qty: parseInt(pr[2]) || 0, glint: parseInt(pr[3]) || 0, fee: parseInt(pr[4]) || 0, text: dec(pr.slice(5).join('|')) }; }
   return o;
 }
@@ -275,8 +276,24 @@ function headline(n) { var p = HEAD[CO.sector[n.s]] || [['{N} big news'], ['{N} 
 function newsOf(k) { var b = null; NEWS.forEach(function (n) { if (n.s === k && (!b || n.t > b.t)) b = n; }); return b; }
 function agoText(t) { var m = Math.max(0, Math.round((Date.now() - (T0 + t * TICK)) / 60000)); return m < 60 ? m + ' min ago' : Math.floor(m / 60) + ' h ago'; }
 function jumpText(n) { return '<span class="' + (n.j >= 0 ? 'up' : 'dn') + '">' + (n.j >= 0 ? '▲ ' : '▼ ') + Math.abs(n.j / 10).toFixed(1) + ' %</span>'; }
+// 26 Nov LINKED ECONOMY E (design/LINKED-ECONOMY.md): the shops' daily price factors as headlines, only when the change is 1 % or more. dy = 'market,parts,shield' x1000 (0 = not known yet).
+var DAY_DY = null;
+function dayHeads() {
+  var a = DAY_DY || [], o = [], m = a[0] || 0, p = a[1] || 0, s = a[2] || 0, pc;
+  if (m && Math.abs(m - 1000) >= 10) { pc = Math.round((m - 1000) / 10); o.push({ k: 'm', t: (pc < 0 ? 'MARKET SALE' : 'MARKET BOOM') + ': rides ' + (pc > 0 ? '+' : '') + pc + ' % today' }); }
+  if (p - 1000 >= 10) o.push({ k: 'p', t: 'PARTS SHORTAGE: parts +' + Math.round((p - 1000) / 10) + ' % today' });
+  if (s - 1000 >= 10) o.push({ k: 's', t: 'SHIELD RUSH: shields +' + Math.round((s - 1000) / 10) + ' % today' });
+  return o;
+}
+function dayHeadFor(k) {      // WRENCH page = parts headline, SAFEGUARD page = shield headline, every other stock = the market headline
+  var h = dayHeads(), want = k === 4 ? 'p' : k === 5 ? 's' : 'm';
+  for (var i = 0; i < h.length; i++) if (h[i].k === want) return h[i];
+  for (var j = 0; j < h.length; j++) if (h[j].k === 'm') return h[j];
+  return null;
+}
 function tapeHtml(S, full) {
   var t = '', N = 12, st = Math.floor(Date.now() / 60000) % STOCKS;      // 12 names per loop (short track), window moves on every minute
+  dayHeads().forEach(function (q) { t += '<span class="ti"><b class="amb">NEWS</b>' + esc(q.t) + '</span>'; });   // LINKED ECONOMY E: today's price headlines first
   NEWS.slice().sort(function (a, b) { return b.t - a.t; }).slice(0, 3).forEach(function (n) { t += '<span class="ti"><b class="amb">NEWS</b>' + esc(headline(n)) + ' ' + jumpText(n) + '</span>'; });   // newest news first on the tape
   for (var j = 0; j < N; j++) { var i = (st + j) % STOCKS, up = S.px[i] >= S.pv[i]; t += '<span class="ti"><b>' + TICKS[i] + '</b>' + f2(S.px[i]) + ' <span class="' + (up ? 'up' : 'dn') + '">' + (up ? '▲' : '▼') + ' ' + sg(pct(S, i), 2) + ' %</span></span>'; }
   return '<div class="tape' + (full ? ' full' : '') + '"><div class="trk" style="animation-delay:-' + ((Date.now() / 1000) % 40).toFixed(2) + 's">' + t + t + '</div></div>';
@@ -312,7 +329,8 @@ function pStock(S) {
   h += T(100, 108, 30, 'dim', esc(NAMES[k]) + ' · <span class="acc">' + TICKS[k] + '</span>') + TR(1820, 110, 24, 'dim', clockHtml()) + A(1660, 150, 160, 160, '', logo(k, 160));
   h += T(100, 150, 120, '', f2(px) + ' <span class="acc" style="font-size:60px">◆</span>');
   h += T(100, 290, 36, up ? 'up' : 'dn', sg(d / 100, 2) + ' ◆  (' + sg(d / pv * 100, 2) + ' %) in 24 h');
-  var nk = newsOf(k); if (nk) h += T(100, 342, 26, 'lab', '<b class="amb">NEWS</b> · ' + agoText(nk.t) + ' · ' + esc(headline(nk)) + ' ' + jumpText(nk), 0, 'width:1000px;overflow:hidden;text-overflow:ellipsis');
+  var nk = newsOf(k), dh = dayHeadFor(k); if (nk) h += T(100, 342, 26, 'lab', '<b class="amb">NEWS</b> · ' + agoText(nk.t) + ' · ' + esc(headline(nk)) + ' ' + jumpText(nk), 0, 'width:1000px;overflow:hidden;text-overflow:ellipsis');
+  else if (dh) h += T(100, 342, 26, 'lab', '<b class="amb">NEWS</b> · ' + esc(dh.t), 0, 'width:1000px;overflow:hidden;text-overflow:ellipsis');   // LINKED ECONOMY E
   var ch = S.ch.slice(-13), cx = 100, cw = 1000, cy1 = 700, chh = 300, bw = cw / 13;
   if (ch.length > 1) {
     var lo = Math.min.apply(0, ch), hi = Math.max.apply(0, ch), rg = (hi - lo) || 1, base = lo - rg * .15;

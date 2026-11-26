@@ -19,6 +19,7 @@
    HOME  26 Nov: every page except attract draws the small button START (house icon) in the left column under the top bar, from CAT.hitsPx.home (46,244 .. 236,304 px) = the SAME rectangle as the touch zone 'home'; touch = attract.
    USED  26 Nov: START page has a USED MARKET button (DRIVE zone). Pages used_l | used_s | used_c | used_p | used_x are drawn by live/used_pages.js (fragment keys in its header);
          on them the DRIVE zone = the other tab (SELL / LISTINGS). Not in demo mode (browser test: set the hash by hand).
+   km kp ks  26 Nov LINKED ECONOMY (live/market_link.js): today's market / parts / shield factor x1000 from GlintKiosk.cs (GL_PriceDay); every price chip is multiplied, a SALE / BOOM / SHORTAGE / RUSH tag shows at 1 % or more. Browser test: #p=buy_sharp&km=970
    still=1 dev: no animations (final frame, for screenshots).
    dbg=1 small counter top-left: L<page loads> S<switches> <ms from hashchange to painted frame>.                                        */
 @font-face{font-family:Brand;src:url(live/fonts/Cinzel.ttf);font-weight:400 900}
@@ -89,6 +90,7 @@ html,body{margin:0;height:100%;background:#000;overflow:hidden}
 <div id="ld"><i></i></div><div id="dbg"></div>
 <script src="live/kiosk_pages.js"></script>
 <script src="live/used_pages.js"></script>
+<script src="live/market_link.js"></script>
 <script>
 'use strict';
 var Q = new URLSearchParams(location.search), PAL = Q.get('pal') || 'e', DBG = Q.get('dbg') === '1';
@@ -148,7 +150,7 @@ function carImg(render, b, cls) {  // cut-out render, bottom-centred in box b, g
   var cx = (b[0] + b[2]) / 2, w = b[2] - b[0];
   return '<div class="abs ' + (cls || 'slide') + '"><div class="abs glow" style="' + box(cx - w * .42, b[3] - 56, cx + w * .42, b[3] + 14) + '"></div><img class="abs car" src="live/img/' + render + '.webp" style="' + box(b[0], b[1], b[2], b[3]) + '"></div>';
 }
-function tag(x1, y, text, withStar) { return '<div class="abs tag fade" data-r="' + x1 + '" style="top:' + y + 'px">' + esc(text) + '</div>'; }   // 26 Nov owner: no star in front any more - prices end in the gold ◆ (glint_mark.js); withStar kept for callers
+function tag(x1, y, text, withStar) { return '<div class="abs tag fade" data-r="' + x1 + '" style="top:' + y + 'px">' + esc(mkText(text)) + '</div>'; }   // 26 Nov LINKED ECONOMY: mkText = today's price (live/market_link.js)   // 26 Nov owner: no star in front any more - prices end in the gold ◆ (glint_mark.js); withStar kept for callers
 function buttons(sel, arrows, back, drive) {
   var h = '', R = CAT.hitsPx;
   if (drive) h += '<div class="abs drive btn"><svg width="30" height="40"><polygon points="2,2 28,20 2,38" fill="var(--accent)"/></svg>DRIVE</div>';   // 25 Nov owner: own DRIVE button next to OPEN / CHOOSE
@@ -244,7 +246,8 @@ function title(s) { return s.toLowerCase().replace(/\b\w/g, function (c) { retur
 
 // ---------- router: #p=<page>&... -> live page, or the page's mp4 inside this page (hybrid fallback)
 function parse() { var f = {}; new URLSearchParams(location.hash.slice(1)).forEach(function (v, k) { f[k] = v; }); f.p = f.p || 'attract'; return f; }
-function build(f) {
+function build(f) { mkBegin(f); return mkEnd(build0(f)); }   // 26 Nov LINKED ECONOMY: today's factors (fragment km / kp / ks) + the SALE / BOOM tag
+function build0(f) {
   var p = f.p, a = p.split('_');
   if (p === 'attract') return { key: 'attract', html: pageAttract(f) };
   if (a[0] === 'used') return usedBuild(f);   // 26 Nov USED MARKET (live/used_pages.js)
