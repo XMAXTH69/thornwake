@@ -31,6 +31,7 @@ html,body{margin:0;height:100%;background:#000;overflow:hidden;font-family:'Cinz
 .tick .in{display:inline-block;animation:sc 60s linear infinite;line-height:120px;font-size:56px;font-weight:700}
 .tick span{margin-right:70px;color:var(--gold)}.tick em{font-style:normal;margin-left:14px}
 @keyframes sc{to{transform:translateX(-50%)}}  /* content is doubled (tk + tk): -50 % = seamless loop, full strip from the first frame */
+#stage{cursor:default;user-select:none;-webkit-user-select:none}   /* 26 Nov owner: no text cursor - nothing on the screen is typed into */
 </style></head>
 <body><div id="stage">
 <div class="hd"><h1>GLINT EXCHANGE</h1><div class="sub">BROKER BOARD<br><span id="asof"></span></div></div>
