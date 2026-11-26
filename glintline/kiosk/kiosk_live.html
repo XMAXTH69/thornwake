@@ -20,6 +20,8 @@
    USED  26 Nov: START page has a GUILD MARKET button (DRIVE zone; formerly USED MARKET). Pages used_l | used_s | used_c | used_p | used_x are drawn by live/used_pages.js (fragment keys in its header);
          on them the DRIVE zone = the next tab (USED -> GUILD STOCK -> SELL -> USED). Not in demo mode (browser test: set the hash by hand).
   STOCK 26 Nov: GUILD STOCK tab = page used_g, live/stock_pages.js (fragment keys in its header). Browser test: #p=used_g&t=2&i=1&n=30&k=sharp&it=hd&st=MECH_J&ub=Rivet&uo=1&op=1  (closed: &op=0)
+   BOUNTY 26 Nov BOUNTY OFFICE desk (live/bounty_pages.js): pages b_home | b_who | b_amt | b_res, sent only by a GlintKiosk set to 'Bounty desk' (fragment keys in the file header). Browser test: #p=b_who&h=1&n=7&i=1&bk=1800&r=Joss|0|R|;Ken|300|W|;Mira|0||;Pip|0|P|3 more races;Rex|0|U|
+   lk=<text> 26 Nov EARNED PAINTS (paint_ pages only): this paint is earned and still locked, <text> = progress ('7 / 10 races'): the tag shows it, the button says LOCKED. y=1 on an earned paint = tag EARNED, button CHOOSE. Browser test: #p=paint_classic_3&lk=7+%2F+10+races
    GUILD 26 Nov GUILD HALL desk (live/guild_pages.js): pages g_home | g_pick | g_price | g_top, sent only by a GlintKiosk set to 'Guild desk' (fragment keys in the file header). Browser test: #p=g_home&h=1&sp=MECHANIC&st=A&jt=12&jc=40&jb=83&rk=1&nr=250&pc=80&er=12400
    SLOTS 26 Nov GARAGE SLOTS (live/slots_ui.js): START page line 'GARAGE 3 / 4 · HANGAR 1 / 1' (gu gl hu hl); pages full_g | full_h = GARAGE FULL / HANGAR FULL with SELL + BUY SLOT (u l n c, see the file header). Browser test: #p=full_g&u=4&l=4&n=7500
    km kp ks  26 Nov LINKED ECONOMY (live/market_link.js): today's market / parts / shield factor x1000 from GlintKiosk.cs (GL_PriceDay); every price chip is multiplied, a SALE / BOOM / SHORTAGE / RUSH tag shows at 1 % or more. Browser test: #p=buy_sharp&km=970
@@ -98,12 +100,14 @@ html,body{margin:0;height:100%;background:#000;overflow:hidden}
 <script src="live/used_pages.js"></script>
 <script src="live/stock_pages.js"></script>
 <script src="live/guild_pages.js"></script>
+<script src="live/bounty_pages.js"></script>
 <script src="live/slots_ui.js"></script>
 <script src="live/market_link.js"></script>
 <script>
 'use strict';
 var Q = new URLSearchParams(location.search), PAL = Q.get('pal') || 'e', DBG = Q.get('dbg') === '1';
 if (Q.get('still') === '1') document.head.appendChild(document.createElement('style')).textContent = '*{animation:none!important}';   // dev: final frame, for screenshots
+window.addEventListener('error', function (e) { if (e.target && e.target.tagName === 'IMG') e.target.style.visibility = 'hidden'; }, true);   // 26 Nov: a paint without its art yet (free car / bike team paint) shows no broken-image icon
 var VIP = false, curVip = false, W = 1920, H = 1080, CARD = [420, 150, 1500, 800], CAT = null, prev = null, t0 = performance.now(), switches = 0, lastMs = 0;
 var loads = +(sessionStorage.getItem('kL') || 0) + 1; try { sessionStorage.setItem('kL', loads); } catch (e) {}
 var stage = document.getElementById('stage'), live = document.getElementById('live');
@@ -245,11 +249,13 @@ function pagePaint(vid, i, f) {
   var p = P[+i], owned = f.y === '1';
   h += carImg(p.img, [C[0] + 170, C[1] + 40, C[2] - 170, C[1] + 360]);
   h += '<div class="abs ctr brand fade" id="pn" style="top:' + (C[1] + 378) + 'px;font-size:66px">' + esc(p.name.toUpperCase()) + '</div>';
-  h += '<div class="abs ctr soft fade" style="top:' + (C[1] + 462) + 'px;font-size:38px">' + esc(owned && p.price ? 'Yours for this vehicle' : p.who) + '</div>';
-  h += tag(C[2] - 30, C[1] + 30, owned && p.price ? 'YOURS' : p.tag, p.price > 0 && !owned);
+  var earn = !!p.earn, lock = earn && !owned;   // 26 Nov EARNED PAINTS: never bought; locked = progress tag (f.lk) + dim LOCKED button
+  h += '<div class="abs ctr soft fade" style="top:' + (C[1] + 462) + 'px;font-size:38px">' + esc(earn ? p.who : owned && p.price ? 'Yours for this vehicle' : p.who) + '</div>';
+  h += tag(C[2] - 30, C[1] + 30, earn ? (owned ? 'EARNED' : (f.lk || p.tag)) : owned && p.price ? 'YOURS' : p.tag, p.price > 0 && !owned);
   var tw = 150, th = 84, gap = 22, x = W / 2 - (n * tw + (n - 1) * gap) / 2, y = C[3] - th - 34;
   P.forEach(function (q, j) { var x0 = x + j * (tw + gap); h += '<div class="abs tile' + (j === +i ? ' on' : '') + '" style="' + box(x0, y, x0 + tw, y + th) + '"><img src="live/img/' + q.img + '.webp" style="max-width:' + (tw - 16) + 'px;max-height:' + (th - 12) + 'px"></div>'; });
-  return h + buttons(owned || !p.price ? 'CHOOSE' : 'BUY', true, 'BACK', true);
+  var bt = buttons(lock ? 'LOCKED' : owned || !p.price ? 'CHOOSE' : 'BUY', true, 'BACK', true);
+  return h + (lock ? bt.replace('<div class="abs sel btn">', '<div class="abs sel btn" style="opacity:.5;background:var(--soft)">') : bt);
 }
 function title(s) { return s.toLowerCase().replace(/\b\w/g, function (c) { return c.toUpperCase(); }); }
 
@@ -259,6 +265,7 @@ function build(f) { mkBegin(f); return lifeEnd(mkEnd(build0(f)), f); }   // 26 N
 function build0(f) {
   var p = f.p, a = p.split('_');
   if (p === 'attract') return { key: 'attract', html: pageAttract(f) };
+  if (a[0] === 'b' && a.length === 2) return bountyBuild(f);   // 26 Nov BOUNTY OFFICE desk (live/bounty_pages.js, GlintKiosk 'Bounty desk' mode)
   if (a[0] === 'g' && a.length === 2) return guildBuild(f);   // 26 Nov GUILD HALL desk (live/guild_pages.js, GlintKiosk 'Guild desk' mode)
   if (a[0] === 'used') return usedBuild(f);   // 26 Nov USED MARKET (live/used_pages.js)
   if (a[0] === 'full' && (a[1] === 'g' || a[1] === 'h')) return fullBuild(f);   // 26 Nov GARAGE SLOTS (live/slots_ui.js)

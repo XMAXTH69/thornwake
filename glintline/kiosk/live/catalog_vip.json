@@ -466,10 +466,20 @@
    {
     "key": "vip",
     "name": "Podium",
-    "who": "This week's top 3 only",
+    "who": "Earned: win 5 races",
     "img": "paint_classic_vip",
     "price": 0,
-    "tag": "GRAND PRIX"
+    "tag": "EARNED",
+    "earn": "vip"
+   },
+   {
+    "key": "team",
+    "name": "Glintline Team",
+    "who": "Earned after 10 finished races",
+    "img": "paint_classic_team",
+    "price": 0,
+    "tag": "EARNED",
+    "earn": "team"
    }
   ],
   "sharp": [
@@ -500,10 +510,20 @@
    {
     "key": "vip",
     "name": "Podium",
-    "who": "This week's top 3 only",
+    "who": "Earned: win 5 races",
     "img": "paint_sharp_vip",
     "price": 0,
-    "tag": "GRAND PRIX"
+    "tag": "EARNED",
+    "earn": "vip"
+   },
+   {
+    "key": "team",
+    "name": "Glintline Team",
+    "who": "Earned after 10 finished races",
+    "img": "paint_sharp_team",
+    "price": 0,
+    "tag": "EARNED",
+    "earn": "team"
    }
   ],
   "drift": [
@@ -534,10 +554,20 @@
    {
     "key": "vip",
     "name": "Podium",
-    "who": "This week's top 3 only",
+    "who": "Earned: win 5 races",
     "img": "paint_drift_vip",
     "price": 0,
-    "tag": "GRAND PRIX"
+    "tag": "EARNED",
+    "earn": "vip"
+   },
+   {
+    "key": "team",
+    "name": "Glintline Team",
+    "who": "Earned after 10 finished races",
+    "img": "paint_drift_team",
+    "price": 0,
+    "tag": "EARNED",
+    "earn": "team"
    }
   ],
   "kart": [
@@ -568,10 +598,20 @@
    {
     "key": "vip",
     "name": "Podium",
-    "who": "This week's top 3 only",
+    "who": "Earned: win 5 races",
     "img": "paint_kart_vip",
     "price": 0,
-    "tag": "GRAND PRIX"
+    "tag": "EARNED",
+    "earn": "vip"
+   },
+   {
+    "key": "team",
+    "name": "Glintline Team",
+    "who": "Earned after 10 finished races",
+    "img": "paint_kart_team",
+    "price": 0,
+    "tag": "EARNED",
+    "earn": "team"
    }
   ],
   "rocket": [
@@ -602,10 +642,58 @@
    {
     "key": "vip",
     "name": "Podium",
-    "who": "This week's top 3 only",
+    "who": "Earned: win 5 races",
     "img": "paint_rocket_vip",
     "price": 0,
-    "tag": "GRAND PRIX"
+    "tag": "EARNED",
+    "earn": "vip"
+   },
+   {
+    "key": "team",
+    "name": "Glintline Team",
+    "who": "Earned after 10 finished races",
+    "img": "paint_rocket_team",
+    "price": 0,
+    "tag": "EARNED",
+    "earn": "team"
+   }
+  ],
+  "heavy": [
+   {
+    "key": "signature",
+    "name": "Glint Black",
+    "who": "Comes with the car",
+    "img": "car_heavy",
+    "price": 0,
+    "tag": "INCLUDED"
+   },
+   {
+    "key": "team",
+    "name": "Glintline Team",
+    "who": "Earned after 10 finished races",
+    "img": "paint_heavy_team",
+    "price": 0,
+    "tag": "EARNED",
+    "earn": "team"
+   }
+  ],
+  "bike": [
+   {
+    "key": "signature",
+    "name": "Glint Black",
+    "who": "Comes with the car",
+    "img": "bike_std",
+    "price": 0,
+    "tag": "INCLUDED"
+   },
+   {
+    "key": "team",
+    "name": "Glintline Team",
+    "who": "Earned after 10 finished races",
+    "img": "paint_bike_team",
+    "price": 0,
+    "tag": "EARNED",
+    "earn": "team"
    }
   ]
  },

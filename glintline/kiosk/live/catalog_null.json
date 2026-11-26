@@ -451,10 +451,20 @@
    {
     "key": "null_wake",
     "name": "Null Wake",
-    "who": "Null Wake members only",
+    "who": "Earned: win 5 clean races in one visit",
     "img": "paint_classic_null_wake",
     "price": 0,
-    "tag": "MEMBERS"
+    "tag": "EARNED",
+    "earn": "null"
+   },
+   {
+    "key": "team",
+    "name": "Glintline Team",
+    "who": "Earned after 10 finished races",
+    "img": "paint_classic_team",
+    "price": 0,
+    "tag": "EARNED",
+    "earn": "team"
    }
   ],
   "sharp": [
@@ -485,10 +495,20 @@
    {
     "key": "null_wake",
     "name": "Null Wake",
-    "who": "Null Wake members only",
+    "who": "Earned: win 5 clean races in one visit",
     "img": "paint_sharp_null_wake",
     "price": 0,
-    "tag": "MEMBERS"
+    "tag": "EARNED",
+    "earn": "null"
+   },
+   {
+    "key": "team",
+    "name": "Glintline Team",
+    "who": "Earned after 10 finished races",
+    "img": "paint_sharp_team",
+    "price": 0,
+    "tag": "EARNED",
+    "earn": "team"
    }
   ],
   "drift": [
@@ -519,10 +539,20 @@
    {
     "key": "null_wake",
     "name": "Null Wake",
-    "who": "Null Wake members only",
+    "who": "Earned: win 5 clean races in one visit",
     "img": "paint_drift_null_wake",
     "price": 0,
-    "tag": "MEMBERS"
+    "tag": "EARNED",
+    "earn": "null"
+   },
+   {
+    "key": "team",
+    "name": "Glintline Team",
+    "who": "Earned after 10 finished races",
+    "img": "paint_drift_team",
+    "price": 0,
+    "tag": "EARNED",
+    "earn": "team"
    }
   ],
   "kart": [
@@ -553,10 +583,20 @@
    {
     "key": "null_wake",
     "name": "Null Wake",
-    "who": "Null Wake members only",
+    "who": "Earned: win 5 clean races in one visit",
     "img": "paint_kart_null_wake",
     "price": 0,
-    "tag": "MEMBERS"
+    "tag": "EARNED",
+    "earn": "null"
+   },
+   {
+    "key": "team",
+    "name": "Glintline Team",
+    "who": "Earned after 10 finished races",
+    "img": "paint_kart_team",
+    "price": 0,
+    "tag": "EARNED",
+    "earn": "team"
    }
   ],
   "rocket": [
@@ -587,10 +627,58 @@
    {
     "key": "null_wake",
     "name": "Null Wake",
-    "who": "Null Wake members only",
+    "who": "Earned: win 5 clean races in one visit",
     "img": "paint_rocket_null_wake",
     "price": 0,
-    "tag": "MEMBERS"
+    "tag": "EARNED",
+    "earn": "null"
+   },
+   {
+    "key": "team",
+    "name": "Glintline Team",
+    "who": "Earned after 10 finished races",
+    "img": "paint_rocket_team",
+    "price": 0,
+    "tag": "EARNED",
+    "earn": "team"
+   }
+  ],
+  "heavy": [
+   {
+    "key": "signature",
+    "name": "Glint Black",
+    "who": "Comes with the car",
+    "img": "car_heavy",
+    "price": 0,
+    "tag": "INCLUDED"
+   },
+   {
+    "key": "team",
+    "name": "Glintline Team",
+    "who": "Earned after 10 finished races",
+    "img": "paint_heavy_team",
+    "price": 0,
+    "tag": "EARNED",
+    "earn": "team"
+   }
+  ],
+  "bike": [
+   {
+    "key": "signature",
+    "name": "Glint Black",
+    "who": "Comes with the car",
+    "img": "bike_std",
+    "price": 0,
+    "tag": "INCLUDED"
+   },
+   {
+    "key": "team",
+    "name": "Glintline Team",
+    "who": "Earned after 10 finished races",
+    "img": "paint_bike_team",
+    "price": 0,
+    "tag": "EARNED",
+    "earn": "team"
    }
   ]
  },

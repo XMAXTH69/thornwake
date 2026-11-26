@@ -447,6 +447,15 @@
     "img": "paint_classic_shop_b",
     "price": 250,
     "tag": "250 glint"
+   },
+   {
+    "key": "team",
+    "name": "Glintline Team",
+    "who": "Earned after 10 finished races",
+    "img": "paint_classic_team",
+    "price": 0,
+    "tag": "EARNED",
+    "earn": "team"
    }
   ],
   "sharp": [
@@ -473,6 +482,15 @@
     "img": "paint_sharp_shop_b",
     "price": 250,
     "tag": "250 glint"
+   },
+   {
+    "key": "team",
+    "name": "Glintline Team",
+    "who": "Earned after 10 finished races",
+    "img": "paint_sharp_team",
+    "price": 0,
+    "tag": "EARNED",
+    "earn": "team"
    }
   ],
   "drift": [
@@ -499,6 +517,15 @@
     "img": "paint_drift_shop_b",
     "price": 250,
     "tag": "250 glint"
+   },
+   {
+    "key": "team",
+    "name": "Glintline Team",
+    "who": "Earned after 10 finished races",
+    "img": "paint_drift_team",
+    "price": 0,
+    "tag": "EARNED",
+    "earn": "team"
    }
   ],
   "kart": [
@@ -525,6 +552,15 @@
     "img": "paint_kart_shop_b",
     "price": 250,
     "tag": "250 glint"
+   },
+   {
+    "key": "team",
+    "name": "Glintline Team",
+    "who": "Earned after 10 finished races",
+    "img": "paint_kart_team",
+    "price": 0,
+    "tag": "EARNED",
+    "earn": "team"
    }
   ],
   "rocket": [
@@ -551,6 +587,53 @@
     "img": "paint_rocket_shop_b",
     "price": 250,
     "tag": "250 glint"
+   },
+   {
+    "key": "team",
+    "name": "Glintline Team",
+    "who": "Earned after 10 finished races",
+    "img": "paint_rocket_team",
+    "price": 0,
+    "tag": "EARNED",
+    "earn": "team"
+   }
+  ],
+  "heavy": [
+   {
+    "key": "signature",
+    "name": "Glint Black",
+    "who": "Comes with the car",
+    "img": "car_heavy",
+    "price": 0,
+    "tag": "INCLUDED"
+   },
+   {
+    "key": "team",
+    "name": "Glintline Team",
+    "who": "Earned after 10 finished races",
+    "img": "paint_heavy_team",
+    "price": 0,
+    "tag": "EARNED",
+    "earn": "team"
+   }
+  ],
+  "bike": [
+   {
+    "key": "signature",
+    "name": "Glint Black",
+    "who": "Comes with the car",
+    "img": "bike_std",
+    "price": 0,
+    "tag": "INCLUDED"
+   },
+   {
+    "key": "team",
+    "name": "Glintline Team",
+    "who": "Earned after 10 finished races",
+    "img": "paint_bike_team",
+    "price": 0,
+    "tag": "EARNED",
+    "earn": "team"
    }
   ]
  },

@@ -456,10 +456,20 @@
    {
     "key": "aurum",
     "name": "Aurum",
-    "who": "Aurum members only",
+    "who": "Earned: win 3 races in a row",
     "img": "paint_classic_aurum",
     "price": 0,
-    "tag": "MEMBERS"
+    "tag": "EARNED",
+    "earn": "aurum"
+   },
+   {
+    "key": "team",
+    "name": "Glintline Team",
+    "who": "Earned after 10 finished races",
+    "img": "paint_classic_team",
+    "price": 0,
+    "tag": "EARNED",
+    "earn": "team"
    }
   ],
   "sharp": [
@@ -490,10 +500,20 @@
    {
     "key": "aurum",
     "name": "Aurum",
-    "who": "Aurum members only",
+    "who": "Earned: win 3 races in a row",
     "img": "paint_sharp_aurum",
     "price": 0,
-    "tag": "MEMBERS"
+    "tag": "EARNED",
+    "earn": "aurum"
+   },
+   {
+    "key": "team",
+    "name": "Glintline Team",
+    "who": "Earned after 10 finished races",
+    "img": "paint_sharp_team",
+    "price": 0,
+    "tag": "EARNED",
+    "earn": "team"
    }
   ],
   "drift": [
@@ -524,10 +544,20 @@
    {
     "key": "aurum",
     "name": "Aurum",
-    "who": "Aurum members only",
+    "who": "Earned: win 3 races in a row",
     "img": "paint_drift_aurum",
     "price": 0,
-    "tag": "MEMBERS"
+    "tag": "EARNED",
+    "earn": "aurum"
+   },
+   {
+    "key": "team",
+    "name": "Glintline Team",
+    "who": "Earned after 10 finished races",
+    "img": "paint_drift_team",
+    "price": 0,
+    "tag": "EARNED",
+    "earn": "team"
    }
   ],
   "kart": [
@@ -558,10 +588,20 @@
    {
     "key": "aurum",
     "name": "Aurum",
-    "who": "Aurum members only",
+    "who": "Earned: win 3 races in a row",
     "img": "paint_kart_aurum",
     "price": 0,
-    "tag": "MEMBERS"
+    "tag": "EARNED",
+    "earn": "aurum"
+   },
+   {
+    "key": "team",
+    "name": "Glintline Team",
+    "who": "Earned after 10 finished races",
+    "img": "paint_kart_team",
+    "price": 0,
+    "tag": "EARNED",
+    "earn": "team"
    }
   ],
   "rocket": [
@@ -592,10 +632,58 @@
    {
     "key": "aurum",
     "name": "Aurum",
-    "who": "Aurum members only",
+    "who": "Earned: win 3 races in a row",
     "img": "paint_rocket_aurum",
     "price": 0,
-    "tag": "MEMBERS"
+    "tag": "EARNED",
+    "earn": "aurum"
+   },
+   {
+    "key": "team",
+    "name": "Glintline Team",
+    "who": "Earned after 10 finished races",
+    "img": "paint_rocket_team",
+    "price": 0,
+    "tag": "EARNED",
+    "earn": "team"
+   }
+  ],
+  "heavy": [
+   {
+    "key": "signature",
+    "name": "Glint Black",
+    "who": "Comes with the car",
+    "img": "car_heavy",
+    "price": 0,
+    "tag": "INCLUDED"
+   },
+   {
+    "key": "team",
+    "name": "Glintline Team",
+    "who": "Earned after 10 finished races",
+    "img": "paint_heavy_team",
+    "price": 0,
+    "tag": "EARNED",
+    "earn": "team"
+   }
+  ],
+  "bike": [
+   {
+    "key": "signature",
+    "name": "Glint Black",
+    "who": "Comes with the car",
+    "img": "bike_std",
+    "price": 0,
+    "tag": "INCLUDED"
+   },
+   {
+    "key": "team",
+    "name": "Glintline Team",
+    "who": "Earned after 10 finished races",
+    "img": "paint_bike_team",
+    "price": 0,
+    "tag": "EARNED",
+    "earn": "team"
    }
   ]
  },
