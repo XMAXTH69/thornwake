@@ -55,7 +55,7 @@ function pageUpg(kind, mk, f) {
 function pageTrail(i, f) {
   var key = CAT.trails[i], st = CAT.trail_styles[key], tier = st[0], C = CARD, own = owned(f) && tier !== 'FREE';
   var h = base('LIGHT LINE', dots(i, CAT.trails.length), { vonly: 1 }) + card() +
-    TC(C[1] + 372, esc(key), 80, 'brand', 960) + TC(C[1] + 474, esc(st[1]), 44, 'hi') + TC(C[1] + 548, esc(CAT.trail_who[tier]), 36, 'soft') + ownedTag(own, tier === 'FREE' ? 'FREE' : 'CLUB', false);
+    TC(C[1] + 372, esc(key), 80, 'brand', 960) + TC(C[1] + 474, esc(st[1]), 44, 'hi') + TC(C[1] + 548, esc(CAT.trail_who[tier]), 36, 'soft') + ownedTag(own, tier === 'FREE' ? 'FREE' : 'EXCLUSIVE', false);
   h += '<canvas id="trl" class="abs" width="1020" height="330" style="left:450px;top:' + (C[1] + 50) + 'px"></canvas>';
   return h + buttons('CHOOSE', true, 'BACK', true);
 }
