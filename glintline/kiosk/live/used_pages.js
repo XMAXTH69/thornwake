@@ -35,7 +35,7 @@ function uNote(text) { return TC(CARD[1] + 330, esc(text), 52, 'soft', 960); }
 function pageUsedList(f) {
   var C = CARD, h = base('GUILD MARKET', uPos(f)) + card() + uTabs(0);
   if (!(+f.n > 0)) return h + TC(C[1] + 250, 'NO USED RIDES FOR SALE', 62, 'brand', 960) + TC(C[1] + 345, 'Players sell rides they no longer need here, often cheaper than new', 34, 'soft', 960) +
-    TC(C[1] + 400, 'None for sale in this garage right now · check again later', 34, 'soft', 960) + TC(C[1] + 470, 'Own a ride you don't need? Press SELL', 38, 'hi', 960) + buttons(null, false, 'BACK') + zoneBtn('GUILD STOCK');
+    TC(C[1] + 400, 'None for sale in this garage right now · check again later', 34, 'soft', 960) + TC(C[1] + 470, 'Own a ride you do not need? Press SELL', 38, 'hi', 960) + buttons(null, false, 'BACK') + zoneBtn('GUILD STOCK');
   var pct = +f.v > 0 ? Math.round(100 * f.pr / f.v) : 0, arm = f.c === '1', work = f.c === '2';
   h += uCar(f.k) + uName(f.k) + T(C[0] + 504, C[1] + 190, 'SELLER  ' + esc(f.s || '?'), 34, 'soft', 520);
   h += lifeChips(C[0] + 500, C[1] + 236, f);                                  // 26 Nov LIFE: status + edition number
@@ -47,7 +47,7 @@ function pageUsedList(f) {
 }
 function pageUsedSell(f) {
   var C = CARD, h = base('GUILD MARKET', uPos(f)) + card() + uTabs(1);
-  if (!(+f.n > 0)) return h + TC(C[1] + 250, 'NOTHING TO SELL YET', 62, 'brand', 960) + TC(C[1] + 345, 'Rides you buy in this garage can be sold here', 36, 'soft', 960) + TC(C[1] + 405, 'The free Glint Car and Glint Bike can't be sold', 36, 'soft', 960) + buttons(null, false, 'BACK') + zoneBtn('USED');
+  if (!(+f.n > 0)) return h + TC(C[1] + 250, 'NOTHING TO SELL YET', 62, 'brand', 960) + TC(C[1] + 345, 'Rides you buy in this garage can be sold here', 36, 'soft', 960) + TC(C[1] + 405, 'The free Glint Car and Glint Bike cannot be sold', 36, 'soft', 960) + buttons(null, false, 'BACK') + zoneBtn('USED');
   var md = +f.md, val = +f.val, listed = !!f.lot, scrap = md === 3;
   h += uCar(f.k) + uName(f.k) + lifeChips(C[0] + 500, C[1] + 186, f);       // 26 Nov LIFE: status + edition number
   h += T(C[0] + 504, C[1] + 262, scrap ? 'SCRAP VALUE' : 'CONDITION VALUE', 26, 'hi', 520) + T(C[0] + 504, C[1] + 292, money(val) + ' ◆', 52, '', 520);
