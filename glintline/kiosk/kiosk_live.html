@@ -19,6 +19,7 @@
    HOME  26 Nov: every page except attract draws the small button START (house icon) in the left column under the top bar, from CAT.hitsPx.home (46,244 .. 236,304 px) = the SAME rectangle as the touch zone 'home'; touch = attract.
    USED  26 Nov: START page has a USED MARKET button (DRIVE zone). Pages used_l | used_s | used_c | used_p | used_x are drawn by live/used_pages.js (fragment keys in its header);
          on them the DRIVE zone = the other tab (SELL / LISTINGS). Not in demo mode (browser test: set the hash by hand).
+   GUILD 26 Nov GUILD HALL desk (live/guild_pages.js): pages g_home | g_pick | g_price | g_top, sent only by a GlintKiosk set to 'Guild desk' (fragment keys in the file header). Browser test: #p=g_home&h=1&sp=MECHANIC&st=A&jt=12&jc=40&jb=83&rk=1&nr=250&pc=80&er=12400
    SLOTS 26 Nov GARAGE SLOTS (live/slots_ui.js): START page line 'GARAGE 3 / 4 · HANGAR 1 / 1' (gu gl hu hl); pages full_g | full_h = GARAGE FULL / HANGAR FULL with SELL + BUY SLOT (u l n c, see the file header). Browser test: #p=full_g&u=4&l=4&n=7500
    km kp ks  26 Nov LINKED ECONOMY (live/market_link.js): today's market / parts / shield factor x1000 from GlintKiosk.cs (GL_PriceDay); every price chip is multiplied, a SALE / BOOM / SHORTAGE / RUSH tag shows at 1 % or more. Browser test: #p=buy_sharp&km=970
    lf ed et ek gt  26 Nov LIFE / LIMITED EDITIONS / GATES (live/life_ui.js): lf = life of the shown ride (thousandths of a percent, 0 = SCRAP; own_ + used pages), ed / et = edition number / total, ek = numbers taken (buy_ / broker_),
@@ -94,6 +95,7 @@ html,body{margin:0;height:100%;background:#000;overflow:hidden}
 <script src="live/kiosk_pages.js"></script>
 <script src="live/life_ui.js"></script>
 <script src="live/used_pages.js"></script>
+<script src="live/guild_pages.js"></script>
 <script src="live/slots_ui.js"></script>
 <script src="live/market_link.js"></script>
 <script>
@@ -255,6 +257,7 @@ function build(f) { mkBegin(f); return lifeEnd(mkEnd(build0(f)), f); }   // 26 N
 function build0(f) {
   var p = f.p, a = p.split('_');
   if (p === 'attract') return { key: 'attract', html: pageAttract(f) };
+  if (a[0] === 'g' && a.length === 2) return guildBuild(f);   // 26 Nov GUILD HALL desk (live/guild_pages.js, GlintKiosk 'Guild desk' mode)
   if (a[0] === 'used') return usedBuild(f);   // 26 Nov USED MARKET (live/used_pages.js)
   if (a[0] === 'full' && (a[1] === 'g' || a[1] === 'h')) return fullBuild(f);   // 26 Nov GARAGE SLOTS (live/slots_ui.js)
   if ((a[0] === 'own' || a[0] === 'buy' || a[0] === 'drive' || a[0] === 'browse' || a[0] === 'rent') && a.length === 2 && CAT.vehicles[a[1]]) return { key: a[0] + a[1], car: a[1], html: pageCar(a[0], a[1], f) };
