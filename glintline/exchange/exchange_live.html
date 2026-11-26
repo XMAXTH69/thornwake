@@ -27,6 +27,14 @@ html,body{margin:0;width:100%;height:100%;background:#04070F;overflow:hidden;pos
 .btn{width:260px;height:110px;top:940px;box-sizing:border-box;border-radius:20px;background:var(--bg2);border:3px solid var(--acc);color:var(--acc);font-size:38px;display:flex;align-items:center;justify-content:center;white-space:nowrap;position:absolute;padding:0 16px}
 .btn.off{background:transparent;border:3px dashed #2C3E6688;color:transparent}
 .btn.soon{opacity:.45;border-color:var(--line);color:var(--dim)}
+/* 26 Nov owner: touchable = PULSING glow (no sweeping lines). MAIN action (right slot) = filled accent; off / soon = still. Selected row = colour highlight only, no motion. */
+.btn{overflow:hidden}
+.btn.main{background:var(--acc);color:#04070F}
+.btn::before{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;animation:xbreathe 2.6s ease-in-out infinite}
+.btn.main::before,.btn.g::before,.btn.rd::before{animation:xbreathe2 2.6s ease-in-out infinite}
+@keyframes xbreathe2{0%,100%{box-shadow:inset 0 0 0 rgba(255,255,255,0)}50%{box-shadow:inset 0 0 30px rgba(255,255,255,.60)}}
+@keyframes xbreathe{0%,100%{box-shadow:inset 0 0 0 rgba(127,212,255,0)}50%{box-shadow:inset 0 0 24px rgba(127,212,255,.40)}}
+.btn.off::before,.btn.soon::before{display:none}
 .btn.g{background:var(--up);color:#04070F;border-color:var(--up)}.btn.rd{background:var(--dn);color:#04070F;border-color:var(--dn)}
 .demo .btn:not(.off){cursor:pointer}.demo .btn:not(.off):hover{filter:brightness(1.25)}
 .spin{width:110px;height:110px;border-radius:50%;border:12px solid #2C3E66;border-top-color:var(--acc);animation:sp .9s linear infinite}@keyframes sp{to{transform:rotate(360deg)}}
@@ -49,8 +57,7 @@ html,body{margin:0;width:100%;height:100%;background:#04070F;overflow:hidden;pos
 .ent .rw{animation:rin .5s cubic-bezier(.2,.7,.2,1) both;animation-delay:calc(var(--i)*45ms + 120ms)}
 .ent .bar{transform-origin:50% 100%;animation:bgrow .6s cubic-bezier(.2,.7,.2,1) both;animation-delay:calc(var(--i)*35ms + 150ms)}
 .ent .btn{animation:bin .45s ease-out both;animation-delay:.15s}
-.btn:not(.off):not(.soon){position:absolute;overflow:hidden}.btn:not(.off):not(.soon)::after{content:'';position:absolute;top:0;bottom:0;width:70px;left:-120px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.4),transparent);transform:skewX(-25deg);animation:shimb 4s linear infinite}
-@keyframes shimb{0%{left:-120px}45%,100%{left:300px}}
+.btn:not(.off):not(.soon){position:absolute;overflow:hidden}
 @keyframes fin{from{opacity:0}}
 @keyframes pin{from{opacity:0;transform:translate3d(120px,0,0)}}
 @keyframes rin{from{opacity:0;transform:translate3d(-48px,0,0)}}
@@ -63,12 +70,10 @@ html,body{margin:0;width:100%;height:100%;background:#04070F;overflow:hidden;pos
 @keyframes fld{0%{filter:brightness(1.7);transform:scale(1.08)}100%{filter:none;transform:none}}
 @keyframes rlu{from{opacity:0;transform:translate3d(0,70%,0)}}
 @keyframes rld{from{opacity:0;transform:translate3d(0,-70%,0)}}
-.selb{overflow:hidden;box-shadow:0 0 30px #7FD4FF66,inset 0 0 22px #7FD4FF33;animation:glw 2.4s ease-in-out infinite}
-.selb::after{content:'';position:absolute;top:0;bottom:0;left:0;width:240px;background:linear-gradient(90deg,transparent,#BFE9FF40,transparent);animation:sweep 3.6s ease-in-out infinite}
-.ent .selb{animation:fin .4s ease-out both,glw 2.4s ease-in-out .5s infinite}
-.selb.mv{animation:selin .22s ease-out,glw 2.4s ease-in-out .22s infinite}
+.selb{overflow:hidden;box-shadow:0 0 30px #7FD4FF66,inset 0 0 22px #7FD4FF33}
+.ent .selb{animation:fin .4s ease-out both}
+.selb.mv{animation:selin .22s ease-out}
 @keyframes glw{50%{opacity:.72}}
-@keyframes sweep{0%{transform:translate3d(-260px,0,0)}60%,100%{transform:translate3d(1800px,0,0)}}
 @keyframes selin{from{opacity:.3;transform:scale(.97,1)}}
 #stage .logo{text-shadow:0 0 24px #7FD4FF55;animation:lglow 3.2s ease-in-out infinite}
 #stage .touch{animation:breathe 2.2s ease-in-out infinite}
@@ -149,7 +154,9 @@ var LOGOS2 = [
   '<rect x="4" y="6" width="40" height="28" rx="4.5" fill="url(#xSil)"/><rect x="7" y="9" width="34" height="22" rx="2.5" fill="#04070F"/><path d="M9 21H16L19 14L24 28L28 18L31 21H39" fill="none" stroke="#7FD4FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /><circle cx="37" cy="13" r="2" fill="url(#xRed)" /><circle cx="37" cy="13" r="0.8" fill="#FFF" /><path d="M24 34V40" fill="none" stroke="#DCE3EE" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" /><path d="M12 42H36" fill="none" stroke="#E8C46A" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" /><path d="M8 12H13" fill="none" stroke="#fff" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" opacity=".5"/>'
 ];
 var FRAME2 = ['xAmb','xAmb','xCy','xCy','xRed','xSil','xAmb','xCy','xSil','xSil','xRed','xRed','xGold','xAmb','xRed','xGrn','xGold','xGrn','xGrn','xGrn','xSil','xSil','xVio','xCy','xCy','xAmb','xVio','xCy','xVio','xVio','xAmb','xCy','xGold','xSil','xGrn','xCy'];
-function logo(i, s) { var k = i + '_' + s; return LCACHE[k] || (LCACHE[k] = '<svg width="' + s + '" height="' + s + '" viewBox="0 0 48 48" style="display:block"><rect x="1" y="1" width="46" height="46" rx="9" fill="url(#xBg)" stroke="#2C3E66" stroke-width="2"/><rect x="3.5" y="3.5" width="41" height="41" rx="7" fill="none" stroke="url(#' + (i < 14 ? FRAME[i] : FRAME2[i - 14]) + ')" stroke-width=".8" opacity=".55"/><g transform="translate(4 4) scale(.8333)">' + (i < 14 ? LOGOS[i] : LOGOS2[i - 14]) + '</g></svg>'); }
+// 26 Nov owner: game-linked stocks show the EXACT in-game emblem (img/ = trimmed copies of Glintline/source/glb faction_hq + tex_brand). ECHOES has no game logo yet.
+var EMB = { 0: 'img/emb_aurum.png', 1: 'img/emb_null.png', 3: 'img/emb_glintline.png' };   // GLINTLINE = logo star rendered by Glintline/source/brand_logo.py star() + gold(), 512 px
+function logo(i, s) { var k = i + '_' + s; return LCACHE[k] || (LCACHE[k] = '<svg width="' + s + '" height="' + s + '" viewBox="0 0 48 48" style="display:block"><rect x="1" y="1" width="46" height="46" rx="9" fill="url(#xBg)" stroke="#2C3E66" stroke-width="2"/><rect x="3.5" y="3.5" width="41" height="41" rx="7" fill="none" stroke="url(#' + (i < 14 ? FRAME[i] : FRAME2[i - 14]) + ')" stroke-width=".8" opacity=".55"/>' + (EMB[i] ? '<image href="' + EMB[i] + '" x="6" y="6" width="36" height="36"/>' : '<g transform="translate(4 4) scale(.8333)">' + (i < 14 ? LOGOS[i] : LOGOS2[i - 14]) + '</g>') + '</svg>'); }
 var BANDS = CO.band;
 var SPREAD = { CALM: .25, BUMPY: .5, WILD: 1 }, BCOL = { CALM: 'up', BUMPY: 'amb', WILD: 'dn' };
 var BASE = [4520,3910,2500,835,910,1980,605,1240,700,1500,880,1100,2200,1650].concat(CO.base.slice(14).map(function (v) { return v * 100; }));   // cents; only a start value when the fragment has none
@@ -212,6 +219,7 @@ function bar(S) {
   for (var i = 0; i < 6; i++) {
     var cl = 'btn' + (L[i] === '' ? ' off' : '') + (/soon/.test(L[i]) ? ' soon' : '');
     if (S.p === 'total' && i === 5) cl += S.side === 'sell' ? ' rd' : ' g';
+    else if (i === 5 && L[i] !== '' && !/soon/.test(L[i])) cl += ' main';                 // 26 Nov: right slot = the page's main action
     h += '<div class="' + cl + '" data-slot="' + SLOTS[i] + '" style="left:' + barX(i) + 'px">' + esc(L[i]) + '</div>';
   }
   var hint = S.p === 'amount' ? (S.side === 'sell' ? '/sell 50 · /sell all' : '/buy 50 · /buy max') : S.p === 'stock' ? '/buy 50 · /sell 50' : S.p === 'move' ? '/in 500 · /out 500 · /in all · /out all' : '';
@@ -298,13 +306,20 @@ function inText(t) {
 function bigNum(v, unit) { return v >= 1000 ? (v / 1000).toFixed(1) + ' ' + unit[1] : Math.round(v) + ' ' + unit[0]; }
 // GLINT-EXCHANGE sec 28 R2b: margin / option deposit per category (short put or long / short call, % of notional) from 24 h before a report
 var DEPOSIT = { 'DEFENSIVE INCOME': '10 / 11 %', 'VALUE': '13 / 14 %', 'CORE': '13 / 14 %', 'DYNAMIC VALUE': '17 / 18 %', 'GROWTH': '20 / 22 %', 'DYNAMIC GROWTH': '28 / 35 %', 'TURNAROUND': '33 / 44 %', 'SPECULATIVE': '38 / 54 %' };
+// 26 Nov owner: real-world names + one plain line, DISPLAY ONLY (CO.category / CO.type keys stay the same: DEPOSIT, REPSIG and the game scripts use them).
+var CATNAME = { 'DEFENSIVE INCOME': ['DIVIDEND', 'pays you the most just for holding it'], 'CORE': ['BLUE CHIP', 'big, trusted, steady'], 'VALUE': ['VALUE', 'solid company at a fair price'],
+  'DYNAMIC VALUE': ['DEEP VALUE', 'cheap for a reason, more ups and downs'], 'GROWTH': ['GROWTH', 'growing fast, small payouts'], 'DYNAMIC GROWTH': ['HIGH GROWTH', 'growing very fast, big swings, no payouts'],
+  'SPECULATIVE': ['SPECULATIVE', 'a bold bet: could soar or sink'], 'TURNAROUND': ['TURNAROUND', 'struggling now, might bounce back'] };
+var TYPENAME = { 'DEFENSIVE': ['DEFENSIVE', 'moves less than the market'], 'SENSITIVE': ['SENSITIVE', 'moves with the market'], 'CYCLICAL': ['CYCLICAL', 'moves more than the market, up and down'] };   // = beta 0.6 / 1.0 / 1.3 in GlintExchangePrice
 function profile(S, k) {
   var capM = S.px[k] / 100 * CO.shares_m[k], vol = CO.avg_vol_k[k], dd = CO.div_day[k];
   var rows = [['Sector', CO.sector[k]], ['Industry', CO.industry[k]], ['Market cap', bigNum(capM, ['M', 'B'])], ['Avg volume 30 d', bigNum(vol, ['k', 'M'])],
     ['Quarterly report', inText(nextDay(CO.report_day[k], 12 * 3600000))], ['Dividend date', dd < 0 ? 'unknown' : inText(nextDay(dd, 0)) + ' · yield ' + CO.div_yield[k].toFixed(1) + ' %'],
-    ['Peer group', CO.peers[k].join(', ')], ['Category', CO.category[k]], ['Stock type', CO.type[k]], ['Report deposit', (DEPOSIT[CO.category[k]] || '-') + ' on report day']];
+    ['Peer group', CO.peers[k].join(', ')], ['Category', (CATNAME[CO.category[k]] || [CO.category[k], ''])[0], (CATNAME[CO.category[k]] || [])[1]], ['With the market', (TYPENAME[CO.type[k]] || [CO.type[k], ''])[0], (TYPENAME[CO.type[k]] || [])[1]], ['Report deposit', (DEPOSIT[CO.category[k]] || '-') + ' on report day']];
   var h = A(1130, 360, 730, 500, '', '', 'background:#04070F66;border:2px solid var(--line);border-radius:14px') + T(1160, 372, 22, 'acc', 'PROFILE', 0, 'letter-spacing:.2em');
-  rows.forEach(function (r, i) { var y = 404 + i * 45; h += T(1160, y + 4, 22, 'dim', r[0]) + T(1420, y, 28, 'lab', esc(r[1]), 0, 'width:430px;overflow:hidden;text-overflow:ellipsis'); });
+  var y = 404;                                                       // rows 41 px; a row with a plain explanation gets a small 2nd line (+22 px)
+  rows.forEach(function (r) { h += T(1160, y + 4, 22, 'dim', r[0]) + T(1420, y, 28, 'lab', esc(r[1]), 0, 'width:430px;overflow:hidden;text-overflow:ellipsis');
+    if (r[2]) { h += T(1420, y + 34, 18, 'dim', esc(r[2]), 0, 'width:430px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis'); y += 22; } y += 41; });
   return h;
 }
 function pAmount(S) {

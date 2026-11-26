@@ -39,8 +39,15 @@ html,body{margin:0;height:100%;background:#000;overflow:hidden}
 .tag{height:70px;box-sizing:border-box;border-radius:35px;background:rgba(var(--tabRGB),.92);border:3px solid var(--accent);color:var(--chip);font-size:44px;line-height:64px;padding:0 24px;white-space:nowrap;display:flex;align-items:center;gap:14px}
 .arrow{width:248px;height:248px;box-sizing:border-box;border-radius:50%;background:rgba(var(--cardRGB),.94);border:6px solid var(--accent)}
 .sel{left:660px;top:870px;width:600px;height:140px;border-radius:28px;background:var(--accent);color:var(--btnTxt);font-size:62px;letter-spacing:.3em;text-align:center;line-height:140px;overflow:hidden}
-.sel::after{content:'';position:absolute;top:0;bottom:0;width:90px;left:-200px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.45),transparent);transform:skewX(-25deg);filter:blur(6px);animation:shim 4s linear infinite}
-@keyframes shim{0%{left:-200px}50%,100%{left:820px}}
+.sel::before{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;animation:selpulse 2.6s ease-in-out infinite}
+@keyframes selpulse{0%,100%{box-shadow:inset 0 0 0 rgba(255,255,255,0)}50%{box-shadow:inset 0 0 36px rgba(255,255,255,.60)}}
+/* 26 Nov owner: every touchable button moves (= 'you can press this'). Gold .sel = MAIN action, white pulse, NO sweeping lines (owner 26 Nov); the dark side buttons keep their colour but get a slow inner glow pulse; arrows a slow outer glow. Not pressable (access note, YOUR GARAGE) = .still, no motion. */
+.back,.drive,.homeb{overflow:hidden}
+.back::before,.drive::before,.homeb::before{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;animation:breathe 2.6s ease-in-out infinite}
+@keyframes breathe{0%,100%{box-shadow:inset 0 0 0 rgba(var(--accentRGB),0)}50%{box-shadow:inset 0 0 26px rgba(var(--accentRGB),.42)}}
+.arrow::before{content:'';position:absolute;inset:-6px;border-radius:50%;pointer-events:none;animation:aglow 2.6s ease-in-out infinite}
+@keyframes aglow{0%,100%{box-shadow:0 0 0 rgba(var(--accentRGB),0)}50%{box-shadow:0 0 34px rgba(var(--accentRGB),.55)}}
+.still::before{display:none}
 .back{left:77px;top:884px;width:422px;height:112px;box-sizing:border-box;border-radius:24px;background:rgba(var(--tabRGB),.88);border:3px solid rgba(var(--accentRGB),.63);color:var(--chip);font-size:46px;display:flex;align-items:center;justify-content:center;gap:22px;white-space:nowrap}
 .drive{left:1421px;top:884px;width:422px;height:112px;box-sizing:border-box;border-radius:24px;background:rgba(var(--tabRGB),.92);border:4px solid var(--accent);color:var(--accent);font-size:46px;letter-spacing:.3em;display:flex;align-items:center;justify-content:center;gap:22px;white-space:nowrap}
 .homeb{box-sizing:border-box;border-radius:16px;background:rgba(var(--tabRGB),.88);border:3px solid rgba(var(--accentRGB),.63);color:var(--chip);font-size:32px;letter-spacing:.14em;display:flex;align-items:center;justify-content:center;gap:12px;white-space:nowrap;z-index:2}
@@ -155,8 +162,8 @@ function buttons(sel, arrows, back, drive) {
 // ---------- pages
 function garageBtn(f) {     // 26 Nov: BACK zone of the start page = MAKE THIS MY GARAGE / YOUR GARAGE (home marker) / dim access note
   var two = function (a, b) { return '<span style="letter-spacing:.06em;font-size:38px;line-height:1.1;text-align:center">' + a + '<br>' + b + '</span>'; };
-  if (f.na) { var t = { gp: ['GRAND PRIX', 'ACCESS NEEDED'], aurum: ['AURUM', 'MEMBERS ONLY'], 'null': ['NULL WAKE', 'MEMBERS ONLY'] }[f.na] || ['NO ACCESS', 'HERE']; return '<div class="abs back btn" id="bk" style="opacity:.5;border-color:rgba(var(--softRGB),.4);color:var(--soft)">' + two(t[0], t[1]) + '</div>'; }
-  if (f.hm === '1') return '<div class="abs back btn" id="bk" style="background:rgba(var(--tabRGB),.5);border-color:rgba(var(--accentRGB),.35)"><svg width="44" height="44" style="flex:none"><polygon points="' + starPts(22, 22, 20, .28) + '" fill="var(--accent)"/></svg><span style="letter-spacing:.1em">YOUR GARAGE</span></div>';
+  if (f.na) { var t = { gp: ['GRAND PRIX', 'ACCESS NEEDED'], aurum: ['AURUM', 'MEMBERS ONLY'], 'null': ['NULL WAKE', 'MEMBERS ONLY'] }[f.na] || ['NO ACCESS', 'HERE']; return '<div class="abs back btn still" id="bk" style="opacity:.5;border-color:rgba(var(--softRGB),.4);color:var(--soft)">' + two(t[0], t[1]) + '</div>'; }
+  if (f.hm === '1') return '<div class="abs back btn still" id="bk" style="background:rgba(var(--tabRGB),.5);border-color:rgba(var(--accentRGB),.35)"><svg width="44" height="44" style="flex:none"><polygon points="' + starPts(22, 22, 20, .28) + '" fill="var(--accent)"/></svg><span style="letter-spacing:.1em">YOUR GARAGE</span></div>';
   return '<div class="abs back btn" id="bk">' + two('MAKE THIS', 'MY GARAGE') + '</div>';
 }
 function pageAttract(f) {
