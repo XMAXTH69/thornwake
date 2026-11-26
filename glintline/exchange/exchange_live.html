@@ -232,7 +232,7 @@ function barX(i) { return Math.round(GAP * (i + 1) + 260 * i); }
 var BARS = {
   market: ['CLOSE', '▲', '▼', 'SORT', '', 'OPEN'], stock: ['BACK', 'BUY', 'SELL', '', 'OPTIONS (soon)', ''],
   amount: ['BACK', '+10', '−10', '−1', '+1', 'NEXT'], total: ['BACK', '', '', '', '', 'BUY NOW'], result: ['MARKET', '', '', 'MY PORTFOLIO', '', 'BACK TO STOCK'],
-  move: ['BACK', 'IN 1,000', 'OUT 1,000', 'IN ALL', 'OUT ALL', ''], wait: ['', '', '', '', '', '']
+  move: ['BACK', 'IN 1,000', 'OUT 1,000', 'IN ALL', 'OUT ALL', ''], attract: ['', '', '', '', '', 'START'], wait: ['', '', '', '', '', '']
 };
 function bar(S) {
   var L = (BARS[S.p] || BARS.wait).slice();
@@ -266,8 +266,8 @@ function bandWord(k, size) { return '<span class="' + BCOL[BANDS[k]] + '" style=
 
 // ---------- pages
 function pAttract(S) {
-  return A(0, 0, 1920, 84, '', '', 'background:var(--tick);border-bottom:3px solid var(--line)') + tapeHtml(S, true) + '<div class="ring"></div>' + TC(300, 110, 'brand logo', 'GLINT EXCHANGE', 'font-size:110px;letter-spacing:.22em') +
-    TC(480, 60, 'lab touch', 'Touch to start', 'color:var(--acc);font-size:64px') + TC(580, 36, 'dim sub', 'Buy and sell shares with your glint ◆');
+  return A(0, 0, 1920, 84, '', '', 'background:var(--tick);border-bottom:3px solid var(--line)') + tapeHtml(S, true) + TC(150, 110, 'brand logo', 'GLINT EXCHANGE', 'font-size:110px;letter-spacing:.22em') +
+    TC(860, 36, 'dim sub', 'Buy and sell shares with your glint ◆');   // 26 Nov owner: START = bar slot 6 (kiosk style), centre free for the in-world loading plane
 }
 // ticker tape (market page): real names/prices/24 h change from the fragment; start offset follows the clock so a redraw never jumps it
 // 26 Nov owner: SURPRISE NEWS (GlintExchangePrice STEP 6). nw = 'stock:tick:jump x10 %' items (';') of the last 24 h. Headline = sector pool, pick (stock x 7 + tick) % 4.
@@ -412,7 +412,7 @@ function pTotal(S) {
   return h;
 }
 function pWait(S) {
-  if (S.ld && !S.pz) return '<div style="position:absolute;inset:0;background:#04070F"></div>' + A(905, 485, 110, 110, 'spin', '');   // 26 Nov owner: loading data = plain screen + spinner like the garage kiosk (no words)
+  if (S.ld && !S.pz) return '<div style="position:absolute;inset:0;background:#04070F"></div>';   // 26 Nov owner: loading data = plain screen; the in-world loading plane spins in front (GlintKioskSpinner)
   if (S.pz) return frame(S, '') + A(905, 300, 110, 110, 'spin', '') + TC(470, 70, 'amb', 'MARKET PAUSED') + TC(570, 32, 'lab', 'The broker is waiting for the race office numbers.') + TC(620, 32, 'dim', 'Prices come back on their own.');
   return frame(S, '') + A(905, 300, 110, 110, 'spin', '') + TC(470, 70, '', esc(S.wd || 'One moment…'), '') + TC(570, 30, 'dim', 'one moment');
 }
@@ -464,7 +464,7 @@ function render() {
   S.chg = null; if (PREV && PREV.length === STOCKS) { S.chg = S.px.map(function (v, i) { return v > PREV[i] ? 1 : v < PREV[i] ? -1 : 0; }); }
   PREV = S.px.slice(); try { sessionStorage.setItem('xPx', PREV.join(',')); } catch (e) {}
   stage.className = (DEMO ? 'demo' : '') + (ent ? ' ent' : '');
-  stage.innerHTML = fn(S) + (S.p === 'attract' ? '' : bar(S)) + pauseBanner(S) + '<div id="dlg"></div>';
+  stage.innerHTML = fn(S) + bar(S) + pauseBanner(S) + '<div id="dlg"></div>';
   fitText(); tickClock(); if (DEMO) demoAfterRender();
   switches++; if (DBG) requestAnimationFrame(function () { dbgEl.textContent = 'L' + loads + ' S' + switches + ' ' + Math.round(performance.now() - t) + 'ms'; });
 }
@@ -562,7 +562,7 @@ if (DEMO) {
   demoInit();
   stage.addEventListener('click', function (e) {
     var t = e.target; var yn = t.getAttribute && t.getAttribute('data-yn'); if (yn) { answer(yn === 'y'); return; }
-    var b = t.closest ? t.closest('.btn') : null; if (b && !b.classList.contains('off') && !b.classList.contains('soon')) press(b.getAttribute('data-slot')); else if (D.p === 'attract') press('select');
+    var b = t.closest ? t.closest('.btn') : null; if (b && !b.classList.contains('off') && !b.classList.contains('soon')) press(b.getAttribute('data-slot'));
   });
   var cb = document.createElement('input'); cb.id = 'chatbox'; cb.placeholder = 'chat: /buy 50 · /sell all · /in 500 · /out all  (Enter)'; cb.autocomplete = 'off';
   cb.style.cssText = 'position:fixed;left:50%;bottom:6px;transform:translateX(-50%);width:min(520px,90vw);z-index:20;font:16px sans-serif;padding:6px 10px;background:#101A33;color:#fff;border:1px solid #7FD4FF;border-radius:6px';
