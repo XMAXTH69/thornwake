@@ -17,6 +17,8 @@
    na=<gp|aurum|null>  26 Nov (attract only): the player may NOT use this garage (gp = GRAND PRIX access needed, aurum / null = faction members only) -> BACK zone shows a dim note.
          neither hm nor na = allowed, not home yet -> BACK zone is the button MAKE THIS MY GARAGE (GlintKiosk.cs: attract + BACK = GL_HomeSet).
    HOME  26 Nov: every page except attract draws the small button START (house icon) in the left column under the top bar, from CAT.hitsPx.home (46,244 .. 236,304 px) = the SAME rectangle as the touch zone 'home'; touch = attract.
+   USED  26 Nov: START page has a USED MARKET button (DRIVE zone). Pages used_l | used_s | used_c | used_p | used_x are drawn by live/used_pages.js (fragment keys in its header);
+         on them the DRIVE zone = the other tab (SELL / LISTINGS). Not in demo mode (browser test: set the hash by hand).
    still=1 dev: no animations (final frame, for screenshots).
    dbg=1 small counter top-left: L<page loads> S<switches> <ms from hashchange to painted frame>.                                        */
 @font-face{font-family:Brand;src:url(live/fonts/Cinzel.ttf);font-weight:400 900}
@@ -32,7 +34,7 @@ html,body{margin:0;height:100%;background:#000;overflow:hidden}
 .bank{top:62px;font-size:26px;color:var(--soft);white-space:nowrap}
 .card{left:420px;top:150px;width:1080px;height:650px;box-sizing:border-box;border-radius:30px;background:rgba(var(--cardRGB),.96);border:4px solid var(--accent);box-shadow:10px 18px 32px rgba(0,0,0,.43)}
 .ctr{left:0;width:1920px;text-align:center;white-space:nowrap}
-.brand{font-family:Brand;font-weight:600;letter-spacing:.32em}
+.brand{font-family:Brand;font-weight:600;letter-spacing:.32em}.brand.tight{letter-spacing:.04em}
 .soft{color:var(--soft)}.hi{color:var(--hiTxt)}
 .car{object-fit:contain;object-position:50% 100%}
 .glow{border-radius:50%;background:rgba(var(--glowRGB),var(--glowA));filter:blur(26px)}
@@ -86,6 +88,7 @@ html,body{margin:0;height:100%;background:#000;overflow:hidden}
 <body><div id="stage"><canvas id="dust" class="abs" width="1920" height="1080"></canvas><div id="live"></div></div>
 <div id="ld"><i></i></div><div id="dbg"></div>
 <script src="live/kiosk_pages.js"></script>
+<script src="live/used_pages.js"></script>
 <script>
 'use strict';
 var Q = new URLSearchParams(location.search), PAL = Q.get('pal') || 'e', DBG = Q.get('dbg') === '1';
@@ -171,7 +174,7 @@ function pageAttract(f) {
     star(960, 300, 95, 'var(--accent)', .24, 'fade') +
     '<div class="abs ctr brand hi fade" style="top:440px;font-size:116px">GLINTLINE</div>' +
     '<div class="abs ctr fade" style="top:600px;font-size:56px">Step on the glowing square</div>' +
-    '<div class="abs ctr soft fade" style="top:676px;font-size:40px">then touch START to choose your car or bike</div>' + buttons('START', false, null) + garageBtn(f || {});
+    '<div class="abs ctr soft fade" style="top:676px;font-size:40px">then touch START to choose your car or bike</div>' + buttons('START', false, null) + garageBtn(f || {}) + zoneBtn('USED MARKET');
 }
 function pageCar(kind, vid, f) {       // own_ / buy_ / drive_ / browse_ / rent_ <car or plane>; planes (kind 'plane') only switch titles, texts, bar names, dots and buttons
   var v = CAT.vehicles[vid], plane = v.kind === 'plane' || v.kind === 'ship', ord = v.kind === 'ship' ? CAT.ship_order : plane ? CAT.air_order : CAT.order, k = ord.indexOf(vid), C = CARD, own = kind === 'own';
@@ -244,6 +247,7 @@ function parse() { var f = {}; new URLSearchParams(location.hash.slice(1)).forEa
 function build(f) {
   var p = f.p, a = p.split('_');
   if (p === 'attract') return { key: 'attract', html: pageAttract(f) };
+  if (a[0] === 'used') return usedBuild(f);   // 26 Nov USED MARKET (live/used_pages.js)
   if ((a[0] === 'own' || a[0] === 'buy' || a[0] === 'drive' || a[0] === 'browse' || a[0] === 'rent') && a.length === 2 && CAT.vehicles[a[1]]) return { key: a[0] + a[1], car: a[1], html: pageCar(a[0], a[1], f) };
   if (a[0] === 'menu' && a.length === 3 && CAT.vehicles[a[1]]) return { key: 'menu' + a[1], car: a[1], html: pageMenu(a[1], +a[2]) };
   if (a[0] === 'paint' && a.length === 3 && CAT.paints[a[1]] && (a[2] === 'drive' || CAT.paints[a[1]][+a[2]])) return { key: 'paint' + a[1] + (a[2] === 'drive' ? 'd' : ''), car: a[1] + a[2], html: pagePaint(a[1], a[2], f) };
