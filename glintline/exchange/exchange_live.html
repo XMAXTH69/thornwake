@@ -213,7 +213,7 @@ function parse() {
   function dec(s) { try { return decodeURIComponent(String(s).replace(/\+/g, ' ')); } catch (e) { return s; } }
   function lst(key, n, d) { return arr(S[key] ? S[key].split(',') : null, n, d); }
   var o = { p: dec(S.p || 'attract'), c: parseInt(S.c) || 0, b: parseInt(S.b) || 0, sel: parseInt(S.sel) || 0, k: Math.max(0, Math.min(STOCKS - 1, parseInt(S.k) || 0)),
-    pz: S.pz === '1', side: S.side === 'sell' ? 'sell' : 'buy', q: Math.max(0, parseInt(S.q) || 0), f: S.f !== undefined && S.f !== '' ? parseInt(S.f) : 5, r: null, er: dec(S.er || ''), mf: Math.max(0, Math.min(3, parseInt(S.mf) || 0)) };
+    pz: S.pz === '1', ld: S.ld === '1', side: S.side === 'sell' ? 'sell' : 'buy', q: Math.max(0, parseInt(S.q) || 0), f: S.f !== undefined && S.f !== '' ? parseInt(S.f) : 5, r: null, er: dec(S.er || ''), mf: Math.max(0, Math.min(3, parseInt(S.mf) || 0)) };
   o.px = lst('px', STOCKS, 0).map(function (v, i) { return v > 0 ? v : BASE[i]; });
   o.pv = lst('pv', STOCKS, 0).map(function (v, i) { return v > 0 ? v : o.px[i]; });
   o.h = lst('h', STOCKS, 0); o.cb = lst('cb', STOCKS, 0);
@@ -411,6 +411,7 @@ function pTotal(S) {
   return h;
 }
 function pWait(S) {
+  if (S.ld && !S.pz) return '<div style="position:absolute;inset:0;background:#04070F"></div>' + A(905, 485, 110, 110, 'spin', '');   // 26 Nov owner: loading data = plain screen + spinner like the garage kiosk (no words)
   if (S.pz) return frame(S, '') + A(905, 300, 110, 110, 'spin', '') + TC(470, 70, 'amb', 'MARKET PAUSED') + TC(570, 32, 'lab', 'The broker is waiting for the race office numbers.') + TC(620, 32, 'dim', 'Prices come back on their own.');
   return frame(S, '') + A(905, 300, 110, 110, 'spin', '') + TC(470, 70, '', 'Booking…', '') + TC(570, 30, 'dim', 'one moment');
 }
