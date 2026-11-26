@@ -16,7 +16,7 @@
 //   mo positions 'stock:c|p:b|s:strike:oe:qty:open:mark:mode:endUnix' joined by '~'   (open/mark = cents per share)
 var OPT = (function () {
   'use strict';
-  var GAMELINKED = 4;                                               // AURUM, NULL WAKE, ECHOES, GLINTLINE: no LONG options (coordinator 25 Nov, pump budget sec 9)
+  // owner 26 Nov (P1): AURUM, NULL WAKE, ECHOES, GLINTLINE options trade like every other stock (old sell-only ban removed)
   var EXP = ['1 DAY', '3 DAYS', '1 WEEK', '4 WEEKS'], EXPD = [1, 3, 7, 28], ROWS = 21, ATM = 10, VIS = 11;
   var MODE = { cov: 'COVERED', cash: 'CASH-SECURED', naked: 'NAKED' };
   var R = { CALM: .20, BUMPY: .30, WILD: .40 };                      // initial margin rate r by band (sec 15)
@@ -57,7 +57,6 @@ var OPT = (function () {
     var t = { K: K, px: px, q: q, prem: prem, fee: fee, call: call, sell: sell, net: sell ? prem - fee : -(prem + fee), modes: [], why: {} };
     var feeShare = o.fee;                                             // glint per contract = cents per share
     t.be = call ? K + px + (sell ? -feeShare : feeShare) : K - px + (sell ? feeShare : -feeShare);
-    if (!sell && k < GAMELINKED) t.refuse = 'No BUY on ' + NAMES[k] + ': the racing crews own a piece of it, so the broker only lets you SELL its options';
     if (!sell) { t.maxLoss = g(prem + fee); t.maxGain = call ? 'no limit' : g(Math.max(0, (K - px) * q - fee)); t.lock = 'nothing'; }
     else {
       var shares = S.h[k], cash = S.c, need = K * q;                  // K cents x 100 shares x q / 100 = K x q glint
@@ -115,7 +114,7 @@ var OPT = (function () {
     }
     h += A(100, y0 + VIS * P + 6, 1720, 2, '', '', 'background:var(--line)');
     h += T(100, 800, 24, 'dim', 'Prices are glint per SHARE · 1 contract = 100 shares · fee ' + o.fee + ' ◆ a contract each way') + TR(1820, 800, 24, 'dim', 'strike ' + (o.row + 1) + ' of ' + ROWS);
-    h += T(100, 836, 24, 'lab', k < GAMELINKED ? 'The racing crews own a piece of ' + esc(NAMES[k]) + ': SELL only, at or out of the money.' : 'Grey side = in the money: BUY only. SELL needs at or out of the money.');
+    h += T(100, 836, 24, 'lab', 'Grey side = in the money: BUY only. SELL needs at or out of the money.');
     return h;
   }
   function pill(x, y, w, on, label, sub, col) {
@@ -215,7 +214,7 @@ var OPT = (function () {
       var K = atm + (i - ATM) * step, n = Math.min(10, Math.abs(i - ATM)) / 10;
       ['c', 'p'].forEach(function (cp) {
         var vv = v * (cp === 'p' ? (K < S0 ? 1 + .12 * n : 1) : (K > S0 ? 1 - .04 * n : 1)), sd = Math.sqrt(vv * vv * T + rep * rep), d1 = (Math.log(S0 / K) + sd * sd / 2) / sd, d2 = d1 - sd;
-        var val = cp === 'c' ? S0 * ncdf(d1) - K * ncdf(d2) : K * ncdf(-d2) - S0 * ncdf(-d1), bid = val < 1 ? 0 : Math.round(val), ask = k < GAMELINKED || val < .5 ? 0 : Math.max(1, Math.ceil(val * 1.10));
+        var val = cp === 'c' ? S0 * ncdf(d1) - K * ncdf(d2) : K * ncdf(-d2) - S0 * ncdf(-d1), bid = val < 1 ? 0 : Math.round(val), ask = val < .5 ? 0 : Math.max(1, Math.ceil(val * 1.10));
         var oi = Math.max(0, Math.round(900 * Math.exp(-Math.abs(i - ATM + (cp === 'c' ? -2 : 2)) / 3) * (.6 + .4 * Math.abs(Math.sin(K + k)))));
         c['o' + cp + 'b'].push(bid); c['o' + cp + 'a'].push(ask); c['o' + cp + 'o'].push(oi);
       });
