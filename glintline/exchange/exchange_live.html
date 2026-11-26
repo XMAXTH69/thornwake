@@ -459,7 +459,8 @@ function render() {
   var t = performance.now(), S = parse(); lastS = S;
   var fn = PAGES[S.p] || pAttract; if (!PAGES[S.p]) S.p = 'attract';
   // motion state: entrance only when the page (or market page of 10) changes; flash only prices that changed since the last draw
-  var key = S.p + (S.p === 'market' ? ':' + S.mf + ':' + Math.floor(Math.max(0, (ORDER[S.mf] || ORDER[0]).indexOf(Math.min(S.sel, STOCKS - 1))) / 10) : '')   // 26 Nov owner: page of 10 in the SORTED list (was raw stock id = sorted arrows 'changed page'), ent = key !== lastKey; if (ent) entT = t; else if (t - entT < 450) ent = true; lastKey = key;
+  // 26 Nov owner: page of 10 in the SORTED list (was raw stock id = sorted arrows 'changed page')
+  var key = S.p + (S.p === 'market' ? ':' + S.mf + ':' + Math.floor(Math.max(0, (ORDER[S.mf] || ORDER[0]).indexOf(Math.min(S.sel, STOCKS - 1))) / 10) : ''), ent = key !== lastKey; if (ent) entT = t; else if (t - entT < 450) ent = true; lastKey = key;
   S.selMoved = !ent && S.sel !== lastSel; lastSel = S.sel;
   S.chg = null; if (PREV && PREV.length === STOCKS) { S.chg = S.px.map(function (v, i) { return v > PREV[i] ? 1 : v < PREV[i] ? -1 : 0; }); }
   PREV = S.px.slice(); try { sessionStorage.setItem('xPx', PREV.join(',')); } catch (e) {}
