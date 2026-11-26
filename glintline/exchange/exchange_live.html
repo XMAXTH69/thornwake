@@ -58,6 +58,7 @@ html,body{margin:0;width:100%;height:100%;background:#04070F;overflow:hidden;pos
 .tape .ti{display:inline-block;margin-right:46px}.tape b{font-weight:400;color:var(--lab);letter-spacing:.08em;margin-right:12px}
 @keyframes tape{to{transform:translate3d(-50%,0,0)}}
 .ent .a{animation:fin .4s ease-out both}
+.ent .spin{animation:fin .4s ease-out both,sp .9s linear infinite}   /* 26 Nov owner 'loading screen doesnt spin': .ent .a replaced the rotation and the wait page is never redrawn */
 .ent .panel{animation:pin .5s cubic-bezier(.2,.7,.2,1) both}
 .ent .rw{animation:rin .5s cubic-bezier(.2,.7,.2,1) both;animation-delay:calc(var(--i)*45ms + 120ms)}
 .ent .bar{transform-origin:50% 100%;animation:bgrow .6s cubic-bezier(.2,.7,.2,1) both;animation-delay:calc(var(--i)*35ms + 150ms)}
