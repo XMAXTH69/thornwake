@@ -62,15 +62,15 @@ var OPT = (function () {
       var shares = S.h[k], cash = S.c, need = K * q;                  // K cents x 100 shares x q / 100 = K x q glint
       if (call) { if (shares >= 100 * q) t.modes.push('cov'); else t.why.cov = 'needs ' + fmt(100 * q) + ' free shares (you have ' + fmt(shares) + ')'; }
       else { if (cash >= need) t.modes.push('cash'); else t.why.cash = 'needs ' + g(need) + ' free (you have ' + g(cash) + ')'; }
-      if (!o.lv) t.why.naked = 'margin desk locked (100 races + 7 days)';
-      else if (o.e > 1) t.why.naked = 'naked = 1 DAY and 3 DAYS only';
+      if (!o.lv) t.why.naked = 'selling without cover is locked (100 races + 7 days)';
+      else if (o.e > 1) t.why.naked = 'selling without cover = 1 DAY and 3 DAYS only';
       else if (o.nk < q) t.why.naked = 'level ' + o.lv + ' allows ' + o.nk + ' now';
       else t.modes.push('naked');
       t.mode = t.modes.indexOf(o.m) >= 0 ? o.m : (t.modes[0] || '');
       t.maxGain = g(prem - fee) + ' (the premium)';
       if (t.mode === 'cov') { t.maxLoss = 'no glint: your ' + fmt(100 * q) + ' shares go at ' + f2(K); t.lock = fmt(100 * q) + ' shares'; }
       else if (t.mode === 'cash') { t.maxLoss = g(Math.max(0, (K - px) * q + fee)) + ' if it falls to 0'; t.lock = g(need); }
-      else if (t.mode === 'naked') { t.maxLoss = call ? 'NO LIMIT · margin call, then forced close' : g(Math.max(0, (K - px) * q + fee)) + ' if it falls to 0'; t.lock = g(o.im) + ' margin' + (o.dp ? ' + report deposit ' + o.dp + ' %' : ''); }
+      else if (t.mode === 'naked') { t.maxLoss = call ? 'NO LIMIT · the broker closes it if your account runs low' : g(Math.max(0, (K - px) * q + fee)) + ' if it falls to 0'; t.lock = g(o.im) + ' margin' + (o.dp ? ' + report deposit ' + o.dp + ' %' : ''); }
       else { t.maxLoss = '-'; t.lock = '-'; }
       if (!px) t.be = 0;
       if (itm(o.cp, K, spot)) { t.refuse = 'In the money: SELL only at or out of the money (pick a ' + (call ? 'higher' : 'lower') + ' strike)'; }
@@ -91,7 +91,7 @@ var OPT = (function () {
       var on = i === o.e, x = 100 + i * 250;
       h += A(x, y, 230, 58, '', '<div class="c" style="line-height:58px;font-size:30px">' + EXP[i] + '</div>', 'border-radius:12px;box-sizing:border-box;' + (on ? 'background:var(--acc);color:#04070F' : 'border:2px solid var(--line);color:var(--lab)'));
     }
-    return h + T(1120, y - 4, 26, 'lab', endText(o.end)) + T(1120, y + 30, 20, 'dim', 'naked (margin desk): 1 DAY and 3 DAYS only');
+    return h + T(1120, y - 4, 26, 'lab', endText(o.end)) + T(1120, y + 30, 20, 'dim', 'selling without cover: 1 DAY and 3 DAYS only');
   }
   function pChain(S) {
     var o = parseO(S), k = S.k, spot = S.px[k], h = head(S, o, 'OPTIONS');
@@ -114,7 +114,7 @@ var OPT = (function () {
     }
     h += A(100, y0 + VIS * P + 6, 1720, 2, '', '', 'background:var(--line)');
     h += T(100, 800, 24, 'dim', 'Prices are glint per SHARE · 1 contract = 100 shares · fee ' + o.fee + ' ◆ a contract each way') + TR(1820, 800, 24, 'dim', 'strike ' + (o.row + 1) + ' of ' + ROWS);
-    h += T(100, 836, 24, 'lab', 'Grey side = in the money: BUY only. SELL needs at or out of the money.');
+    h += T(100, 836, 24, 'lab', 'Grey side = already worth money: BUY only. SELL only on the other side.');
     return h;
   }
   function pill(x, y, w, on, label, sub, col) {
@@ -131,7 +131,7 @@ var OPT = (function () {
   }
   function modes(o, t, y) {
     var h = T(100, y, 24, 'acc', 'COLLATERAL', 0, 'letter-spacing:.2em');
-    if (!t.sell) return h + T(100, y + 40, 30, 'lab', 'None. You can lose only what you pay.') + T(100, y + 84, 24, 'dim', 'At expiry: in the money = paid out automatically, else it expires.');
+    if (!t.sell) return h + T(100, y + 40, 30, 'lab', 'None. You can lose only what you pay.') + T(100, y + 84, 24, 'dim', 'At expiry: if it is worth money you are paid automatically, else it ends.');
     var list = t.call ? [['cov', 'COVERED', 'you own the 100 shares per contract']] : [['cash', 'CASH-SECURED', 'strike × 100 is locked per contract']];
     list.push(['naked', 'NAKED - margin', '1 DAY / 3 DAYS only · report deposit applies']);
     list.forEach(function (m, i) {
@@ -168,7 +168,7 @@ var OPT = (function () {
     if (t.sell) h += T(100, 520, 30, 'lab', 'Mode: <span class="acc">' + (MODE[t.mode] || '-') + '</span>' + (t.modes.length > 1 ? ' <span class="dim" style="font-size:22px">(MODE changes it)</span>' : '')) + T(100, 562, 26, 'dim', 'Locked until expiry: ' + esc(t.lock));
     var plain = plainText(S, t);
     h += T(100, 610, 30, '', esc(plain), 0, 'white-space:normal;width:940px;line-height:1.3');
-    if (t.sell && t.mode === 'naked') h += T(100, 740, 26, 'dn', 'Margin: if your account gets too thin the broker calls you, then closes it by force. Only Exchange glint is at risk.', 0, 'white-space:normal;width:940px;line-height:1.3');
+    if (t.sell && t.mode === 'naked') h += T(100, 740, 26, 'dn', 'Margin: if your account runs too low, the broker closes this order for you. Only Exchange glint is at risk.', 0, 'white-space:normal;width:940px;line-height:1.3');
     h += summary(S, o, t, 150);
     h += t.refuse ? TC(820, 30, 'dn', esc(t.refuse)) : TC(820, 30, 'lab', 'Press ' + (t.sell ? 'SELL NOW' : 'BUY NOW') + ', then Yes in the box');
     return h;
@@ -182,7 +182,7 @@ var OPT = (function () {
     h += T(100, 150, 120, net >= 0 ? 'up' : '', (net >= 0 ? '+' : '−') + fmt(Math.abs(net)) + ' <span class="acc" style="font-size:60px">◆</span>') + T(100, 292, 32, 'lab', sh ? 'you pay to buy it back' : 'you get for selling it back');
     var rows = [[(sh ? 'Buy back ' : 'Sell back ') + fmt(p.q) + ' × 100 × ' + f2(p.mark), g(cost), 'lab'], ['Result of the whole trade', sg(res) + ' ◆', res >= 0 ? 'up' : 'dn']];
     rows.forEach(function (r, i) { var y = 380 + i * 66; h += T(100, y, 32, 'lab', r[0]) + TR(1300, y, 34, r[2], r[1]); });
-    h += T(100, 600, 28, 'dim', sh ? 'The locked ' + (p.m === 'cov' ? 'shares are' : 'glint is') + ' free again at once.' : 'The glint goes to your free Exchange glint.');
+    h += T(100, 600, 28, 'dim', sh ? 'The locked ' + (p.m === 'cov' ? 'shares are' : 'glint is') + ' free again at once.' : 'The glint is added to your free Exchange glint.');
     h += TC(820, 30, 'lab', 'Press CLOSE NOW, then Yes in the box');
     return h;
   }

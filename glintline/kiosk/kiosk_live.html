@@ -193,7 +193,7 @@ function pageAttract(f) {
 }
 function pageCar(kind, vid, f) {       // own_ / buy_ / drive_ / browse_ / rent_ <car or plane>; planes (kind 'plane') only switch titles, texts, bar names, dots and buttons
   var v = CAT.vehicles[vid], plane = v.kind === 'plane' || v.kind === 'ship', ord = v.kind === 'ship' ? CAT.ship_order : plane ? CAT.air_order : CAT.order, k = ord.indexOf(vid), C = CARD, own = kind === 'own';
-  var ttl = { browse: plane ? 'CHOOSE YOUR PLANE' : 'CHOOSE YOUR RIDE', own: plane ? (v.kind === 'ship' ? 'YOUR SHIP' : 'YOUR PLANE') : 'YOUR RIDE', buy: plane ? 'IN THE HANGAR' : 'IN THE SHOP', drive: 'READY', rent: v.kind === 'ship' ? 'RENT A SHIP' : 'RENT A PLANE' }[kind];
+  var ttl = { browse: plane ? 'CHOOSE YOUR PLANE' : 'CHOOSE YOUR VEHICLE', own: plane ? (v.kind === 'ship' ? 'YOUR SHIP' : 'YOUR PLANE') : 'YOUR VEHICLE', buy: plane ? 'IN THE HANGAR' : 'IN THE SHOP', drive: 'READY', rent: v.kind === 'ship' ? 'RENT A SHIP' : 'RENT A PLANE' }[kind];
   var price = kind === 'rent' ? money(v.rent) + ' · 5 MIN' : own ? 'YOURS' : (v.price ? money(v.price) + ' glint' : 'FREE');
   if (kind === 'drive') return base(ttl, [k, ord.length]) + card() + carImg(v.render, [C[0] + 220, C[1] + 60, C[2] - 220, C[1] + 420]) +
     '<div class="abs ctr fade" style="top:' + (C[1] + 456) + 'px;font-size:58px">Your ' + esc(title(v.name)) + (plane ? ' waits on the apron' : ' waits on the start pad') + '</div>' +
@@ -213,7 +213,7 @@ function pageCar(kind, vid, f) {       // own_ / buy_ / drive_ / browse_ / rent_
     h += '</div>';
   });
   h += tag(C[2] - 30, C[3] - 100, price, !own);
-  if (kind === 'buy') h += '<div class="abs soft fade" style="left:' + (C[0] + 50) + 'px;top:' + (C[3] - 80) + 'px;font-size:34px">' + (plane && (v.kind !== 'ship' || v.rent) ? 'Or rent it for 5 minutes  ·  touch RENT' : 'Paid from your banked glint') + '</div>';
+  if (kind === 'buy') h += '<div class="abs soft fade" style="left:' + (C[0] + 50) + 'px;top:' + (C[3] - 80) + 'px;font-size:34px">' + (plane && (v.kind !== 'ship' || v.rent) ? 'Or rent it for 5 minutes  ·  touch RENT' : 'Paid from your vault') + '</div>';
   if (kind === 'rent') h += '<div class="abs soft fade" style="left:' + (C[0] + 50) + 'px;top:' + (C[3] - 80) + 'px;font-size:34px">Rent for 5 minutes  ·  touch BUY to own it</div>';
   return h + buttons(own ? (plane ? 'FLY' : 'DRIVE') : kind === 'rent' ? 'RENT' : 'BUY', true, plane ? (kind === 'buy' && (v.kind !== 'ship' || v.rent) ? 'RENT' : kind === 'rent' ? 'BUY' : 'BACK') : own ? 'CUSTOMISE' : null);   // 25 Nov owner: 'arrows: rent' unclear -> the chip names where it goes
 }
@@ -250,7 +250,7 @@ function pagePaint(vid, i, f) {
   h += carImg(p.img, [C[0] + 170, C[1] + 40, C[2] - 170, C[1] + 360]);
   h += '<div class="abs ctr brand fade" id="pn" style="top:' + (C[1] + 378) + 'px;font-size:66px">' + esc(p.name.toUpperCase()) + '</div>';
   var earn = !!p.earn, lock = earn && !owned;   // 26 Nov EARNED PAINTS: never bought; locked = progress tag (f.lk) + dim LOCKED button
-  h += '<div class="abs ctr soft fade" style="top:' + (C[1] + 462) + 'px;font-size:38px">' + esc(earn ? p.who : owned && p.price ? 'Yours for this vehicle' : p.who) + '</div>';
+  h += '<div class="abs ctr soft fade" style="top:' + (C[1] + 462) + 'px;font-size:38px">' + esc(earn ? p.who : owned && p.price ? 'You own this paint' : p.who) + '</div>';
   h += tag(C[2] - 30, C[1] + 30, earn ? (owned ? 'EARNED' : (f.lk || p.tag)) : owned && p.price ? 'YOURS' : p.tag, p.price > 0 && !owned);
   var tw = 150, th = 84, gap = 22, x = W / 2 - (n * tw + (n - 1) * gap) / 2, y = C[3] - th - 34;
   P.forEach(function (q, j) { var x0 = x + j * (tw + gap); h += '<div class="abs tile' + (j === +i ? ' on' : '') + '" style="' + box(x0, y, x0 + tw, y + th) + '"><img src="live/img/' + q.img + '.webp" style="max-width:' + (tw - 16) + 'px;max-height:' + (th - 12) + 'px"></div>'; });

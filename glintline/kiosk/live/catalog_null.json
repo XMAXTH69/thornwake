@@ -666,7 +666,7 @@
    {
     "key": "signature",
     "name": "Glint Black",
-    "who": "Comes with the car",
+    "who": "Comes with the bike",
     "img": "bike_std",
     "price": 0,
     "tag": "INCLUDED"
@@ -750,7 +750,7 @@
    "line": "Five curved blades",
    "price": "12 000 glint",
    "hints": [
-    "Bought for this car or bike only",
+    "Buy once, keep it",
     "Keeps turning after you stop",
     "One per car or bike · change free"
    ]
@@ -761,7 +761,7 @@
    "line": "Three paddles",
    "price": "12 000 glint",
    "hints": [
-    "Bought for this car or bike only",
+    "Buy once, keep it",
     "Keeps turning after you stop",
     "One per car or bike · change free"
    ]
@@ -772,7 +772,7 @@
    "line": "The glint star",
    "price": "12 000 glint",
    "hints": [
-    "Bought for this car or bike only",
+    "Buy once, keep it",
     "Keeps turning after you stop",
     "One per car or bike · change free"
    ]
@@ -783,7 +783,7 @@
    "line": "Sixteen vanes",
    "price": "12 000 glint",
    "hints": [
-    "Bought for this car or bike only",
+    "Buy once, keep it",
     "Keeps turning after you stop",
     "One per car or bike · change free"
    ]
@@ -792,7 +792,7 @@
    "key": "aurum",
    "name": "AURUM LAUREL",
    "line": "Gold laurel wreath",
-   "price": "AURUM members - monument L2",
+   "price": "AURUM members, monument level 2",
    "hints": [
     "Free · monument level 2",
     "Keeps turning after you stop",
@@ -803,7 +803,7 @@
    "key": "null",
    "name": "NULL WAKE CRESCENT",
    "line": "Violet crescents",
-   "price": "NULL WAKE members - monument L2",
+   "price": "NULL WAKE members, monument level 2",
    "hints": [
     "Free · monument level 2",
     "Keeps turning after you stop",
@@ -892,7 +892,7 @@
    [
     "beat",
     "BEAT 120",
-    "Pulses at 120 BPM",
+    "Pulses 120 times a minute",
     4000
    ],
    [
@@ -1033,7 +1033,7 @@
     "GOLD",
     [
      255,
-     199,
+     198,
      51
     ]
    ]
@@ -1195,15 +1195,15 @@
   ],
   "BREATHE": [
    "FREE",
-   "Glows brighter and softer, slow"
+   "Slowly glows brighter, then softer"
   ],
   "CHASE": [
    "FREE",
-   "Light runs from your car to the tail"
+   "Light runs from your vehicle to the tail"
   ],
   "BRAKE FLASH": [
    "FREE",
-   "Flashes white, fades out slow"
+   "Flashes white, then fades out slowly"
   ],
   "BOOST SURGE": [
    "FREE",
@@ -1231,7 +1231,7 @@
   ],
   "RAINBOW": [
    "KITTY",
-   "Seven colours, one per piece"
+   "Seven colours along the line"
   ]
  },
  "trail_who": {
@@ -1239,7 +1239,7 @@
   "AURUM": "Aurum members only",
   "NULL": "Null Wake members only",
   "VIP": "This week's top 3 only",
-  "KITTY": "Comet Kitty only"
+  "KITTY": "Only for the Comet Kitty"
  },
  "upg": {
   "_note": "s64: upg_<kind>_<mk>; prices = GlintShop.cs Unlock/Copy (DESIGN N5b.7), effects = DESIGN N5b; garage tier = highest Mk sold (GlintShop refuses higher)",
@@ -1279,9 +1279,9 @@
     "+9 % turning"
    ],
    "cell": [
-    "Light line 9 s · refill x1",
-    "Light line 10.5 s · refill x1.1",
-    "Light line 12 s · refill x1.2"
+    "Light line lasts 9 s",
+    "Light line lasts 10.5 s · refills 10 % faster",
+    "Light line lasts 12 s · refills 20 % faster"
    ]
   },
   "unlock": {

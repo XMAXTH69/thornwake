@@ -280,7 +280,7 @@ function jumpText(n) { return '<span class="' + (n.j >= 0 ? 'up' : 'dn') + '">' 
 var DAY_DY = null;
 function dayHeads() {
   var a = DAY_DY || [], o = [], m = a[0] || 0, p = a[1] || 0, s = a[2] || 0, pc;
-  if (m && Math.abs(m - 1000) >= 10) { pc = Math.round((m - 1000) / 10); o.push({ k: 'm', t: (pc < 0 ? 'MARKET SALE' : 'MARKET BOOM') + ': rides ' + (pc > 0 ? '+' : '') + pc + ' % today' }); }
+  if (m && Math.abs(m - 1000) >= 10) { pc = Math.round((m - 1000) / 10); o.push({ k: 'm', t: (pc < 0 ? 'MARKET SALE' : 'MARKET BOOM') + ': prices ' + (pc > 0 ? '+' : '') + pc + ' % today' }); }
   if (p - 1000 >= 10) o.push({ k: 'p', t: 'PARTS SHORTAGE: parts +' + Math.round((p - 1000) / 10) + ' % today' });
   if (s - 1000 >= 10) o.push({ k: 's', t: 'SHIELD RUSH: shields +' + Math.round((s - 1000) / 10) + ' % today' });
   return o;
@@ -378,7 +378,7 @@ function sortTag(m, k) { return m === 2 ? (TYPENAME[CO.type[k]] || [CO.type[k]])
 var ORDER = [0, 1, 2, 3].map(function (m) { var ix = []; for (var i = 0; i < STOCKS; i++) ix.push(i); return ix.sort(function (a, b) { return sortRank(m, a) - sortRank(m, b) || a - b; }); });
 function profile(S, k) {
   var capM = S.px[k] / 100 * CO.shares_m[k], vol = CO.avg_vol_k[k], dd = CO.div_day[k];
-  var rows = [['Sector', CO.sector[k]], ['Industry', CO.industry[k]], ['Market cap', bigNum(capM, ['M', 'B'])], ['Avg volume 30 d', bigNum(vol, ['k', 'M'])],
+  var rows = [['Sector', CO.sector[k]], ['Industry', CO.industry[k]], ['Market cap', bigNum(capM, ['M', 'B'])], ['Avg volume 30 days', bigNum(vol, ['k', 'M'])],
     ['Quarterly report', inText(nextDay(CO.report_day[k], 12 * 3600000))], ['Dividend date', dd < 0 ? 'unknown' : inText(nextDay(dd, 0)) + ' · yield ' + CO.div_yield[k].toFixed(1) + ' %'],
     ['Peer group', CO.peers[k].join(', ')], ['Category', (CATNAME[CO.category[k]] || [CO.category[k], ''])[0], (CATNAME[CO.category[k]] || [])[1]], ['Stock type', (TYPENAME[CO.type[k]] || [CO.type[k], ''])[0], (TYPENAME[CO.type[k]] || [])[1]], ['Report deposit', (DEPOSIT[CO.category[k]] || '-') + ' on report day']];
   var h = A(1130, 360, 730, 500, '', '', 'background:#04070F66;border:2px solid var(--line);border-radius:14px') + T(1160, 372, 22, 'acc', 'PROFILE', 0, 'letter-spacing:.2em');
@@ -402,7 +402,7 @@ function pTotal(S) {
   var mid = q * px, gross = q * fill, feeC = S.f * 100, tot = sell ? Math.max(0, Math.floor((gross - feeC) / 100 + 1e-9)) : Math.ceil((gross + feeC) / 100 - 1e-9);
   h += T(100, 108, 30, 'dim', '<span class="' + col + '">' + (sell ? 'SELL' : 'BUY') + '</span> ' + fmt(q) + ' ' + esc(NAMES[k]) + ' · check the total');
   h += T(100, 150, 120, sell ? 'up' : '', (sell ? '+' : '−') + fmt(tot) + ' <span class="acc" style="font-size:60px">◆</span>') + T(100, 292, 32, 'lab', sell ? 'you get' : 'you pay');
-  var rows = [[fmt(q) + ' shares × ' + f2(px) + ' (mid price)', f2(mid) + ' ◆', 'lab'], ['Spread ' + pctBp(spreadBp(k)) + ' % ' + (sell ? '(taken off)' : '(added)'), sg((gross - mid) / 100, 2) + ' ◆', 'amb'],
+  var rows = [[fmt(q) + ' shares × ' + f2(px) + ' (market price)', f2(mid) + ' ◆', 'lab'], ['Spread ' + pctBp(spreadBp(k)) + ' % ' + (sell ? '(taken off)' : '(added)'), sg((gross - mid) / 100, 2) + ' ◆', 'amb'],
     ['Broker fee', sg((sell ? -1 : 1) * S.f) + ' ◆', 'amb'], ['Total ' + (sell ? 'to you' : '') + ' (' + (sell ? 'rounded down' : 'rounded up') + ')', fmt(tot) + ' ◆', '']];
   for (var i = 0; i < 4; i++) { var y = 370 + i * 62 + (i === 3 ? 16 : 0); h += T(100, y, 32, i === 3 ? '' : 'lab', rows[i][0]) + TR(1300, y, 34, rows[i][2], rows[i][1]); if (i === 2) h += A(100, y + 52, 1200, 3, '', '', 'background:var(--line)'); }
   if (sell) { var cost = S.h[k] > 0 ? S.cb[k] / 100 * q / S.h[k] : 0, pl = tot - cost; h += T(100, 680, 34, pl >= 0 ? 'up' : 'dn', 'Result on these ' + fmt(q) + ': ' + sg(pl) + ' ◆ (you paid ' + (S.h[k] ? f2(S.cb[k] / S.h[k]) : '0.00') + ' each)') + T(100, 730, 28, 'dim', 'Glint after: ' + fmt(S.c + tot) + ' ◆ free'); }

@@ -30,7 +30,7 @@ function driveTile() {
   return '<div class="fade">' + [0, 1, 2].map(function (k) { var r = 130 + k * 16; return '<i class="abs" style="left:' + (960 - r) + 'px;top:' + (C[1] + 210 - r) + 'px;width:' + 2 * r + 'px;height:' + 2 * r + 'px;box-sizing:border-box;border-radius:50%;border:6px solid rgba(var(--accentRGB),' + ((200 - k * 60) / 255).toFixed(2) + ')"></i>'; }).join('') +
     '<svg class="abs" style="left:900px;top:' + (C[1] + 130) + 'px" width="130" height="160"><polygon fill="var(--accent)" points="10,10 130,80 10,150 38,80"/></svg></div>' +
     '<div class="abs ctr brand fade" style="top:' + (C[1] + 386) + 'px;font-size:76px">READY TO DRIVE</div>' +
-    '<div class="abs ctr hi fade" style="top:' + (C[1] + 490) + 'px;font-size:42px">Touch DRIVE · your ride waits on the start pad</div>' +
+    '<div class="abs ctr hi fade" style="top:' + (C[1] + 490) + 'px;font-size:42px">Touch DRIVE · your vehicle waits on the start pad</div>' +
     '<div class="abs ctr soft fade" style="top:' + (C[1] + 556) + 'px;font-size:34px">BACK for more paint, parts, lines, rims or a shield</div>';
 }
 function pageSubDrive(kind) {
@@ -222,7 +222,7 @@ function pageBroker(key, f) {
   var v = CAT.vehicles[key], C = CARD, rentable = v.rent > 0, pr = f && +f.bp > 0 ? +f.bp : v.price;   // &bp = live broker price (GlintKiosk, 25 Nov)
   var h = base('GLINT EXCHANGE', null, { brk: 1 }) + card() + carImg(v.render, [C[0] + 220, C[1] + 10, C[2] - 220, C[1] + 260]) +
     TC(C[1] + 272, esc(v.name), 62, 'brand', 960) + TC(C[1] + 346, 'SOLD BY THE BROKER', 50, 'brand hi') +
-    TC(C[1] + 416, 'at the GLINT EXCHANGE, behind the spawn beside the Museum', 36, 'text') + TC(C[1] + 474, 'The broker only sells to clients. Put your glint to work at the Exchange first.', 30, 'soft', 1000);
+    TC(C[1] + 416, 'at the GLINT EXCHANGE, behind the spawn beside the Museum', 36, 'text') + TC(C[1] + 474, 'The broker only sells to players who use the Exchange. Use your glint there first.', 30, 'soft', 1000);
   h += tag(C[2] - 30, C[3] - 100, money(pr) + ' ◆', false).replace('class="abs tag fade"', 'class="abs tag fade" ').replace('style="top:', 'style="color:#FFB02E;top:');
   return h + buttons(null, true, 'BACK');
 }

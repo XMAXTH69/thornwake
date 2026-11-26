@@ -110,7 +110,7 @@ var PF = (function () {
     // owner 26 Nov: main view = what you decide on. ONE top strip, rows = name · how many · value · gain/loss (+ expiry for options); the rest sits in the detail panel of the selected row.
     h += card(100, 146, 1720, 84) + T(124, 158, 19, 'acc', 'PORTFOLIO VALUE', 0, 'letter-spacing:.14em') + T(124, 184, 40, '', g(inv)) +
       T(620, 158, 19, 'acc', 'GAIN / LOSS', 0, 'letter-spacing:.14em') + T(620, 184, 40, plAll >= 0 ? 'up' : 'dn', sg(plAll) + ' ◆') +
-      T(1120, 158, 19, 'acc', 'FREE GLINTS', 0, 'letter-spacing:.14em') + T(1120, 184, 40, '', g(S.c));
+      T(1120, 158, 19, 'acc', 'FREE GLINT', 0, 'letter-spacing:.14em') + T(1120, 184, 40, '', g(S.c));
     var yH = 250, X = { lg: 120, nm: 170, ch: 480, hn: 624, qt: 880, vl: 1070, pl: 1270 }, DX = 1320;
     h += T(X.nm, yH, 19, 'dim', 'STOCK', 0, 'letter-spacing:.1em') + TR(X.qt, yH, 19, 'dim', 'HOW MANY') + TR(X.vl, yH, 19, 'dim', 'VALUE') + TR(X.pl, yH, 19, 'dim', 'GAIN / LOSS') + A(100, yH + 28, 1200, 2, '', '', 'background:var(--line)');
     if (!M.flat.length) return h + TC(470, 50, 'dim', P.pf === 1 ? 'You own no shares.' : P.pf === 2 ? 'No open options.' : 'No open positions.') + TC(550, 32, 'dim', 'Buy shares or sell an option first.');
@@ -135,10 +135,10 @@ var PF = (function () {
       T(DX + 100, 298, 28, '', esc(NAMES[dk]), 380, 'overflow:hidden;text-overflow:ellipsis;white-space:nowrap') + T(DX + 100, 334, 19, 'dim', TICKS[dk] + ' · ' + esc(CO.sector[dk]), 380, 'overflow:hidden;white-space:nowrap');
     var dr = [[dopt ? (cur.st[0] === 'S' ? 'Got per share' : 'Paid per share') : 'Average cost', f2(cur.open)], ['Price now', f2(dopt ? cur.mark : S.px[dk])]];
     if (dopt) dr.push(['Strike', f2(cur.p.K)], ['Ends', dstr(cur.p.end * 1000) + ' · ' + inH(cur.p.end * 1000)]);
-    dr.push([dopt ? 'A year if repeated' : 'Dividend a year', dry === null || dry === undefined ? '–' : (dry > 999 ? '>999' : dry < 10 ? dry.toFixed(1) : Math.round(dry)) + ' %'],
+    dr.push([dopt ? 'Per year at this rate' : 'Dividend a year', dry === null || dry === undefined ? '–' : (dry > 999 ? '>999' : dry < 10 ? dry.toFixed(1) : Math.round(dry)) + ' %'],
       ['Next report', '<span class="' + (drs ? 'amb' : '') + '">' + dstr(dt) + ' · ' + inH(dt) + '</span>'], ['Peers', CO.peers[dk].join(' · ')], ['Gain / loss', '<span class="' + (cur.pl >= 0 ? 'up' : 'dn') + '">' + pc(cur.pct) + '</span>']);
     dr.forEach(function (rw, i) { var yy = 376 + i * 44; h += T(DX + 20, yy + 4, 20, 'dim', rw[0]) + TR(DX + 480, yy, 24, 'lab', rw[1]) + A(DX + 20, yy + 36, 460, 1, '', '', 'background:var(--line)'); });
-    if (cur.wheel) h += T(DX + 20, 376 + dr.length * 44 + 4, 18, 'amb', 'amber bar = shares with a short call on them', 460, 'white-space:normal;line-height:1.15');
+    if (cur.wheel) h += T(DX + 20, 376 + dr.length * 44 + 4, 18, 'amb', 'amber bar = shares locked by a call you sold', 460, 'white-space:normal;line-height:1.15');
     h += T(100, 800, 22, 'dim', 'page ' + (pi + 1) + '/' + M.pages.length + ' · ▲▼ move, past the end = next page');
     var act = cur.st === 'SH' ? ['SELL ' + TICKS[cur.k], 'var(--dn)'] : ['CLOSE EARLY', 'var(--amb)'];
     h += chipTxt(820, 794, 280, 36, act[1], act[0], 22);                // action of the selected row = the SELECT key
@@ -148,7 +148,7 @@ var PF = (function () {
     P.pos.forEach(function (p) { var c = p.mark * p.q; cn += (p.bs === 's' ? -c : c) - P.fee * p.q; });
     if (P.pf !== 2 && stocks) h += T(100, 842, 32, '', 'Sell all shares: you get ' + fmt(sn) + ' ◆');   // 26 Nov owner: say what happens to your glint, no bare signed number
     if (P.pf !== 1 && opts) h += TR(1820, 842, 32, '', 'Close all options: ' + (cn >= 0 ? 'you get' : 'you pay') + ' <span class="' + (cn >= 0 ? 'up' : 'dn') + '">' + fmt(Math.abs(cn)) + ' ◆</span>');
-    h += T(100, 896, 20, 'dim', 'ALERT report within 48 h · ITM short option ends inside the money');
+    h += T(100, 896, 20, 'dim', 'ALERT: report due within 48 h · an option you sold would cost you if it ended now');
     return h;
   }
 
