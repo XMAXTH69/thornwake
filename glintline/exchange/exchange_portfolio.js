@@ -10,7 +10,7 @@
 //     inside a group the SHARES row first, then its options in the order of 'mo'; pf=1 drops the option rows, pf=2 drops the shares rows (empty groups vanish,
 //     the group order of the rest is unchanged). ALL = every row. sel is clamped to the list; the page shows the page that holds sel.
 //     SELL (shares row) / CLOSE EARLY (option row) act on that row; for CLOSE EARLY the game then shows p=oclose with sel = index of that option inside 'mo'.
-//   Bottom lines: 'If you sell all now: X' (pf 0/1; sum floor(h*fillSell/100) - f per stock over the FREE shares h) and 'If you close all now: +X' (pf 0/2; options, fee 'of' per contract, default 2).
+//   Bottom lines (26 Nov wording): 'Sell all shares: you get X' (pf 0/1; sum floor(h*fillSell/100) - f per stock over the FREE shares h) and 'Close all options: you get / you pay X' (pf 0/2; options, fee 'of' per contract, default 2).
 // Re-used core keys (already sent on every page):  c free glint   px 50 prices   h 50 FREE shares   cb 50 cost x100 of the FREE shares   sel selected row/slice
 // Re-used option key (same text as MY OPTIONS):     mo  'stock:c|p:b|s:strike:oe:qty:open:mark:mode:endUnix' joined by '~'  (cents per share)
 // NEW keys, all optional (missing = 0 / empty):
@@ -146,8 +146,8 @@ var PF = (function () {
     var sn = 0, cn = 0;
     for (var j = 0; j < STOCKS; j++) if (S.h[j] > 0) sn += Math.floor(S.h[j] * fillSell(S.px[j], j) / 100) - S.f;
     P.pos.forEach(function (p) { var c = p.mark * p.q; cn += (p.bs === 's' ? -c : c) - P.fee * p.q; });
-    if (P.pf !== 2 && stocks) h += T(100, 842, 32, '', 'If you sell all now: ' + fmt(sn) + ' ◆');
-    if (P.pf !== 1 && opts) h += TR(1820, 842, 32, '', 'If you close all now: <span class="' + (cn >= 0 ? 'up' : 'dn') + '">' + sg(cn) + ' ◆</span>');
+    if (P.pf !== 2 && stocks) h += T(100, 842, 32, '', 'Sell all shares: you get ' + fmt(sn) + ' ◆');   // 26 Nov owner: say what happens to your glint, no bare signed number
+    if (P.pf !== 1 && opts) h += TR(1820, 842, 32, '', 'Close all options: ' + (cn >= 0 ? 'you get' : 'you pay') + ' <span class="' + (cn >= 0 ? 'up' : 'dn') + '">' + fmt(Math.abs(cn)) + ' ◆</span>');
     h += T(100, 896, 20, 'dim', 'ALERT report within 48 h · ITM short option ends inside the money');
     return h;
   }
