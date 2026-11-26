@@ -266,8 +266,8 @@ function bandWord(k, size) { return '<span class="' + BCOL[BANDS[k]] + '" style=
 
 // ---------- pages
 function pAttract(S) {
-  return A(0, 0, 1920, 84, '', '', 'background:var(--tick);border-bottom:3px solid var(--line)') + tapeHtml(S, true) + TC(150, 110, 'brand logo', 'GLINT EXCHANGE', 'font-size:110px;letter-spacing:.22em') +
-    TC(860, 36, 'dim sub', 'Buy and sell shares with your glint ◆');   // 26 Nov owner: START = bar slot 6 (kiosk style), centre free for the in-world loading plane
+  return A(0, 0, 1920, 84, '', '', 'background:var(--tick);border-bottom:3px solid var(--line)') + tapeHtml(S, true) + TC(380, 110, 'brand logo', 'GLINT EXCHANGE', 'font-size:110px;letter-spacing:.22em') +
+    TC(540, 36, 'dim sub', 'Buy and sell shares with your glint ◆');   // 26 Nov owner: START = bar slot 6 (kiosk style), title back in the centre (owner: the start screen rarely loads)
 }
 // ticker tape (market page): real names/prices/24 h change from the fragment; start offset follows the clock so a redraw never jumps it
 // 26 Nov owner: SURPRISE NEWS (GlintExchangePrice STEP 6). nw = 'stock:tick:jump x10 %' items (';') of the last 24 h. Headline = sector pool, pick (stock x 7 + tick) % 4.
