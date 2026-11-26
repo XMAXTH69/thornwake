@@ -16,7 +16,7 @@ function mkBegin(f) {                     // before a page is drawn: read the fa
   MK.m = +f.km || 0; MK.p = +f.kp || 0; MK.s = +f.ks || 0; MKX.used = {};
   var p = f.p || '', a = p.split('_'), k = a[0];
   MKX.kind = (k === 'browse' || k === 'buy') ? (a.length === 2 && mkVeh(a[1]) ? 'm' : '')
-    : (k === 'paint' || k === 'rims' || k === 'rimd' || k === 'tyre' || k === 'ug' || p.indexOf('twin_buy_') === 0) ? 'm'
+    : (k === 'paint' || k === 'rims' || k === 'rimd' || k === 'tyre' || k === 'ug' || k === 'full' || p.indexOf('twin_buy_') === 0) ? 'm'
     : k === 'upg' ? 'p' : p === 'shield' ? 's' : '';
 }
 function mkFmt(n, sep) { var s = String(n); return sep === ',' ? s.replace(/\B(?=(\d{3})+(?!\d))/g, ',') : s.replace(/\B(?=(\d{3})+(?!\d))/g, ' '); }
