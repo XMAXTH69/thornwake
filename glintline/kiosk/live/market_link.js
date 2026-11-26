@@ -30,7 +30,7 @@ function mkText(t) {                      // price chip text: '12 000 glint' / '
 function mkPct(f) { return Math.round((f - 1000) / 10); }
 function mkHeads(m, p, s) {               // [{k: 'm'|'p'|'s', up: bool, text}] only when the change is 1 % or more (also used by the Exchange page: same words)
   var o = [], pc;
-  if (m && Math.abs(m - 1000) >= 10) { pc = mkPct(m); o.push({ k: 'm', up: pc > 0, text: pc < 0 ? 'MARKET SALE' : 'MARKET BOOM', line: (pc < 0 ? 'MARKET SALE: rides ' : 'MARKET BOOM: rides ') + (pc > 0 ? '+' : '') + pc + ' % today', tag: (pc < 0 ? 'MARKET SALE ' : 'BOOM +') + pc + ' %' }); }
+  if (m && Math.abs(m - 1000) >= 10) { pc = mkPct(m); o.push({ k: 'm', up: pc > 0, text: pc < 0 ? 'MARKET SALE' : 'MARKET BOOM', line: (pc < 0 ? 'MARKET SALE: vehicles ' : 'MARKET BOOM: vehicles ') + (pc > 0 ? '+' : '') + pc + ' % today', tag: (pc < 0 ? 'MARKET SALE ' : 'BOOM +') + pc + ' %' }); }
   if (p && p - 1000 >= 10) { pc = mkPct(p); o.push({ k: 'p', up: true, text: 'PARTS SHORTAGE', line: 'PARTS SHORTAGE: parts +' + pc + ' % today', tag: 'PARTS SHORTAGE +' + pc + ' %' }); }
   if (s && s - 1000 >= 10) { pc = mkPct(s); o.push({ k: 's', up: true, text: 'SHIELD RUSH', line: 'SHIELD RUSH: shields +' + pc + ' % today', tag: 'SHIELD RUSH +' + pc + ' %' }); }
   return o;

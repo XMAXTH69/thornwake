@@ -23,7 +23,7 @@ function pageBountyHome(f) {
   var C = CARD, h = base('BOUNTY OFFICE', null, { nohome: 1 }) + card(), rows = bRows(f.r), n = +f.n || 0;
   h += TC(C[1] + 26, 'MOST WANTED', 70, 'brand', 960);
   if (!n) {
-    h += TC(C[1] + 200, 'NOBODY IS WANTED', 52, 'soft', 960) + TC(C[1] + 280, 'Put a price on a rider. Anyone who crashes him takes it.', 34, 'soft', 960);
+    h += TC(C[1] + 200, 'NOBODY IS WANTED', 52, 'soft', 960) + TC(C[1] + 280, 'Put a price on a rider. Whoever crashes them takes it.', 34, 'soft', 960);
   } else {
     rows.slice(0, 6).forEach(function (r, i) {
       var y = C[1] + 130 + i * 70;
@@ -33,13 +33,13 @@ function pageBountyHome(f) {
     });
     if (n > 6) h += TC(C[1] + 560, '+ ' + (n - 6) + ' more', 30, 'soft', 960);
   }
-  h += TC(C[1] + (n ? 586 : 380), 'Placed here, nowhere else', 28, 'soft', 960);
+  h += TC(C[1] + (n ? 586 : 380), 'Bounties are placed at this desk only', 28, 'soft', 960);
   return h + selBtn('PLACE A BOUNTY');
 }
 
 function bWho(f) {
   var C = CARD, n = +f.n || 0, i = +f.i || 0, rows = bRows(f.r), start = Math.floor(i / 5) * 5, h = base('BOUNTY OFFICE', null) + card();
-  h += TC(C[1] + 18, 'WHO?', 56, 'brand', 960);
+  h += TC(C[1] + 18, 'PICK A RIDER', 56, 'brand', 960);
   if (f.h === '0' || f.h === '2') {
     var closed = f.h === '2';
     return h + TC(C[1] + 250, closed ? 'THE OFFICE DID NOT ANSWER' : 'ASKING THE OFFICE', 62, 'brand', 960) +
@@ -51,9 +51,9 @@ function bWho(f) {
     var idx = start + j, on = idx === i, y = C[1] + 126 + j * 78, flag = r[2] || '', note = r[3] || '', tot = +r[1] || 0, fee = +r[4] || 0, hrs = +r[5] || 0, prot = flag === 'P' || flag === 'U' || flag === 'O';
     h += '<div class="abs tile' + (on ? ' on' : '') + ' fade" style="' + box(C[0] + 40, y, C[2] - 40, y + 68) + ';border-radius:16px' + (prot ? ';opacity:.55' : '') + '"></div>';
     h += T(C[0] + 70, fee > 0 ? y + 0 : y + 12, esc(String(r[0]).toUpperCase()), fee > 0 ? 32 : 38, on ? 'hi' : '', 400);
-    if (fee > 0 && !prot) h += T(C[0] + 70, y + 38, 'Repeat on ' + esc(String(r[0]).toUpperCase()) + ' · extra fee ' + money(fee) + ' ◆ (resets in ' + hrs + ' h)', 27, 'soft', 760);
+    if (fee > 0 && !prot) h += T(C[0] + 70, y + 38, 'Another bounty on ' + esc(String(r[0]).toUpperCase()) + ' today costs ' + money(fee) + ' ◆ extra (normal again in ' + hrs + ' h)', 27, 'soft', 760);
     var right = flag === 'P' ? '<span class="soft" style="font-size:26px">ROOKIE  ·  protected for ' + esc(note) + '</span>'
-      : flag === 'U' ? '<span class="soft" style="font-size:26px">NO RIDER RECORD YET</span>'
+      : flag === 'U' ? '<span class="soft" style="font-size:26px">NEW HERE  ·  PROTECTED</span>'
       : flag === 'O' ? '<span class="soft" style="font-size:26px">OFF THE BOARD UNTIL TOMORROW</span>'
       : (flag === 'R' ? '<span class="hi" style="font-size:28px;letter-spacing:.14em">REVENGE</span>  ' : '') + (tot > 0 ? '<span style="color:' + B_RED + '">WANTED  ' + money(tot) + ' ◆</span>' : '');
     h += '<div class="abs fade" style="' + box(C[0] + 440, y, C[2] - 70, y + 68) + ';display:flex;align-items:center;justify-content:flex-end;font-size:34px;white-space:nowrap">' + right + '</div>';
@@ -68,18 +68,18 @@ function bAmt(f) {
   var C = CARD, am = String(f.am || '').split(',').map(Number), o = +f.o || 0, c = +f.c || 0, mn = +f.mn || 0, mx = +f.mx || 0, work = c === 3;
   var h = base('BOUNTY OFFICE', null) + card() + TC(C[1] + 24, 'PRICE ON', 36, 'soft', 960) + TC(C[1] + 70, esc(String(f.nm || '').toUpperCase()), 76, 'brand hi', 960);
   var tt = +f.tt || 0;
-  h += TC(C[1] + 176, tt > 0 ? 'already ' + money(tt) + ' ◆ on his head  ·  yours stacks' : (f.fl === 'R' ? 'REVENGE  ·  the rider who crashed you' : 'a clean new price'), 32, tt > 0 ? '' : 'soft', 960);
+  h += TC(C[1] + 176, tt > 0 ? 'already ' + money(tt) + ' ◆ on this rider  ·  yours adds to it' : (f.fl === 'R' ? 'REVENGE  ·  the rider who crashed you' : 'no bounty on this rider yet'), 32, tt > 0 ? '' : 'soft', 960);
   var fee = +f.fe || 0, rh = +f.rh || 0;
-  if (fee > 0) h += TC(C[1] + 208, 'Repeat on ' + esc(String(f.nm || '').toUpperCase()) + ' · extra fee ' + money(fee) + ' ◆ (resets in ' + rh + ' h)', 30, 'hi', 1000);
+  if (fee > 0) h += TC(C[1] + 208, 'Another bounty on ' + esc(String(f.nm || '').toUpperCase()) + ' today costs ' + money(fee) + ' ◆ extra (normal again in ' + rh + ' h)', 30, 'hi', 1000);
   for (var j = 0; j < 5; j++) {
     var x = C[0] + 40 + j * 200, v = am[j] || 0, ok = v >= Math.max(1, mn) && v <= mx, on = j === o;
     h += '<div class="abs tile' + (on ? ' on' : '') + ' fade" style="' + box(x, C[1] + 240, x + 184, C[1] + 380) + ';border-radius:20px;flex-direction:column;gap:6px' + (ok ? '' : ';opacity:.35') + (on ? ';border:3px solid var(--accent)' : '') + '">' +
-      '<div class="soft" style="font-size:24px;letter-spacing:.14em">' + (j === 4 ? 'MAX' : 'STAKE') + '</div><div class="' + (on ? 'hi' : '') + '" style="font-size:46px;white-space:nowrap">' + money(v) + '</div></div>';
+      '<div class="soft" style="font-size:24px;letter-spacing:.14em">' + (j === 4 ? 'MAX' : 'AMOUNT') + '</div><div class="' + (on ? 'hi' : '') + '" style="font-size:46px;white-space:nowrap">' + money(v) + '</div></div>';
   }
-  h += TC(C[1] + 410, 'YOUR VAULT  ' + money(+f.bk || 0) + ' ◆   ·   MOST YOU MAY STAKE  ' + money(mx) + ' ◆  (half)', 30, 'soft', 1000);
+  h += TC(C[1] + 410, 'YOUR VAULT  ' + money(+f.bk || 0) + ' ◆   ·   MOST YOU CAN PUT UP  ' + money(mx) + ' ◆  (half your vault)', 30, 'soft', 1000);
   var v = am[o] || 0, line = work ? 'Working, one moment' : c === 1 ? 'Pay ' + money(v) + (fee > 0 ? ' + ' + money(fee) + ' fee' : '') + ' ◆ from your vault? Touch CONFIRM' : v > mx ? 'More than half of your vault' : v < Math.max(1, mn) ? 'Smallest bounty is ' + money(mn) + ' ◆' : 'LEFT / RIGHT = amount  ·  SELECT = PLACE';
   h += TC(C[1] + 470, esc(line), 42, c === 1 ? 'hi' : 'soft', 1000);
-  h += TC(C[1] + 540, 'Any rider who crashes him takes it. If he survives, half of it goes back to him.', 28, 'soft', 1000);
+  h += TC(C[1] + 540, 'Whoever crashes this rider takes it. If they survive, they keep half of it.', 28, 'soft', 1000);
   return h + buttons(null, true, 'BACK') + selBtn(work ? 'WORKING' : c === 1 ? 'CONFIRM' : 'PLACE', work);
 }
 
@@ -88,12 +88,12 @@ function bRes(f) {
   if (ok) {
     h += TC(C[1] + 130, 'BOUNTY PLACED', 80, 'brand hi', 960) + TC(C[1] + 260, esc(String(f.nm || '').toUpperCase()), 64, 'brand', 960) +
       TC(C[1] + 360, '<span style="color:' + B_RED + '">' + money(+f.a || 0) + ' ◆</span> from your vault', 48, '', 960) +
-      TC(C[1] + 450, 'He is on the Most Wanted wall now.', 34, 'soft', 960);
+      TC(C[1] + 450, 'They are on the Most Wanted wall now.', 34, 'soft', 960);
   } else {
     h += TC(C[1] + 130, 'NOT PLACED', 80, 'brand', 960) + (f.nm ? TC(C[1] + 260, esc(String(f.nm).toUpperCase()), 56, 'brand soft', 960) : '') +
       TC(C[1] + 360, esc(f.w || 'Try again'), 42, 'hi', 1000) + TC(C[1] + 450, 'Nothing was taken from your vault.', 34, 'soft', 960);
   }
-  return h + buttons(null, false, 'BACK') + selBtn('THE LIST');
+  return h + buttons(null, false, 'BACK') + selBtn('BACK TO LIST');
 }
 
 function bountyBuild(f) {

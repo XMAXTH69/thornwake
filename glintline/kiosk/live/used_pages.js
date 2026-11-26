@@ -34,28 +34,28 @@ function uNote(text) { return TC(CARD[1] + 330, esc(text), 52, 'soft', 960); }
 
 function pageUsedList(f) {
   var C = CARD, h = base('GUILD MARKET', uPos(f)) + card() + uTabs(0);
-  if (!(+f.n > 0)) return h + TC(C[1] + 250, 'NO USED RIDES FOR SALE', 62, 'brand', 960) + TC(C[1] + 345, 'Players sell rides they no longer need here, often cheaper than new', 34, 'soft', 960) +
-    TC(C[1] + 400, 'None for sale in this garage right now · check again later', 34, 'soft', 960) + TC(C[1] + 470, 'Own a ride you do not need? Press SELL', 38, 'hi', 960) + buttons(null, false, 'BACK') + zoneBtn('GUILD STOCK');
+  if (!(+f.n > 0)) return h + TC(C[1] + 250, 'NO USED VEHICLES FOR SALE', 62, 'brand', 960) + TC(C[1] + 345, 'Players sell vehicles they no longer need here, often cheaper than new', 34, 'soft', 960) +
+    TC(C[1] + 400, 'None for sale in this garage right now · check again later', 34, 'soft', 960) + TC(C[1] + 470, 'Own a vehicle you do not need? Press SELL', 38, 'hi', 960) + buttons(null, false, 'BACK') + zoneBtn('GUILD STOCK');
   var pct = +f.v > 0 ? Math.round(100 * f.pr / f.v) : 0, arm = f.c === '1', work = f.c === '2';
   h += uCar(f.k) + uName(f.k) + T(C[0] + 504, C[1] + 190, 'SELLER  ' + esc(f.s || '?'), 34, 'soft', 520);
   h += lifeChips(C[0] + 500, C[1] + 236, f);                                  // 26 Nov LIFE: status + edition number
-  h += T(C[0] + 504, C[1] + 312, 'COMES WITH IT', 26, 'hi', 520) + uWrap(C[0] + 504, C[1] + 346, 520, f.w || 'the ride itself', 30, 'soft');
-  h += T(C[0] + 50, C[3] - 130, pct + ' % OF ITS CONDITION VALUE', 34, 'soft', 480) + T(C[0] + 50, C[3] - 84, 'RECOMMENDED  ' + money(recPrice(f.v)) + ' ◆  (' + REC_PCT + ' %)', 34, 'hi', 600);
+  h += T(C[0] + 504, C[1] + 312, 'COMES WITH IT', 26, 'hi', 520) + uWrap(C[0] + 504, C[1] + 346, 520, f.w || 'just the vehicle', 30, 'soft');
+  h += T(C[0] + 50, C[3] - 130, pct + ' % OF ITS VALUE TODAY', 34, 'soft', 480) + T(C[0] + 50, C[3] - 84, 'RECOMMENDED  ' + money(recPrice(f.v)) + ' ◆  (' + REC_PCT + ' %)', 34, 'hi', 600);
   h += tag(C[2] - 30, C[3] - 100, money(f.pr) + ' ◆', false);
-  if (arm) h += '<div class="abs ctr fade" style="top:' + (C[3] + 14) + 'px;font-size:36px;color:var(--hi)">Pay ' + money(f.pr) + ' ◆ from your banked glint? Touch CONFIRM</div>';
+  if (arm) h += '<div class="abs ctr fade" style="top:' + (C[3] + 14) + 'px;font-size:36px;color:var(--hi)">Pay ' + money(f.pr) + ' ◆ from your vault? Touch CONFIRM</div>';
   return h + buttons(null, true, 'BACK') + selBtn(work ? 'WORKING' : f.me === '1' ? 'YOURS' : arm ? 'CONFIRM' : 'BUY', f.me === '1') + zoneBtn('GUILD STOCK');
 }
 function pageUsedSell(f) {
   var C = CARD, h = base('GUILD MARKET', uPos(f)) + card() + uTabs(1);
-  if (!(+f.n > 0)) return h + TC(C[1] + 250, 'NOTHING TO SELL YET', 62, 'brand', 960) + TC(C[1] + 345, 'Rides you buy in this garage can be sold here', 36, 'soft', 960) + TC(C[1] + 405, 'The free Glint Car and Glint Bike cannot be sold', 36, 'soft', 960) + buttons(null, false, 'BACK') + zoneBtn('USED');
+  if (!(+f.n > 0)) return h + TC(C[1] + 250, 'NOTHING TO SELL YET', 62, 'brand', 960) + TC(C[1] + 345, 'Vehicles you buy in this garage can be sold here', 36, 'soft', 960) + TC(C[1] + 405, 'The free Glint Car and Glint Bike cannot be sold', 36, 'soft', 960) + buttons(null, false, 'BACK') + zoneBtn('USED');
   var md = +f.md, val = +f.val, listed = !!f.lot, scrap = md === 3;
   h += uCar(f.k) + uName(f.k) + lifeChips(C[0] + 500, C[1] + 186, f);       // 26 Nov LIFE: status + edition number
-  h += T(C[0] + 504, C[1] + 262, scrap ? 'SCRAP VALUE' : 'CONDITION VALUE', 26, 'hi', 520) + T(C[0] + 504, C[1] + 292, money(val) + ' ◆', 52, '', 520);
+  h += T(C[0] + 504, C[1] + 262, scrap ? 'SCRAP VALUE' : 'VALUE TODAY', 26, 'hi', 520) + T(C[0] + 504, C[1] + 292, money(val) + ' ◆', 52, '', 520);
   var line = listed ? 'LISTED FOR ' + money(f.pr) + ' ◆' : md === 0 ? 'CANNOT BE SOLD' : scrap ? 'SCRAP  ·  PADDOCK ONLY' : md === 1 ? 'PADDOCK ONLY' : 'PADDOCK OR PLAYERS';
   h += T(C[0] + 504, C[1] + 372, esc(line), 36, 'hi', 520);
-  var sub = listed ? 'You get ' + money(f.pr - Math.floor((f.pr * 15 + 50) / 100)) + ' ◆ when it sells' : md === 0 ? (f.why || 'not now') : scrap ? 'Cannot be driven. The Paddock pays ' + money(f.pad) + ' ◆, your paints and parts stay' : md === 1 ? 'The Paddock pays ' + money(f.pad) + ' ◆ at once' : 'Paddock pays ' + money(f.pad) + ' ◆, players 70 to 100 %';
+  var sub = listed ? 'You get ' + money(f.pr - Math.floor((f.pr * 15 + 50) / 100)) + ' ◆ when it sells' : md === 0 ? (f.why || 'not now') : scrap ? 'Cannot be driven. The Paddock pays ' + money(f.pad) + ' ◆, you keep your paints and parts' : md === 1 ? 'The Paddock pays ' + money(f.pad) + ' ◆ at once' : 'The Paddock pays ' + money(f.pad) + ' ◆ at once, or players pay 70 to 100 %';
   h += uWrap(C[0] + 504, C[1] + 428, 520, sub, 30, 'soft');
-  return h + buttons(null, true, 'BACK') + selBtn('OPEN', md === 0 && !listed) + zoneBtn('USED');
+  return h + buttons(null, true, 'BACK') + selBtn(listed ? 'CHANGE' : 'SELL', md === 0 && !listed) + zoneBtn('USED');
 }
 function pageUsedChoice(f) {
   var C = CARD, val = +f.val, os = (f.os || 'p').split(''), o = +f.o || 0, arm = f.c === '1', work = f.c === '2';
@@ -66,7 +66,7 @@ function pageUsedChoice(f) {
     var x = x0 + j * (tw + gap), on = j === o;
     h += '<div class="abs tile' + (on ? ' on' : '') + ' fade" style="' + box(x, C[1] + 190, x + tw, C[1] + 360) + ';border-radius:22px;flex-direction:column;font-size:40px;letter-spacing:.1em;color:' + (on ? 'var(--text)' : 'var(--soft)') + '"><div>' + NM[c][0] + '</div><div>' + NM[c][1] + '</div></div>';
   });
-  var c0 = os[o], txt = c0 === 'p' ? 'The Paddock pays ' + money(f.pad) + ' ◆ (50 % of its condition value), at once' : c0 === 's' ? 'Scrap pays ' + money(f.pad) + ' ◆ (10 %). Paints, rims and parts stay for your next one' : c0 === 'l' ? 'You pick the price: 70 to 100 % of ' + money(val) + ' ◆. The fee is 15 %.' : 'Take your ride off the market and get it back';
+  var c0 = os[o], txt = c0 === 'p' ? 'The Paddock pays ' + money(f.pad) + ' ◆ at once (half of its value today)' : c0 === 's' ? 'Scrap pays ' + money(f.pad) + ' ◆ (10 %). You keep its paints, rims and parts for your next one' : c0 === 'l' ? 'You pick the price: 70 to 100 % of ' + money(val) + ' ◆. 15 % comes off as a fee when it sells.' : 'Take it off the market and get it back in your garage';
   h += lifeChips(C[0] + 560, C[1] + 22, f, true);
   h += TC(C[1] + 410, esc(txt), 38, 'soft', 960);
   if (arm) h += TC(C[1] + 490, (c0 === 's' ? 'Scrap for ' : 'Sell for ') + money(f.pad) + ' ◆?  Touch CONFIRM', 46, 'hi', 960);
@@ -75,11 +75,11 @@ function pageUsedChoice(f) {
 function pageUsedPrice(f) {
   var C = CARD, pct = +f.pct, h = base('GUILD MARKET', null) + card() + uTabs(1) + TC(C[1] + 100, esc(uVeh(f.k).name), 54, 'brand', 900);
   h += lifeChips(C[0] + 560, C[1] + 22, f, true);
-  h += TC(C[1] + 160, pct + '%', 130, 'brand hi tight', 600) + TC(C[1] + 310, 'ASKING PRICE  ' + money(f.pr) + ' ◆   of condition value ' + money(f.val) + ' ◆', 42, '', 1040);
+  h += TC(C[1] + 160, pct + '%', 130, 'brand hi tight', 600) + TC(C[1] + 310, 'ASKING PRICE  ' + money(f.pr) + ' ◆   (value today ' + money(f.val) + ' ◆)', 42, '', 1040);
   h += TC(C[1] + 372, 'YOU GET  ' + money(f.you) + ' ◆   (after the 15 % fee)', 40, 'hi', 960);
-  h += TC(C[1] + 430, 'RECOMMENDED  ' + REC_PCT + ' %  =  ' + money(recPrice(f.val)) + ' ◆' + (pct === REC_PCT ? '   ·   this is it' : ''), 40, pct === REC_PCT ? 'hi' : 'soft', 960);
+  h += TC(C[1] + 430, 'RECOMMENDED  ' + REC_PCT + ' %  =  ' + money(recPrice(f.val)) + ' ◆' + (pct === REC_PCT ? '   ·   picked' : ''), 40, pct === REC_PCT ? 'hi' : 'soft', 960);
   for (var q = 70; q <= 100; q += 5) { var x = 960 - 7 * 44 + (q - 70) / 5 * 88, rec = q === REC_PCT; h += '<i class="abs fade" style="left:' + (x - (rec ? 17 : 14)) + 'px;top:' + (C[1] + (rec ? 514 : 520)) + 'px;width:' + (rec ? 34 : 28) + 'px;height:' + (rec ? 34 : 28) + 'px;border-radius:50%;box-sizing:border-box;border:' + (rec ? '4px solid var(--hi)' : '0') + ';background:' + (q === pct ? 'var(--accent)' : 'rgba(var(--softRGB),.4)') + '"></i>'; }
-  h += TC(C[1] + 572, 'LEFT / RIGHT = price, 5 % steps  ·  ringed dot = recommended', 30, 'soft', 960);
+  h += TC(C[1] + 572, 'LEFT / RIGHT = change the price in 5 % steps  ·  ringed dot = recommended', 30, 'soft', 960);
   return h + buttons(null, true, 'BACK') + selBtn(f.c === '2' ? 'WORKING' : 'LIST IT');
 }
 function pageUsedWait(f) {

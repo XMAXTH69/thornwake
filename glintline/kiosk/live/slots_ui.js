@@ -24,8 +24,8 @@ function pageFull(f) {
   var h = base(pool + ' FULL', null) + card() + TC(C[1] + 100, pool + ' FULL', 84, 'brand', 960);
   h += TC(C[1] + 214, u + ' / ' + l + '  ' + (hang ? 'PLANES AND SHIPS' : 'CARS AND BIKES'), 46, 'hi', 960) + slotPips(l, u, C[1] + 296);
   h += TC(C[1] + 392, 'Sell one on the GUILD MARKET, or buy a slot', 44, '', 960);
-  h += TC(C[1] + 454, 'Slots are permanent and never sold', 34, 'soft', 960);
-  if (arm) h += TC(C[1] + 524, 'Pay ' + price + ' ◆ from banked glint? Touch CONFIRM', 44, 'hi', 960);
+  h += TC(C[1] + 454, 'A bought slot is yours for good', 34, 'soft', 960);
+  if (arm) h += TC(C[1] + 524, 'Pay ' + price + ' ◆ from your vault? Touch CONFIRM', 44, 'hi', 960);
   else if (n > 0) h += '<div class="abs soft fade" style="left:' + (C[0] + 50) + 'px;top:' + (C[3] - 84) + 'px;font-size:34px">NEXT SLOT</div>' + tag(C[2] - 30, C[3] - 100, money(n) + ' glint', false);
   else h += TC(C[1] + 524, 'NO MORE SLOTS TO BUY', 44, 'hi', 960);
   var zone = zoneBtn(arm ? 'CANCEL' : 'BUY SLOT');

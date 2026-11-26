@@ -15,8 +15,8 @@
 var G_RANKS = ['APPRENTICE', 'JOURNEYMAN', 'MASTER'], G_SPECS = ['MECHANIC', 'DEALER'];
 function gOn(f) { return f.h === '1'; }
 function gInfo(spec) {
-  return spec === 'DEALER' ? ['DEALER', 'Sell used rides for an 8 % fee, not 15 %', 'Up to 5 lots at the low fee. A higher rank gives extra garage slots.']
-    : ['MECHANIC', 'Repair rides for 60 to 95 % of the Paddock price', 'You set the price. Parts cost 50 % of the Paddock price and burn.'];
+  return spec === 'DEALER' ? ['DEALER', 'Sell used vehicles for an 8 % fee, not 15 %', 'Up to 5 vehicles for sale at the low fee. A higher rank gives extra garage slots.']
+    : ['MECHANIC', 'Repair other riders vehicles for 60 to 95 % of the Paddock price', 'You set the price. Parts cost you 50 % of the Paddock price.'];
 }
 function gWait(f) {
   var closed = f.h === '2';
@@ -49,12 +49,12 @@ function pageGuildHome(f) {
   }
   var info = gInfo(sp), jt = +f.jt || 0, jc = +f.jc || 0, jb = +f.jb || 0, nr = +f.nr || 0;
   h += TC(C[1] + 24, info[0], 80, 'brand hi', 960);
-  h += TC(C[1] + 124, train ? 'TRAINING  ·  PLAY DAY ' + (+f.td || 0) + ' OF ' + (+f.tn || 3) : 'ACTIVE  ·  ' + (sp === 'MECHANIC' ? 'LISTED AT THE GARAGE' : 'LOW FEE ON YOUR USED LOTS'), 38, train ? 'soft' : 'hi', 960);
+  h += TC(C[1] + 124, train ? 'TRAINING  ·  PLAY DAY ' + (+f.td || 0) + ' OF ' + (+f.tn || 3) : 'ACTIVE  ·  ' + (sp === 'MECHANIC' ? 'RIDERS CAN PICK YOU FOR REPAIRS' : 'LOW FEE WHEN YOU SELL USED'), 38, train ? 'soft' : 'hi', 960);
   var x0 = C[0] + 40, w = 320, g = 20, y1 = C[1] + 200, y2 = C[1] + 360, th = 140;
   h += gTile(x0, y1, w, th, 'RANK', G_RANKS[rk]) + gTile(x0 + w + g, y1, w, th, 'JOBS TODAY', jt + ' / ' + jc) + gTile(x0 + 2 * (w + g), y1, w, th, 'TOTAL JOBS', money(jb));
   h += gTile(x0, y2, w, th, train ? 'TRAINING' : 'STATUS', train ? (+f.td || 0) + ' / ' + (+f.tn || 3) + ' DAYS' : 'ACTIVE');
   h += gTile(x0 + w + g, y2, w, th, 'EARNED', money(+f.er || 0) + ' ◆');
-  h += gTile(x0 + 2 * (w + g), y2, w, th, sp === 'MECHANIC' ? 'YOUR PRICE' : 'USED FEE', sp === 'MECHANIC' ? (+f.pc || 95) + ' % PADDOCK' : '8 %');
+  h += gTile(x0 + 2 * (w + g), y2, w, th, sp === 'MECHANIC' ? 'YOUR PRICE' : 'USED FEE', sp === 'MECHANIC' ? (+f.pc || 95) + ' % OF PADDOCK' : '8 %');
   var bx = C[0] + 40, bw = 1000, by = C[1] + 560, pct = nr > 0 ? Math.min(1, jb / nr) : 1;
   h += '<div class="abs fade" style="' + box(bx, by, bx + bw, by + 30) + ';border-radius:10px;box-sizing:border-box;background:rgba(var(--tabRGB),.6);border:2px solid rgba(var(--softRGB),.43);overflow:hidden"><div style="height:100%;width:' + Math.round(pct * 100) + '%;background:var(--accent)"></div></div>';
   h += T(bx, by + 38, nr > 0 ? esc(money(jb) + ' / ' + money(nr) + ' JOBS TO ' + G_RANKS[Math.min(2, rk + 1)]) : 'HIGHEST RANK REACHED', 26, 'soft', 1000);
@@ -64,20 +64,20 @@ function pageGuildHome(f) {
 function pageGuildPick(f) {
   var C = CARD, o = +f.o === 1 ? 1 : 0, c = +f.c || 0, sp = f.sp || '', change = !!sp, work = c === 3, same = sp === G_SPECS[o];
   var cost = change ? +f.cc || 10000 : +f.sc || 5000, days = change ? +f.cd || 7 : +f.sd || 3, rk = Math.max(0, Math.min(2, +f.rk || 0));
-  var h = base('GUILD HALL', null) + card() + TC(C[1] + 30, change ? 'CHANGE SPECIALISATION' : 'CHOOSE YOUR WORK', 56, 'brand', 960);
+  var h = base('GUILD HALL', null) + card() + TC(C[1] + 30, change ? 'CHANGE YOUR JOB' : 'CHOOSE YOUR JOB', 56, 'brand', 960);
   G_SPECS.forEach(function (s, j) {
     var x = C[0] + 40 + j * 520, on = j === o, g = gInfo(s);
     h += '<div class="abs tile' + (on ? ' on' : '') + ' fade" style="' + box(x, C[1] + 110, x + 480, C[1] + 330) + ';border-radius:22px;flex-direction:column;gap:12px;padding:0 24px;text-align:center;color:' + (on ? 'var(--text)' : 'var(--soft)') + '">' +
       '<div class="brand" style="font-size:52px;letter-spacing:.2em">' + g[0] + '</div><div style="font-size:30px;line-height:1.2">' + esc(g[1]) + '</div></div>';
   });
   h += TC(C[1] + 350, 'PRICE  ' + money(cost) + ' ◆   ·   ' + days + ' PLAY DAYS OF TRAINING', 44, 'hi', 960);
-  if (change) h += TC(C[1] + 420, 'WARNING  ·  your ' + sp + ' and your rank ' + G_RANKS[rk] + ' are LOST', 38, '', 960);
-  var line = work ? 'Working, one moment' : same ? 'You already are a ' + sp + '. Pick the other one.'
+  if (change) h += TC(C[1] + 420, 'WARNING  ·  you lose ' + sp + ' and your rank ' + G_RANKS[rk], 38, '', 960);
+  var line = work ? 'Working, one moment' : same ? 'You are already a ' + sp + '. Pick the other one.'
     : c === 0 ? 'LEFT / RIGHT = choose  ·  SELECT = ' + (change ? 'CHANGE' : 'START')
     : c === 1 ? (change ? 'Pay ' + money(cost) + ' ◆ and give up your rank? Touch CONFIRM' : 'Pay ' + money(cost) + ' ◆ from your banked glint? Touch CONFIRM')
     : 'LAST CHANCE  ·  this cannot be undone. Touch CONFIRM AGAIN';
   h += TC(C[1] + (change ? 490 : 440), esc(line), 40, c > 0 && !same ? 'hi' : 'soft', 960);
-  if (change) h += TC(C[1] + 560, 'Change number ' + ((+f.ch || 0) + 1) + '  ·  one specialisation at a time', 28, 'soft', 960);
+  if (change) h += TC(C[1] + 560, 'Change number ' + ((+f.ch || 0) + 1) + '  ·  one job at a time', 28, 'soft', 960);
   var lbl = work ? 'WORKING' : c === 0 ? (change ? 'CHANGE' : 'START') : c === 1 ? 'CONFIRM' : 'CONFIRM AGAIN';
   return h + buttons(null, true, 'BACK') + selBtn(lbl, same && !work);
 }
@@ -88,7 +88,7 @@ function pageGuildPrice(f) {
   var h = base('GUILD HALL', null) + card() + TC(C[1] + 30, 'SET YOUR REPAIR PRICE', 56, 'brand', 960);
   h += TC(C[1] + 120, pc + ' %', 150, 'brand hi tight', 600) + TC(C[1] + 290, 'OF THE PADDOCK PRICE' + (pc === cur ? '   ·   posted now' : '   ·   posted now: ' + cur + ' %'), 36, 'soft', 960);
   h += TC(C[1] + 360, 'On a 1 000 ◆ Paddock repair', 34, 'soft', 960);
-  h += TC(C[1] + 408, 'Rider pays ' + money(price) + ' ◆   ·   parts burn ' + mat + ' ◆   ·   you keep ' + money(Math.max(0, keep)) + ' ◆', 40, keep > 0 ? 'hi' : '', 1020);
+  h += TC(C[1] + 408, 'Rider pays ' + money(price) + ' ◆   ·   parts cost ' + mat + ' ◆   ·   you keep ' + money(Math.max(0, keep)) + ' ◆', 40, keep > 0 ? 'hi' : '', 1020);
   for (var q = 60; q <= 95; q += 5) {
     var x = 960 - 3.5 * 80 + (q - 60) / 5 * 80, on = q === pc, was = q === cur;
     h += '<i class="abs fade" style="left:' + (x - (on ? 17 : 12)) + 'px;top:' + (C[1] + (on ? 484 : 490)) + 'px;width:' + (on ? 34 : 24) + 'px;height:' + (on ? 34 : 24) + 'px;border-radius:50%;box-sizing:border-box;border:' + (was ? '4px solid var(--hi)' : '3px solid var(--soft)') + ';background:' + (on ? 'var(--accent)' : 'transparent') + '"></i>';
@@ -107,7 +107,7 @@ function gBlock(x, y, w, head, rows, fmt, max) {
   if (!rows.length) return h + T(x, y + 58, 'nobody yet', 28, 'soft', w);
   rows.slice(0, max).forEach(function (r, i) {
     var yy = y + 54 + i * 42;
-    h += T(x, yy, (i + 1) + '  ' + esc(r.name), 30, '', w - 250) + T(x + w - 245, yy + 6, esc(G_RANKS[Math.max(0, Math.min(2, r.rank))].slice(0, 4) + (r.spec ? ' ' + r.spec.slice(0, 4) : '')), 20, 'soft', 115) +
+    h += T(x, yy, (i + 1) + '  ' + esc(r.name), 30, '', w - 250) + T(x + w - 245, yy - 2, esc(G_RANKS[Math.max(0, Math.min(2, r.rank))]), 17, 'soft', 120) + T(x + w - 245, yy + 18, esc(r.spec || ''), 17, 'soft', 120) +
       '<div class="abs fade hi" style="left:' + (x + w - 120) + 'px;top:' + yy + 'px;width:120px;text-align:right;font-size:30px;white-space:nowrap">' + fmt(r) + '</div>';
   });
   return h;

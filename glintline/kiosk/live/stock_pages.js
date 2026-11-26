@@ -51,16 +51,16 @@ function pageStock(f) {
     var left = (+f.et) - (+f.ek || 0), out = (+f.ek || 0) >= +f.et && !own;
     h += lifeChip(C[0] + 500, C[1] + 312, own && +f.ed > 0 ? 'YOURS  ' + edText(f.ed, f.et) : out ? 'SOLD OUT  ·  see USED' : 'LIMITED  ·  ' + left + ' LEFT OF ' + f.et, out ? '#FF6A4D' : 'var(--accent)', out);
   }
-  var by = +f.uo === 1 && f.ub ? 'Unlocked by ' + f.ub + '  ·  ' + stockLabel(set) : +f.uo === 1 ? 'Unlocked  ·  ' + stockLabel(set) : 'Not unlocked yet  ·  needs a ' + stockLabel(set);
+  var by = +f.uo === 1 && f.ub ? 'Unlocked by ' + f.ub + '  ·  ' + stockLabel(set) : +f.uo === 1 ? 'Unlocked  ·  ' + stockLabel(set) : 'Locked  ·  opens when a player becomes ' + stockLabel(set);
   h += uWrap(C[0] + 504, C[1] + 390, 540, by, 32, dark ? 'soft' : 'hi');
   if (dark) {
     // DARK state: the stand is switched off while no active specialist holds the rank (G4)
     h += '<div class="abs fade" style="' + box(C[0] + 6, C[1] + 100, C[2] - 6, C[3] - 6) + ';background:rgba(6,9,12,.58);border-radius:0 0 26px 26px;pointer-events:none"></div>';
-    h += '<div class="abs fade" style="left:' + (C[0] + 500) + 'px;top:' + (C[1] + 470) + 'px;width:520px;font-size:34px;line-height:1.15;color:#FF6A4D">' + (+f.uo === 1 ? 'CLOSED  ·  no active ' + stockLabel(set) : 'LOCKED  ·  nobody has reached it') + '</div>';
+    h += '<div class="abs fade" style="left:' + (C[0] + 500) + 'px;top:' + (C[1] + 470) + 'px;width:520px;font-size:34px;line-height:1.15;color:#FF6A4D">' + (+f.uo === 1 ? 'CLOSED  ·  opens again when a ' + stockLabel(set) + ' is active' : 'LOCKED  ·  no player has reached this rank yet') + '</div>';
   }
   if (nc && !dark) h += uWrap(C[0] + 504, C[1] + 470, 540, 'Buy the ' + String(veh.name) + ' first', 32, 'soft');
   h += tag(C[2] - 30, C[3] - 100, own ? 'YOURS' : price > 0 ? money(price) + ' glint' : '', false);
-  if (arm) h += '<div class="abs ctr fade" style="top:' + (C[3] + 14) + 'px;font-size:36px;color:var(--hi)">Buy ' + esc(d.name) + ' from your banked glint? Touch CONFIRM</div>';
+  if (arm) h += '<div class="abs ctr fade" style="top:' + (C[3] + 14) + 'px;font-size:36px;color:var(--hi)">Buy ' + esc(d.name) + ' from your vault? Touch CONFIRM</div>';
   var lab = work ? 'WORKING' : own ? 'YOURS' : dark ? 'CLOSED' : nc ? 'NEEDS CAR' : arm ? 'CONFIRM' : 'BUY';
   return h + buttons(null, true, 'BACK') + selBtn(lab, own || dark || nc) + zoneBtn('SELL');
 }
