@@ -5,7 +5,7 @@
 //
 // DATA RULE: the screen gets its state ONLY from the #fragment sent by GlintBroker (media URL). Compact aggregates, never daily data.
 //   Pages          p=portfolio   p=results      (old p=shares / p=myopt are NOT pages any more: they draw p=portfolio with pf=1 / pf=2)
-//   FILTER  pf 0 ALL (default, missing = 0) | 1 SHARES only | 2 OPTIONS only    drawn as 3 tabs next to the title; the bottom bar FILTER key cycles it.
+//   FILTER  pf 0 ALL (default, missing = 0) | 1 SHARES only | 2 OPTIONS only    drawn as 3 tabs next to the title; the bottom bar key cycles it and is labelled with the NEXT view (SHOW SHARES / SHOW OPTIONS / SHOW ALL).
 //   SEL RULE (portfolio): 'sel' = index into the FILTERED flat row list, 0-based. Flat list = groups sorted by exposure DESC (= shares x px / 100 + strike x contracts of its options; stable, ties keep first-seen order: shares groups by stock id, then option-only groups in mo order; NEVER re-sorted after filtering),
 //     inside a group the SHARES row first, then its options in the order of 'mo'; pf=1 drops the option rows, pf=2 drops the shares rows (empty groups vanish,
 //     the group order of the rest is unchanged). ALL = every row. sel is clamped to the list; the page shows the page that holds sel.
@@ -249,7 +249,7 @@ var PF = (function () {
 
   // ---------------- register pages + bars (entry buttons only in free slots)
   PAGES.portfolio = PAGES.shares = PAGES.myopt = pPortfolio; PAGES.results = pResults;      // shares / myopt = old names, same page
-  BARS.portfolio = ['BACK', '▲', '▼', 'FILTER', 'RESULTS', ''];
+  BARS.portfolio = ['BACK', '▲', '▼', 'SHOW SHARES', 'RESULTS', ''];
   BARS.results = ['BACK', '', '', '◀ VIEW', 'VIEW ▶', ''];
   var baseBar = bar;
   bar = function (S) {
@@ -257,7 +257,7 @@ var PF = (function () {
       var Pp = parseP(S), Mm = build(S, Pp), r0 = Mm.flat[Math.max(0, Math.min(Mm.flat.length - 1, S.sel))];
       if (S.p === 'shares') Pp.pf = 1; else if (S.p === 'myopt') Pp.pf = 2;
       Mm = build(S, Pp); r0 = Mm.flat[Math.max(0, Math.min(Mm.flat.length - 1, S.sel))];
-      BARS[S.p] = ['BACK', '▲', '▼', 'FILTER', 'RESULTS', r0 ? (r0.st === 'SH' ? 'SELL' : 'CLOSE EARLY') : ''];
+      BARS[S.p] = ['BACK', '▲', '▼', ['SHOW SHARES', 'SHOW OPTIONS', 'SHOW ALL'][Pp.pf || 0], 'RESULTS', r0 ? (r0.st === 'SH' ? 'SELL' : 'CLOSE EARLY') : ''];   // 26 Nov owner: the key says what it switches TO
     }
     if (S.p === 'results') { var P = parseP(S); BARS.results = ['BACK', P.view ? '▲' : '', P.view ? '▼' : '', '◀ VIEW', 'VIEW ▶', P.view ? '' : (P.val ? 'SHOW INCOME' : 'SHOW VALUE')]; }
     return baseBar(S);

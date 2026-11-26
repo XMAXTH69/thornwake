@@ -10,6 +10,7 @@
    er   red error line (URL-encoded, e.g. 'max 336 shares'; sent when a chat command /buy /sell /in /out is refused; missing = none)
    r    ok|kind|qty|glint|fee|text   (kind buy|sell|in|out; text URL-encoded; on ok results text = optional result line, e.g. "+12 glint result")
    pz   1 = MARKET PAUSED (the price script waits for the game-link numbers): amber strip on every page + text on the wait page; 0/missing = normal
+   mf   market SORT 0 ALL | 1 SECTOR | 2 STOCK TYPE | 3 CATEGORY (26 Nov; bar slot 4 SORT = key 3; order = ORDER[] = GlintBroker SortOrder)
    f    fee per order (default 5)   n send counter (ignored)   unknown keys ignored.   ?demo=1 = fake state + clickable buttons/keys + chat box (/buy 50 /sell all /in 500 /out all).   ?dbg=1 = counter. */
 @font-face{font-family:Brand;src:url(../kiosk/live/fonts/Cinzel.ttf);font-weight:400 900}
 @font-face{font-family:UI;src:url(../kiosk/live/fonts/BarlowSemiCondensed-Bold.ttf)}
@@ -194,7 +195,7 @@ function parse() {
   function dec(s) { try { return decodeURIComponent(String(s).replace(/\+/g, ' ')); } catch (e) { return s; } }
   function lst(key, n, d) { return arr(S[key] ? S[key].split(',') : null, n, d); }
   var o = { p: dec(S.p || 'attract'), c: parseInt(S.c) || 0, b: parseInt(S.b) || 0, sel: parseInt(S.sel) || 0, k: Math.max(0, Math.min(STOCKS - 1, parseInt(S.k) || 0)),
-    pz: S.pz === '1', side: S.side === 'sell' ? 'sell' : 'buy', q: Math.max(0, parseInt(S.q) || 0), f: S.f !== undefined && S.f !== '' ? parseInt(S.f) : 5, r: null, er: dec(S.er || '') };
+    pz: S.pz === '1', side: S.side === 'sell' ? 'sell' : 'buy', q: Math.max(0, parseInt(S.q) || 0), f: S.f !== undefined && S.f !== '' ? parseInt(S.f) : 5, r: null, er: dec(S.er || ''), mf: Math.max(0, Math.min(3, parseInt(S.mf) || 0)) };
   o.px = lst('px', STOCKS, 0).map(function (v, i) { return v > 0 ? v : BASE[i]; });
   o.pv = lst('pv', STOCKS, 0).map(function (v, i) { return v > 0 ? v : o.px[i]; });
   o.h = lst('h', STOCKS, 0); o.cb = lst('cb', STOCKS, 0);
@@ -207,13 +208,14 @@ function parse() {
 var SLOTS = ['back', 'up', 'down', 'minus', 'plus', 'select'], GAP = (W - 6 * 260) / 7;
 function barX(i) { return Math.round(GAP * (i + 1) + 260 * i); }
 var BARS = {
-  market: ['CLOSE', '▲', '▼', 'MY PORTFOLIO', 'MOVE GLINT', 'OPEN'], stock: ['BACK', 'BUY', 'SELL', '', 'OPTIONS (soon)', ''],
+  market: ['CLOSE', '▲', '▼', 'SORT', '', 'OPEN'], stock: ['BACK', 'BUY', 'SELL', '', 'OPTIONS (soon)', ''],
   amount: ['BACK', '+10', '−10', '−1', '+1', 'NEXT'], total: ['BACK', '', '', '', '', 'BUY NOW'], result: ['MARKET', '', '', 'MY PORTFOLIO', '', 'BACK TO STOCK'],
   move: ['BACK', 'IN 1,000', 'OUT 1,000', 'IN ALL', 'OUT ALL', ''], wait: ['', '', '', '', '', '']
 };
 function bar(S) {
   var L = (BARS[S.p] || BARS.wait).slice();
   if (S.p === 'total' && S.side === 'sell') L[5] = 'SELL NOW';
+  if (S.p === 'market') L[3] = SORTNEXT[S.mf];   // 26 Nov owner layout A: key says what it switches TO; MY PORTFOLIO + MOVE GLINT live in the YOUR ACCOUNT box
   if (S.p === 'result' && S.r && (S.r.kind === 'in' || S.r.kind === 'out')) L[5] = 'BACK TO MOVE';
   var h = '';
   for (var i = 0; i < 6; i++) {
@@ -252,16 +254,24 @@ function tapeHtml(S, full) {
   return '<div class="tape' + (full ? ' full' : '') + '"><div class="trk" style="animation-delay:-' + ((Date.now() / 1000) % 40).toFixed(2) + 's">' + t + t + '</div></div>';
 }
 function pMarket(S) {
-  var h = frame(S, ''), shares = worth(S);
-  h += T(100, 108, 26, 'dim', 'GLINT EXCHANGE · your account') + T(100, 134, 92, '', fmt(S.c) + ' <span class="acc" style="font-size:54px">◆</span>');
-  h += TR(1820, 150, 34, 'lab', 'shares worth <b style="font-weight:400" class="acc">' + fmt(shares) + ' ◆</b> · total <span style="color:#fff">' + fmt(S.c + shares) + ' ◆</span>');
-  h += TR(1820, 108, 24, 'dim', clockHtml());
-  var y0 = 240, PG = 10, pages = Math.ceil(STOCKS / PG), pg = Math.floor(Math.min(S.sel, STOCKS - 1) / PG), end = Math.min(STOCKS, pg * PG + PG);
-  h += TR(1820, 196, 24, 'lab', 'page ' + (pg + 1) + '/' + pages + ' <span class="dim">· ▲▼ move, past the end = next page</span>');
-  for (var i = pg * PG; i < end; i++) {
-    var y = y0 + (i - pg * PG) * 58, ch = pct(S, i), up = S.px[i] >= S.pv[i], sel = i === S.sel, n = i - pg * PG, ri = '--i:' + n + ';';
+  var h = frame(S, ''), shares = worth(S), m = S.mf, ord = ORDER[m], pos = Math.max(0, ord.indexOf(Math.min(S.sel, STOCKS - 1)));
+  // 26 Nov owner: YOUR ACCOUNT is its own box (so it never reads as 'the stocks below are yours'); layout A: its 2 touch buttons sit IN the box
+  //   touch zones (GlintKioskButton Button=portfolio / move) = the SAME rectangles: portfolio 1170,116-1490,184 px · move 1510,116-1830,184 px
+  h += A(80, 106, 1760, 88, '', '', 'background:#04070F88;border:2px solid var(--acc);border-radius:12px;box-sizing:border-box');
+  h += T(110, 114, 20, 'acc', 'YOUR ACCOUNT', 0, 'letter-spacing:.2em') + T(110, 138, 42, '', fmt(S.c) + ' <span class="acc">◆</span> <span class="dim" style="font-size:24px">free glint to buy with</span>');
+  h += T(640, 122, 26, 'lab', 'your shares worth <span class="acc">' + fmt(shares) + ' ◆</span>') + T(640, 156, 26, 'lab', 'total <span style="color:#fff">' + fmt(S.c + shares) + ' ◆</span>');
+  h += '<div class="btn" data-slot="portfolio" style="left:1170px;top:116px;width:320px;height:68px;font-size:30px;border-radius:14px">MY PORTFOLIO</div>';
+  h += '<div class="btn" data-slot="move" style="left:1510px;top:116px;width:320px;height:68px;font-size:30px;border-radius:14px">MOVE GLINT</div>';
+  var y0 = 240, PG = 10, pages = Math.ceil(STOCKS / PG), pg = Math.floor(pos / PG), end = Math.min(STOCKS, pg * PG + PG);
+  var tabs = SORTNAME.map(function (t, i) { return '<span style="padding:2px 10px;margin-left:6px;border-radius:6px;' + (i === m ? 'background:var(--acc);color:#04070F' : 'color:var(--dim)') + '">' + t + '</span>'; }).join('');
+  h += T(100, 200, 24, 'lab', 'ALL STOCKS <span class="dim">· pick one to look at it</span>', 0, 'letter-spacing:.06em') + T(640, 201, 20, 'dim', 'sorted by' + tabs);
+  h += TR(1820, 201, 20, 'lab', 'page ' + (pg + 1) + '/' + pages + ' <span class="dim">· ' + clockHtml() + '</span>');
+  for (var r = pg * PG; r < end; r++) {
+    var i = ord[r], y = y0 + (r - pg * PG) * 58, ch = pct(S, i), up = S.px[i] >= S.pv[i], sel = i === S.sel, n = r - pg * PG, ri = '--i:' + n + ';';
+    if (m && r > pg * PG && sortRank(m, i) !== sortRank(m, ord[r - 1])) h += A(100, y - 7, 1720, 2, 'rw', '', 'background:var(--acc);opacity:.45;' + ri);   // new group starts
     if (sel) h += A(80, y - 5, 1760, 54, 'rw selb' + (S.selMoved ? ' mv' : ''), '', 'background:#7FD4FF33;border-left:8px solid var(--acc);box-sizing:border-box;' + ri);
     h += A(120, y + 1, 40, 40, 'rw', logo(i, 40), ri) + T(176, y, 28, 'row rw', esc(NAMES[i]), 0, 'color:#fff;' + ri) + T(560, y + 4, 22, 'row dim rw', TICKS[i], 0, 'height:36px;line-height:36px;letter-spacing:.08em;' + ri);
+    h += T(660, y, 19, 'rw', esc(sortTag(m, i)), 300, 'height:44px;line-height:44px;overflow:hidden;text-overflow:ellipsis;letter-spacing:.06em;color:var(--' + (m ? 'acc' : 'dim') + ');' + ri);
     h += TR(1090, y, 26, 'row rw ' + (up ? 'up' : 'dn'), sg(ch, 2) + ' %', ri) + T(1120, y, 28, 'row rw ' + (up ? 'up' : 'dn'), up ? '▲' : '▼', 0, ri);
     h += TR(1500, y, 22, 'row rw dim', 'spread ' + spreadOf(i) + ' %', ri);
     h += A(1560, y + 3, 230, 38, 'chip rw' + (S.chg && S.chg[i] ? (S.chg[i] > 0 ? ' fu' : ' fd') : ''), '<span class="chv">' + f2(S.px[i]) + ' ◆</span>', 'background:var(--' + (up ? 'up' : 'dn') + ');' + ri);
@@ -311,11 +321,19 @@ var CATNAME = { 'DEFENSIVE INCOME': ['DIVIDEND', 'pays you the most just for hol
   'DYNAMIC VALUE': ['DEEP VALUE', 'cheap for a reason, more ups and downs'], 'GROWTH': ['GROWTH', 'growing fast, small payouts'], 'DYNAMIC GROWTH': ['HIGH GROWTH', 'growing very fast, big swings, no payouts'],
   'SPECULATIVE': ['SPECULATIVE', 'a bold bet: could soar or sink'], 'TURNAROUND': ['TURNAROUND', 'struggling now, might bounce back'] };
 var TYPENAME = { 'DEFENSIVE': ['DEFENSIVE', 'moves less than the market'], 'SENSITIVE': ['SENSITIVE', 'moves with the market'], 'CYCLICAL': ['CYCLICAL', 'moves more than the market, up and down'] };   // = beta 0.6 / 1.0 / 1.3 in GlintExchangePrice
+// 26 Nov owner: SORT key (number key 3 on the market page) groups the stock list so a balanced pick is easy without opening every stock.
+//   mf 0 ALL (board order, row tag = sector) | 1 SECTOR | 2 STOCK TYPE (defensive / sensitive / cyclical) | 3 CATEGORY.  sel stays the STOCK ID.
+//   ORDER[mf] = display order; MUST equal SortOrder in Glintline/scripts/pages/GlintBroker.cs (print it: node Glintline/source/exchange_sort_order.js).
+var SORTNAME = ['ALL', 'SECTOR', 'STOCK TYPE', 'CATEGORY'], SORTNEXT = ['BY SECTOR', 'BY TYPE', 'BY CATEGORY', 'SHOW ALL'];
+var SECTS = CO.sector.filter(function (v, i, a) { return a.indexOf(v) === i; }).sort();
+function sortRank(m, k) { return m === 1 ? SECTS.indexOf(CO.sector[k]) : m === 2 ? ['DEFENSIVE', 'SENSITIVE', 'CYCLICAL'].indexOf(CO.type[k]) : m === 3 ? Object.keys(CATNAME).indexOf(CO.category[k]) : 0; }
+function sortTag(m, k) { return m === 2 ? (TYPENAME[CO.type[k]] || [CO.type[k]])[0] : m === 3 ? (CATNAME[CO.category[k]] || [CO.category[k]])[0] : CO.sector[k].toUpperCase(); }
+var ORDER = [0, 1, 2, 3].map(function (m) { var ix = []; for (var i = 0; i < STOCKS; i++) ix.push(i); return ix.sort(function (a, b) { return sortRank(m, a) - sortRank(m, b) || a - b; }); });
 function profile(S, k) {
   var capM = S.px[k] / 100 * CO.shares_m[k], vol = CO.avg_vol_k[k], dd = CO.div_day[k];
   var rows = [['Sector', CO.sector[k]], ['Industry', CO.industry[k]], ['Market cap', bigNum(capM, ['M', 'B'])], ['Avg volume 30 d', bigNum(vol, ['k', 'M'])],
     ['Quarterly report', inText(nextDay(CO.report_day[k], 12 * 3600000))], ['Dividend date', dd < 0 ? 'unknown' : inText(nextDay(dd, 0)) + ' · yield ' + CO.div_yield[k].toFixed(1) + ' %'],
-    ['Peer group', CO.peers[k].join(', ')], ['Category', (CATNAME[CO.category[k]] || [CO.category[k], ''])[0], (CATNAME[CO.category[k]] || [])[1]], ['With the market', (TYPENAME[CO.type[k]] || [CO.type[k], ''])[0], (TYPENAME[CO.type[k]] || [])[1]], ['Report deposit', (DEPOSIT[CO.category[k]] || '-') + ' on report day']];
+    ['Peer group', CO.peers[k].join(', ')], ['Category', (CATNAME[CO.category[k]] || [CO.category[k], ''])[0], (CATNAME[CO.category[k]] || [])[1]], ['Stock type', (TYPENAME[CO.type[k]] || [CO.type[k], ''])[0], (TYPENAME[CO.type[k]] || [])[1]], ['Report deposit', (DEPOSIT[CO.category[k]] || '-') + ' on report day']];
   var h = A(1130, 360, 730, 500, '', '', 'background:#04070F66;border:2px solid var(--line);border-radius:14px') + T(1160, 372, 22, 'acc', 'PROFILE', 0, 'letter-spacing:.2em');
   var y = 404;                                                       // rows 41 px; a row with a plain explanation gets a small 2nd line (+22 px)
   rows.forEach(function (r) { h += T(1160, y + 4, 22, 'dim', r[0]) + T(1420, y, 28, 'lab', esc(r[1]), 0, 'width:430px;overflow:hidden;text-overflow:ellipsis');
@@ -415,7 +433,7 @@ function demoInit() {
   [[2, 100], [3, 400], [6, 50]].forEach(function (o) { D.h[o[0]] = o[1]; D.cb[o[0]] = Math.round(o[1] * D.px[o[0]] * (1 + rnd(-.04, .05)) + 500); });
 }
 function demoWrite() {
-  var u = 'p=' + D.p + '&c=' + D.c + '&b=' + D.b + '&px=' + D.px.join(',') + '&pv=' + D.pv.join(',') + '&sel=' + D.sel + '&k=' + D.k + '&side=' + D.side + '&q=' + D.q + '&h=' + D.h.join(',') + '&cb=' + D.cb.join(',') + '&ch=' + D.hist[D.k].slice(-13).join(',') + '&f=' + D.f + '&n=' + (D.n = (D.n || 0) + 1) + (D.pz ? '&pz=1' : '') + (D.er ? '&er=' + encodeURIComponent(D.er) : '');
+  var u = 'p=' + D.p + '&c=' + D.c + '&b=' + D.b + '&px=' + D.px.join(',') + '&pv=' + D.pv.join(',') + '&sel=' + D.sel + '&mf=' + (D.mf || 0) + '&k=' + D.k + '&side=' + D.side + '&q=' + D.q + '&h=' + D.h.join(',') + '&cb=' + D.cb.join(',') + '&ch=' + D.hist[D.k].slice(-13).join(',') + '&f=' + D.f + '&n=' + (D.n = (D.n || 0) + 1) + (D.pz ? '&pz=1' : '') + (D.er ? '&er=' + encodeURIComponent(D.er) : '');
   if (D.r) u += '&r=' + D.r;
   location.hash = u;
 }
@@ -437,8 +455,9 @@ function press(id) {
   function go(np) { D.p = np; }
   if (p === 'attract') { go('market'); }
   else if (p === 'market') {
-    if (id === 'back') go('attract'); else if (id === 'up') D.sel = (D.sel + STOCKS - 1) % STOCKS; else if (id === 'down') D.sel = (D.sel + 1) % STOCKS; else if (id === 'pgup') D.sel = (D.sel + STOCKS - 10) % STOCKS; else if (id === 'pgdn') D.sel = (D.sel + 10) % STOCKS;
-    else if (id === 'minus') { D.sel = 0; go('portfolio'); } else if (id === 'plus') go('move'); else if (id === 'select') { D.k = D.sel; go('stock'); }
+    var od = ORDER[D.mf || 0], ps = od.indexOf(D.sel);   // 26 Nov: ▲▼ / page keys walk the SORTED list; key 3 = next sort
+    if (id === 'back') go('attract'); else if (id === 'up') D.sel = od[(ps + STOCKS - 1) % STOCKS]; else if (id === 'down') D.sel = od[(ps + 1) % STOCKS]; else if (id === 'pgup') { var pp = Math.floor(ps / 10) - 1; D.sel = od[(pp < 0 ? Math.floor((STOCKS - 1) / 10) : pp) * 10]; } else if (id === 'pgdn') D.sel = od[(Math.floor(ps / 10) + 1) * 10 >= STOCKS ? 0 : (Math.floor(ps / 10) + 1) * 10]; else if (id === 'minus') D.mf = ((D.mf || 0) + 1) % 4;
+    else if (id === 'portfolio') { D.sel = 0; go('portfolio'); } else if (id === 'move') go('move'); else if (id === 'select') { D.k = D.sel; go('stock'); }
   } else if (p === 'stock') {
     if (id === 'back') go('market');
     else if (id === 'up') { D.side = 'buy'; D.q = Math.min(1, maxBuy()) || 1; go('amount'); }
@@ -522,4 +541,4 @@ if (!DEMO) render();
 else render();
 </script>
 <script src="exchange_options.js"></script>
-<script src="exchange_charts.js"></script><script src="exchange_portfolio.js"></script><script src="exchange_portfolio_demo.js"></script><script>if (PLAY) document.write('<script src="exchange_play.js"><\/script>');   // play test = owner PC only (file not in git)</script></body></html>
+<script src="exchange_charts.js"></script><script src="exchange_portfolio.js"></script><script src="exchange_portfolio_demo.js"></script><script>if (PLAY) document.write('<script src="exchange_play.js"><\/script>');   // play test = owner PC only (file not in git)</script><script src="../glint_mark.js"></script></body></html>

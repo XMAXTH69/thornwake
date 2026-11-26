@@ -89,11 +89,11 @@ function draw() {
     tk += '<span>' + esc(r.n) + ' ' + r.p.toFixed(2) + '<em class="' + cls + '">' + (up ? '&#9650;' : '&#9660;') + ' ' + ch + '</em></span>';
   });
   document.getElementById('tk').innerHTML = tk + tk;
-  document.getElementById('e1').textContent = fmt(d.e[0]); document.getElementById('e2').textContent = fmt(d.e[1]); document.getElementById('e3').textContent = fmt(d.e[2]);
-  document.getElementById('lb').innerHTML = d.lb.length ? d.lb.map(function (x, i) { var up = x.v >= 0; return '<div class="lr"><i>' + (i + 1) + '</i><span>' + esc(x.n) + '</span><b class="' + (up ? 'up' : 'dn') + '">' + (up ? '+' : '-') + fmt(Math.abs(x.v)) + '</b></div>'; }).join('') : '<div class="note">no traders yet</div>';
+  document.getElementById('e1').textContent = fmt(d.e[0]) + ' ◆'; document.getElementById('e2').textContent = fmt(d.e[1]) + ' ◆'; document.getElementById('e3').textContent = fmt(d.e[2]) + ' ◆';   // 26 Nov: gold glint mark (glint_mark.js)
+  document.getElementById('lb').innerHTML = d.lb.length ? d.lb.map(function (x, i) { var up = x.v >= 0; return '<div class="lr"><i>' + (i + 1) + '</i><span>' + esc(x.n) + '</span><b class="' + (up ? 'up' : 'dn') + '">' + (up ? '+' : '-') + fmt(Math.abs(x.v)) + ' ◆</b></div>'; }).join('') : '<div class="note">no traders yet</div>';
   var as = document.getElementById('asof'); if (d.t) { var x = new Date(d.t * 1000); as.textContent = ('0' + x.getHours()).slice(-2) + ':' + ('0' + x.getMinutes()).slice(-2); } else as.textContent = '';
 }
 function fit() { var s = Math.min(innerWidth / 1920, innerHeight / 1080), st = document.getElementById('stage'); st.style.transform = 'scale(' + s + ')'; st.style.left = (innerWidth - 1920 * s) / 2 + 'px'; st.style.top = (innerHeight - 1080 * s) / 2 + 'px'; }
 addEventListener('resize', fit); addEventListener('hashchange', draw); fit(); draw();
 setTimeout(function () { grid(); setInterval(grid, TURN); }, TURN - Date.now() % TURN);   // turn the page on the 15 s mark (every board in every instance shows the same page)
-</script></body></html>
+</script><script src="../glint_mark.js"></script></body></html>
