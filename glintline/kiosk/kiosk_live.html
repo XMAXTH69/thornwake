@@ -20,6 +20,8 @@
    USED  26 Nov: START page has a USED MARKET button (DRIVE zone). Pages used_l | used_s | used_c | used_p | used_x are drawn by live/used_pages.js (fragment keys in its header);
          on them the DRIVE zone = the other tab (SELL / LISTINGS). Not in demo mode (browser test: set the hash by hand).
    km kp ks  26 Nov LINKED ECONOMY (live/market_link.js): today's market / parts / shield factor x1000 from GlintKiosk.cs (GL_PriceDay); every price chip is multiplied, a SALE / BOOM / SHORTAGE / RUSH tag shows at 1 % or more. Browser test: #p=buy_sharp&km=970
+   lf ed et ek gt  26 Nov LIFE / LIMITED EDITIONS / GATES (live/life_ui.js): lf = life of the shown ride (thousandths of a percent, 0 = SCRAP; own_ + used pages), ed / et = edition number / total, ek = numbers taken (buy_ / broker_),
+         gt = gate plate text. Browser test: #p=own_rocket&lf=64000&ed=7&et=60 | #p=buy_rocket&et=60&ek=60&gt=25+RACES | #p=own_classic&lf=0.   used_* pages: lf ed et pad (see live/used_pages.js).
    still=1 dev: no animations (final frame, for screenshots).
    dbg=1 small counter top-left: L<page loads> S<switches> <ms from hashchange to painted frame>.                                        */
 @font-face{font-family:Brand;src:url(live/fonts/Cinzel.ttf);font-weight:400 900}
@@ -89,6 +91,7 @@ html,body{margin:0;height:100%;background:#000;overflow:hidden}
 <body><div id="stage"><canvas id="dust" class="abs" width="1920" height="1080"></canvas><div id="live"></div></div>
 <div id="ld"><i></i></div><div id="dbg"></div>
 <script src="live/kiosk_pages.js"></script>
+<script src="live/life_ui.js"></script>
 <script src="live/used_pages.js"></script>
 <script src="live/market_link.js"></script>
 <script>
@@ -246,7 +249,7 @@ function title(s) { return s.toLowerCase().replace(/\b\w/g, function (c) { retur
 
 // ---------- router: #p=<page>&... -> live page, or the page's mp4 inside this page (hybrid fallback)
 function parse() { var f = {}; new URLSearchParams(location.hash.slice(1)).forEach(function (v, k) { f[k] = v; }); f.p = f.p || 'attract'; return f; }
-function build(f) { mkBegin(f); return mkEnd(build0(f)); }   // 26 Nov LINKED ECONOMY: today's factors (fragment km / kp / ks) + the SALE / BOOM tag
+function build(f) { mkBegin(f); return lifeEnd(mkEnd(build0(f)), f); }   // 26 Nov LINKED ECONOMY: today's factors (fragment km / kp / ks) + the SALE / BOOM tag
 function build0(f) {
   var p = f.p, a = p.split('_');
   if (p === 'attract') return { key: 'attract', html: pageAttract(f) };
