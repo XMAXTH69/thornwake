@@ -26,7 +26,7 @@ html,body{margin:0;width:100%;height:100%;background:#04070F;overflow:hidden;pos
 .row{height:44px;line-height:44px;font-size:28px}
 .chip{height:38px;line-height:38px;border-radius:6px;color:#04070F;text-align:center;font-size:28px}
 .btn{width:260px;height:110px;top:940px;box-sizing:border-box;border-radius:20px;background:var(--bg2);border:3px solid var(--acc);color:var(--acc);font-size:38px;display:flex;align-items:center;justify-content:center;white-space:nowrap;position:absolute;padding:0 16px}
-.btn.off{background:transparent;border:3px dashed #2C3E6688;color:transparent}
+.btn.off{visibility:hidden}   /* 26 Nov owner: no outline of empty slots */
 .btn.soon{opacity:.45;border-color:var(--line);color:var(--dim)}
 /* 26 Nov owner: touchable = PULSING glow (no sweeping lines). MAIN action (right slot) = filled accent; off / soon = still. Selected row = colour highlight only, no motion. */
 .btn{overflow:hidden}
