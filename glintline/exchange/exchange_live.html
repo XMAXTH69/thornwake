@@ -32,7 +32,11 @@ html,body{margin:0;width:100%;height:100%;background:#04070F;overflow:hidden;pos
 .btn{overflow:hidden}
 .btn.main{background:var(--acc);color:#04070F}
 .btn::before{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;animation:xbreathe 2.6s ease-in-out infinite}
-.btn.main::before,.btn.g::before,.btn.rd::before{animation:xbreathe2 2.6s ease-in-out infinite}
+/* 26 Nov owner: a white inner glow is invisible on a FILLED button -> filled buttons pulse as a whole: brightness + outer halo in their own colour */
+.btn.main::before,.btn.g::before,.btn.rd::before{display:none}
+.btn.main{--gl:127,212,255}.btn.g{--gl:46,229,157}.btn.rd{--gl:255,79,100}
+.btn.main,.btn.g,.btn.rd{animation:xfill 2.6s ease-in-out infinite}
+@keyframes xfill{0%,100%{box-shadow:0 0 0 0 rgba(var(--gl),0);filter:brightness(.88)}50%{box-shadow:0 0 34px 8px rgba(var(--gl),.75);filter:brightness(1.18)}}
 @keyframes xbreathe2{0%,100%{box-shadow:inset 0 0 0 rgba(255,255,255,0)}50%{box-shadow:inset 0 0 30px rgba(255,255,255,.60)}}
 @keyframes xbreathe{0%,100%{box-shadow:inset 0 0 0 rgba(127,212,255,0)}50%{box-shadow:inset 0 0 24px rgba(127,212,255,.40)}}
 .btn.off::before,.btn.soon::before{display:none}
@@ -58,6 +62,7 @@ html,body{margin:0;width:100%;height:100%;background:#04070F;overflow:hidden;pos
 .ent .rw{animation:rin .5s cubic-bezier(.2,.7,.2,1) both;animation-delay:calc(var(--i)*45ms + 120ms)}
 .ent .bar{transform-origin:50% 100%;animation:bgrow .6s cubic-bezier(.2,.7,.2,1) both;animation-delay:calc(var(--i)*35ms + 150ms)}
 .ent .btn{animation:bin .45s ease-out both;animation-delay:.15s}
+.ent .btn.main,.ent .btn.g,.ent .btn.rd{animation:bin .45s ease-out .15s both,xfill 2.6s ease-in-out .6s infinite}   /* keep the filled-button pulse during the entrance */
 .btn:not(.off):not(.soon){position:absolute;overflow:hidden}
 @keyframes fin{from{opacity:0}}
 @keyframes pin{from{opacity:0;transform:translate3d(120px,0,0)}}
