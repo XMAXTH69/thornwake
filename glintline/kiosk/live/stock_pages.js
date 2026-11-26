@@ -38,7 +38,7 @@ function stockSwatch(it, x, y, w, h) {
 function pageStock(f) {
   var C = CARD, h = base('GUILD MARKET', null) + card() + uTabs(2);
   if (f.z !== undefined && f.z !== '') return h + TC(C[1] + 270, f.z === '1' ? 'THE GUILD DID NOT ANSWER' : 'ASKING THE GUILD', 62, 'brand', 960) + TC(C[1] + 370, f.z === '1' ? 'Try again in a moment' : 'One moment', 40, 'soft', 960) + buttons(null, false, 'BACK') + zoneBtn('SELL');
-  if (!(+f.n > 0)) return h + TC(C[1] + 270, 'NOTHING IN STOCK HERE', 62, 'brand', 960) + TC(C[1] + 370, 'This garage sells no ride that the Guild stocks', 38, 'soft', 960) + buttons(null, false, 'BACK') + zoneBtn('SELL');
+  if (!(+f.n > 0)) return h + TC(C[1] + 250, 'NO GUILD ITEMS HERE YET', 62, 'brand', 960) + TC(C[1] + 345, 'New parts and paints appear here when players reach Guild ranks', 34, 'soft', 960) + TC(C[1] + 405, 'Join the Guild at the Guild Hall', 36, 'hi', 960) + buttons(null, false, 'BACK') + zoneBtn('SELL');
   var d = SK[f.it] || SK.hd, open = f.op === '1', own = f.ow === '1', nc = f.nc === '1', arm = f.c === '1', work = f.c === '2', guild = f.it === 'guild', set = f.st || d.set;
   var veh = guild ? { name: 'Guild Edition' } : uVeh(f.k), price = stockPrice(f.it, f.k), dark = !open && !own;
   // left: the vehicle (the numbered Guild Edition has no picture yet) + the item swatch
