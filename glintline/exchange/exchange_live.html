@@ -192,7 +192,16 @@ function T(x, y, size, cls, html, w, st) { return A(x, y, w, 0, cls, html, 'font
 function TR(xr, y, size, cls, html, st) { return A(xr - 900, y, 900, 0, cls + ' r', html, 'font-size:' + size + 'px;line-height:' + Math.round(size * 1.1) + 'px;' + (st || '')); }
 function TC(y, size, cls, html, st) { return A(0, y, 1920, 0, cls + ' c', html, 'font-size:' + size + 'px;line-height:' + Math.round(size * 1.1) + 'px;' + (st || '')); }
 function arr(a, n, d) { var o = []; for (var i = 0; i < n; i++) { var v = a && a[i] !== undefined && a[i] !== '' ? +a[i] : d; o.push(isNaN(v) ? d : v); } return o; }
-function spreadOf(k) { var s = SPREAD[BANDS[k]]; return k <= 3 ? Math.max(s, .5) : s; }
+// 26 Nov owner: the spread CHANGES like real life (GlintExchangePrice STEP 5). The game sends sp = bp per side + sw = why (0 normal / 1 report / 2 big move).
+//   Without sp (demo / old game) the page uses the same clock rule minus the big-move part: band bp x 0.97 (game-linked >= 50), x2 within 2 h of the report.
+var LIVE_SP = null, LIVE_SW = null;
+function baseBp(k) { var b = SPREAD[BANDS[k]] * 100 * 0.97; return k <= 3 ? Math.max(b, 50) : b; }
+function reportWin(k) { var t = Math.floor((Date.now() - T0) / TICK), d = Math.floor(t / 288); return d % 28 === CO.report_day[k] && Math.abs(t % 288 - 144) <= 24; }
+function spreadBp(k) { return LIVE_SP && LIVE_SP[k] > 0 ? LIVE_SP[k] : Math.round(baseBp(k) * (reportWin(k) ? 2 : 1)); }
+function spreadWhy(k) { return LIVE_SP && LIVE_SP[k] > 0 ? (LIVE_SW ? LIVE_SW[k] || 0 : 0) : (reportWin(k) ? 1 : 0); }
+function pctBp(bp) { return String(+(bp / 100).toFixed(2)); }
+function spreadOf(k) { return spreadBp(k) / 100; }
+function spreadNote(k) { var w = spreadWhy(k); return w ? ' <span class="amb">(' + (w === 1 ? 'report day' : 'big move in the last hour') + ' · normally ' + pctBp(Math.round(baseBp(k))) + ' %)</span>' : ''; }
 function fillBuy(px, k) { return Math.ceil(px * (1 + spreadOf(k) / 100) - 1e-9); }
 function fillSell(px, k) { return Math.floor(px * (1 - spreadOf(k) / 100) + 1e-9); }
 
@@ -208,6 +217,7 @@ function parse() {
   o.pv = lst('pv', STOCKS, 0).map(function (v, i) { return v > 0 ? v : o.px[i]; });
   o.h = lst('h', STOCKS, 0); o.cb = lst('cb', STOCKS, 0);
   o.ch = S.ch ? S.ch.split(',').map(Number).filter(function (v) { return v > 0; }) : [];
+  LIVE_SP = S.sp ? S.sp.split(',').map(Number) : null; LIVE_SW = S.sw ? S.sw.split(',').map(Number) : null;
   if (S.r) { var pr = S.r.split('|'); o.r = { ok: pr[0] === '1', kind: dec(pr[1] || ''), qty: parseInt(pr[2]) || 0, glint: parseInt(pr[3]) || 0, fee: parseInt(pr[4]) || 0, text: dec(pr.slice(5).join('|')) }; }
   return o;
 }
@@ -281,7 +291,7 @@ function pMarket(S) {
     h += A(120, y + 1, 40, 40, 'rw', logo(i, 40), ri) + T(176, y, 28, 'row rw', esc(NAMES[i]), 0, 'color:#fff;' + ri) + T(560, y + 4, 22, 'row dim rw', TICKS[i], 0, 'height:36px;line-height:36px;letter-spacing:.08em;' + ri);
     h += T(660, y, 19, 'rw', esc(sortTag(m, i)), 300, 'height:44px;line-height:44px;overflow:hidden;text-overflow:ellipsis;letter-spacing:.06em;color:var(--' + (m ? 'acc' : 'dim') + ');' + ri);
     h += TR(1090, y, 26, 'row rw ' + (up ? 'up' : 'dn'), sg(ch, 2) + ' %', ri) + T(1120, y, 28, 'row rw ' + (up ? 'up' : 'dn'), up ? '▲' : '▼', 0, ri);
-    h += TR(1500, y, 22, 'row rw dim', 'spread ' + spreadOf(i) + ' %', ri);
+    h += TR(1500, y, 22, 'row rw ' + (spreadWhy(i) ? 'amb' : 'dim'), 'spread ' + pctBp(spreadBp(i)) + ' %' + (spreadWhy(i) ? ' ▲' : ''), ri);   // amber = raised right now
     h += A(1560, y + 3, 230, 38, 'chip rw' + (S.chg && S.chg[i] ? (S.chg[i] > 0 ? ' fu' : ' fd') : ''), '<span class="chv">' + f2(S.px[i]) + ' ◆</span>', 'background:var(--' + (up ? 'up' : 'dn') + ');' + ri);
   }
   h += tapeHtml(S);
@@ -306,7 +316,7 @@ function pStock(S) {
     var net = own * fs / 100 - S.f, pl = net - S.cb[k] / 100;
     h += T(x, 748, 30, '', 'You own ' + fmt(own) + ' shares · paid ' + f2(S.cb[k] / own) + ' each') + T(x, 790, 30, pl >= 0 ? 'up' : 'dn', 'If you sold now: ' + sg(pl) + ' ◆');
   } else h += T(x, 748, 30, '', 'You own no shares') + T(x, 790, 28, 'dim', 'Press BUY to get some');
-  h += T(x, 834, 22, 'dim', 'Spread ' + spreadOf(k) + ' % each way · buy ' + f2(fillBuy(px, k)) + ' · sell ' + f2(fs) + ' · fee ' + S.f + ' ◆');
+  h += T(x, 834, 22, 'dim', 'Spread ' + pctBp(spreadBp(k)) + ' % each way' + spreadNote(k) + ' · buy ' + f2(fillBuy(px, k)) + ' · sell ' + f2(fs) + ' · fee ' + S.f + ' ◆');
   h += TR(1620, 330, 24, 'dim', 'Your free glint: <span style="color:#fff">' + fmt(S.c) + ' ◆</span>');
   h += profile(S, k);
   return h;
@@ -363,7 +373,7 @@ function pTotal(S) {
   var mid = q * px, gross = q * fill, feeC = S.f * 100, tot = sell ? Math.max(0, Math.floor((gross - feeC) / 100 + 1e-9)) : Math.ceil((gross + feeC) / 100 - 1e-9);
   h += T(100, 108, 30, 'dim', '<span class="' + col + '">' + (sell ? 'SELL' : 'BUY') + '</span> ' + fmt(q) + ' ' + esc(NAMES[k]) + ' · check the total');
   h += T(100, 150, 120, sell ? 'up' : '', (sell ? '+' : '−') + fmt(tot) + ' <span class="acc" style="font-size:60px">◆</span>') + T(100, 292, 32, 'lab', sell ? 'you get' : 'you pay');
-  var rows = [[fmt(q) + ' shares × ' + f2(px) + ' (mid price)', f2(mid) + ' ◆', 'lab'], ['Spread ' + spreadOf(k) + ' % ' + (sell ? '(taken off)' : '(added)'), sg((gross - mid) / 100, 2) + ' ◆', 'amb'],
+  var rows = [[fmt(q) + ' shares × ' + f2(px) + ' (mid price)', f2(mid) + ' ◆', 'lab'], ['Spread ' + pctBp(spreadBp(k)) + ' % ' + (sell ? '(taken off)' : '(added)'), sg((gross - mid) / 100, 2) + ' ◆', 'amb'],
     ['Broker fee', sg((sell ? -1 : 1) * S.f) + ' ◆', 'amb'], ['Total ' + (sell ? 'to you' : '') + ' (' + (sell ? 'rounded down' : 'rounded up') + ')', fmt(tot) + ' ◆', '']];
   for (var i = 0; i < 4; i++) { var y = 370 + i * 62 + (i === 3 ? 16 : 0); h += T(100, y, 32, i === 3 ? '' : 'lab', rows[i][0]) + TR(1300, y, 34, rows[i][2], rows[i][1]); if (i === 2) h += A(100, y + 52, 1200, 3, '', '', 'background:var(--line)'); }
   if (sell) { var cost = S.h[k] > 0 ? S.cb[k] / 100 * q / S.h[k] : 0, pl = tot - cost; h += T(100, 680, 34, pl >= 0 ? 'up' : 'dn', 'Result on these ' + fmt(q) + ': ' + sg(pl) + ' ◆ (you paid ' + (S.h[k] ? f2(S.cb[k] / S.h[k]) : '0.00') + ' each)') + T(100, 730, 28, 'dim', 'Glint after: ' + fmt(S.c + tot) + ' ◆ free'); }
