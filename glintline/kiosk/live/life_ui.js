@@ -29,7 +29,7 @@ function lifeEnd(r, f) {
   var p = f.p || '', a = p.split('_'), C = CARD, h = '';
   if (a[0] === 'own' && a.length === 2 && f.lf !== undefined && f.lf !== '') {
     h += lifeChips(C[0] + 30, C[3] - 125, f);   // bottom left: the name and the stat bars use the top
-    if (+f.lf <= 0) h += '<div class="abs fade" style="left:' + (C[0] + 34) + 'px;top:' + (C[3] - 62) + 'px;font-size:32px;white-space:nowrap;color:#FF6A4D">cannot be driven  ·  sell it as scrap at the USED MARKET</div>' + selCover('SCRAPPED');
+    if (+f.lf <= 0) h += '<div class="abs fade" style="left:' + (C[0] + 34) + 'px;top:' + (C[3] - 62) + 'px;font-size:32px;white-space:nowrap;color:#FF6A4D">cannot be driven  ·  sell it as scrap at the GUILD MARKET</div>' + selCover('SCRAPPED');
   } else if ((a[0] === 'buy' || a[0] === 'broker') && a.length === 2) {
     var bro = a[0] === 'broker', y = bro ? C[3] - 100 : C[1] + 92, x = C[0] + 30, et = +f.et || 0, ek = f.ek === undefined ? -1 : +f.ek, out = et > 0 && ek >= et;
     if (et > 0 && ek >= 0) {      // broker page: one row at the bottom (the ship picture fills the top); shop pages: two rows left under the market tag

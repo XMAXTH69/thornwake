@@ -1,9 +1,9 @@
 'use strict';
-/* Glintline LIVE kiosk: the USED MARKET pages (26 Nov 2026, design/USED-MARKET.md). ONE job: draw used_l / used_s / used_c / used_p / used_x from the
+/* Glintline LIVE kiosk: the GUILD MARKET pages (26 Nov 2026, design/USED-MARKET.md; renamed from USED MARKET, tabs USED / GUILD STOCK / SELL, the GUILD STOCK page used_g is live/stock_pages.js). ONE job: draw used_l / used_s / used_c / used_p / used_x from the
    URL #fragment that GlintKiosk.cs builds (UsedFrag); no data lives here. Loaded by kiosk_live.html after kiosk_pages.js (shares CAT, CARD, base, card,
    buttons, carImg, tag, T, TC, esc, money, title ...). Text values are percent-encoded by the kiosk (+ = space), parse() decodes them.
    Fragment keys (all short, the kiosk sends ONE lot / ride per page, never the whole list):
-     t=0|1       tab (0 LISTINGS, 1 SELL)                 i,n = this item / how many (1-based)       k = vehicle key (catalog name + picture)
+     t=0|1|2     tab (0 USED = used_l, 1 SELL = used_s, 2 GUILD STOCK = used_g; the DRIVE zone steps USED -> GUILD STOCK -> SELL)                 i,n = this item / how many (1-based)       k = vehicle key (catalog name + picture)
      used_l  LISTINGS   n=0 -> empty;  s seller, pr price, v value (new price + extras), w what comes with it, me=1 own lot, c=1 confirm armed / 2 working
      used_s  SELL list  val value, md 0 no sale / 1 paddock only / 2 paddock + players, why (md 0), lot = open lot id (listed), pr = its price
      used_c  CHOICE     val, o chosen option, os option letters (p PADDOCK, l PLAYERS, x CANCEL LISTING), c=1 paddock confirm armed / 2 working
@@ -21,9 +21,9 @@ function selBtn(label, dim) { return '<div class="abs sel btn" style="font-size:
 function uVeh(k) { var v = CAT.vehicles[k]; return { name: v ? v.name : title(k || '?'), render: v ? v.render : null }; }
 function uTabs(t) {
   var C = CARD;
-  return ['LISTINGS', 'SELL'].map(function (s, j) {
-    var x = C[0] + 40 + j * 250;
-    return '<div class="abs tile' + (j === +t ? ' on' : '') + ' fade" style="' + box(x, C[1] + 22, x + 230, C[1] + 80) + ';border-radius:29px;font-size:30px;letter-spacing:.14em;color:' + (j === +t ? 'var(--accent)' : 'var(--soft)') + '">' + s + '</div>';
+  return [[0, 'USED'], [2, 'GUILD STOCK'], [1, 'SELL']].map(function (s, j) {     // tab numbers: 0 USED, 2 GUILD STOCK, 1 SELL (same as GlintKiosk uTab)
+    var x = C[0] + 40 + j * 300, on = s[0] === +t;
+    return '<div class="abs tile' + (on ? ' on' : '') + ' fade" style="' + box(x, C[1] + 22, x + 280, C[1] + 80) + ';border-radius:29px;font-size:30px;letter-spacing:.14em;color:' + (on ? 'var(--accent)' : 'var(--soft)') + '">' + s[1] + '</div>';
   }).join('');
 }
 function uPos(f) { return f.n > 1 && f.n <= 12 ? [(+f.i) - 1, +f.n] : null; }   // stars in the top bar only for a short list
@@ -33,9 +33,9 @@ function uWrap(x, y, w, text, size, cls) { return '<div class="abs fade ' + (cls
 function uNote(text) { return TC(CARD[1] + 330, esc(text), 52, 'soft', 960); }
 
 function pageUsedList(f) {
-  var C = CARD, h = base('USED MARKET', uPos(f)) + card() + uTabs(0);
+  var C = CARD, h = base('GUILD MARKET', uPos(f)) + card() + uTabs(0);
   if (!(+f.n > 0)) return h + TC(C[1] + 270, 'NO USED RIDES LISTED', 62, 'brand', 960) + TC(C[1] + 370, 'Nobody is selling a ride of this garage right now', 38, 'soft', 960) +
-    TC(C[1] + 440, 'Touch SELL to list yours', 38, 'hi', 960) + buttons(null, false, 'BACK') + zoneBtn('SELL');
+    TC(C[1] + 440, 'Open the SELL tab to list yours', 38, 'hi', 960) + buttons(null, false, 'BACK') + zoneBtn('GUILD STOCK');
   var pct = +f.v > 0 ? Math.round(100 * f.pr / f.v) : 0, arm = f.c === '1', work = f.c === '2';
   h += uCar(f.k) + uName(f.k) + T(C[0] + 504, C[1] + 190, 'SELLER  ' + esc(f.s || '?'), 34, 'soft', 520);
   h += lifeChips(C[0] + 500, C[1] + 236, f);                                  // 26 Nov LIFE: status + edition number
@@ -43,11 +43,11 @@ function pageUsedList(f) {
   h += T(C[0] + 50, C[3] - 130, pct + ' % OF ITS CONDITION VALUE', 34, 'soft', 480) + T(C[0] + 50, C[3] - 84, 'RECOMMENDED  ' + money(recPrice(f.v)) + ' ◆  (' + REC_PCT + ' %)', 34, 'hi', 600);
   h += tag(C[2] - 30, C[3] - 100, money(f.pr) + ' ◆', false);
   if (arm) h += '<div class="abs ctr fade" style="top:' + (C[3] + 14) + 'px;font-size:36px;color:var(--hi)">Pay ' + money(f.pr) + ' ◆ from your banked glint? Touch CONFIRM</div>';
-  return h + buttons(null, true, 'BACK') + selBtn(work ? 'WORKING' : f.me === '1' ? 'YOURS' : arm ? 'CONFIRM' : 'BUY', f.me === '1') + zoneBtn('SELL');
+  return h + buttons(null, true, 'BACK') + selBtn(work ? 'WORKING' : f.me === '1' ? 'YOURS' : arm ? 'CONFIRM' : 'BUY', f.me === '1') + zoneBtn('GUILD STOCK');
 }
 function pageUsedSell(f) {
-  var C = CARD, h = base('USED MARKET', uPos(f)) + card() + uTabs(1);
-  if (!(+f.n > 0)) return h + TC(C[1] + 270, 'NOTHING TO SELL HERE', 62, 'brand', 960) + TC(C[1] + 370, 'You own no ride of this garage', 38, 'soft', 960) + buttons(null, false, 'BACK') + zoneBtn('LISTINGS');
+  var C = CARD, h = base('GUILD MARKET', uPos(f)) + card() + uTabs(1);
+  if (!(+f.n > 0)) return h + TC(C[1] + 270, 'NOTHING TO SELL HERE', 62, 'brand', 960) + TC(C[1] + 370, 'You own no ride of this garage', 38, 'soft', 960) + buttons(null, false, 'BACK') + zoneBtn('USED');
   var md = +f.md, val = +f.val, listed = !!f.lot, scrap = md === 3;
   h += uCar(f.k) + uName(f.k) + lifeChips(C[0] + 500, C[1] + 186, f);       // 26 Nov LIFE: status + edition number
   h += T(C[0] + 504, C[1] + 262, scrap ? 'SCRAP VALUE' : 'CONDITION VALUE', 26, 'hi', 520) + T(C[0] + 504, C[1] + 292, money(val) + ' ◆', 52, '', 520);
@@ -55,12 +55,12 @@ function pageUsedSell(f) {
   h += T(C[0] + 504, C[1] + 372, esc(line), 36, 'hi', 520);
   var sub = listed ? 'You get ' + money(f.pr - Math.floor((f.pr * 15 + 50) / 100)) + ' ◆ when it sells' : md === 0 ? (f.why || 'not now') : scrap ? 'Cannot be driven. The Paddock pays ' + money(f.pad) + ' ◆, your paints and parts stay' : md === 1 ? 'The Paddock pays ' + money(f.pad) + ' ◆ at once' : 'Paddock pays ' + money(f.pad) + ' ◆, players 70 to 100 %';
   h += uWrap(C[0] + 504, C[1] + 428, 520, sub, 30, 'soft');
-  return h + buttons(null, true, 'BACK') + selBtn('OPEN', md === 0 && !listed) + zoneBtn('LISTINGS');
+  return h + buttons(null, true, 'BACK') + selBtn('OPEN', md === 0 && !listed) + zoneBtn('USED');
 }
 function pageUsedChoice(f) {
   var C = CARD, val = +f.val, os = (f.os || 'p').split(''), o = +f.o || 0, arm = f.c === '1', work = f.c === '2';
   var NM = { p: ['SELL TO', 'PADDOCK'], l: ['LIST FOR', 'PLAYERS'], x: ['CANCEL', 'LISTING'], s: ['SCRAP IT', 'TO PADDOCK'] };
-  var h = base('USED MARKET', null) + card() + uTabs(1) + TC(C[1] + 100, esc(uVeh(f.k).name), 54, 'brand', 900);
+  var h = base('GUILD MARKET', null) + card() + uTabs(1) + TC(C[1] + 100, esc(uVeh(f.k).name), 54, 'brand', 900);
   var tw = 300, gap = 40, x0 = 960 - (os.length * tw + (os.length - 1) * gap) / 2;
   os.forEach(function (c, j) {
     var x = x0 + j * (tw + gap), on = j === o;
@@ -73,7 +73,7 @@ function pageUsedChoice(f) {
   return h + buttons(null, os.length > 1, 'BACK') + selBtn(work ? 'WORKING' : arm ? 'CONFIRM' : c0 === 'p' ? 'PADDOCK' : c0 === 's' ? 'SCRAP IT' : c0 === 'l' ? 'SET PRICE' : 'CANCEL');
 }
 function pageUsedPrice(f) {
-  var C = CARD, pct = +f.pct, h = base('USED MARKET', null) + card() + uTabs(1) + TC(C[1] + 100, esc(uVeh(f.k).name), 54, 'brand', 900);
+  var C = CARD, pct = +f.pct, h = base('GUILD MARKET', null) + card() + uTabs(1) + TC(C[1] + 100, esc(uVeh(f.k).name), 54, 'brand', 900);
   h += lifeChips(C[0] + 560, C[1] + 22, f, true);
   h += TC(C[1] + 160, pct + '%', 130, 'brand hi tight', 600) + TC(C[1] + 310, 'ASKING PRICE  ' + money(f.pr) + ' ◆   of condition value ' + money(f.val) + ' ◆', 42, '', 1040);
   h += TC(C[1] + 372, 'YOU GET  ' + money(f.you) + ' ◆   (after the 15 % fee)', 40, 'hi', 960);
@@ -84,7 +84,7 @@ function pageUsedPrice(f) {
 }
 function pageUsedWait(f) {
   var closed = f.z === '1';
-  return base('USED MARKET', null) + card() + TC(CARD[1] + 250, closed ? 'USED MARKET CLOSED' : 'ASKING THE MARKET', 66, 'brand', 960) +
+  return base('GUILD MARKET', null) + card() + TC(CARD[1] + 250, closed ? 'GUILD MARKET CLOSED' : 'ASKING THE MARKET', 66, 'brand', 960) +
     TC(CARD[1] + 360, closed ? 'Nobody answered. Try again in a moment.' : 'One moment', 40, 'soft', 960) + buttons(null, false, 'BACK');
 }
 function usedBuild(f) {
@@ -93,6 +93,7 @@ function usedBuild(f) {
   if (p === 'used_s') return { key: 'useds', car: f.k + f.i, html: pageUsedSell(f) };
   if (p === 'used_c') return { key: 'usedc', car: f.k, html: pageUsedChoice(f) };
   if (p === 'used_p') return { key: 'usedp', car: f.k, html: pageUsedPrice(f) };
+  if (p === 'used_g') return stockBuild(f);   // GUILD STOCK tab (live/stock_pages.js)
   if (p === 'used_x') return { key: 'usedx', car: 'x', html: pageUsedWait(f) };
   return null;
 }

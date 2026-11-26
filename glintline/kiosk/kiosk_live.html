@@ -17,8 +17,9 @@
    na=<gp|aurum|null>  26 Nov (attract only): the player may NOT use this garage (gp = GRAND PRIX access needed, aurum / null = faction members only) -> BACK zone shows a dim note.
          neither hm nor na = allowed, not home yet -> BACK zone is the button MAKE THIS MY GARAGE (GlintKiosk.cs: attract + BACK = GL_HomeSet).
    HOME  26 Nov: every page except attract draws the small button START (house icon) in the left column under the top bar, from CAT.hitsPx.home (46,244 .. 236,304 px) = the SAME rectangle as the touch zone 'home'; touch = attract.
-   USED  26 Nov: START page has a USED MARKET button (DRIVE zone). Pages used_l | used_s | used_c | used_p | used_x are drawn by live/used_pages.js (fragment keys in its header);
-         on them the DRIVE zone = the other tab (SELL / LISTINGS). Not in demo mode (browser test: set the hash by hand).
+   USED  26 Nov: START page has a GUILD MARKET button (DRIVE zone; formerly USED MARKET). Pages used_l | used_s | used_c | used_p | used_x are drawn by live/used_pages.js (fragment keys in its header);
+         on them the DRIVE zone = the next tab (USED -> GUILD STOCK -> SELL -> USED). Not in demo mode (browser test: set the hash by hand).
+  STOCK 26 Nov: GUILD STOCK tab = page used_g, live/stock_pages.js (fragment keys in its header). Browser test: #p=used_g&t=2&i=1&n=30&k=sharp&it=hd&st=MECH_J&ub=Rivet&uo=1&op=1  (closed: &op=0)
    GUILD 26 Nov GUILD HALL desk (live/guild_pages.js): pages g_home | g_pick | g_price | g_top, sent only by a GlintKiosk set to 'Guild desk' (fragment keys in the file header). Browser test: #p=g_home&h=1&sp=MECHANIC&st=A&jt=12&jc=40&jb=83&rk=1&nr=250&pc=80&er=12400
    SLOTS 26 Nov GARAGE SLOTS (live/slots_ui.js): START page line 'GARAGE 3 / 4 · HANGAR 1 / 1' (gu gl hu hl); pages full_g | full_h = GARAGE FULL / HANGAR FULL with SELL + BUY SLOT (u l n c, see the file header). Browser test: #p=full_g&u=4&l=4&n=7500
    km kp ks  26 Nov LINKED ECONOMY (live/market_link.js): today's market / parts / shield factor x1000 from GlintKiosk.cs (GL_PriceDay); every price chip is multiplied, a SALE / BOOM / SHORTAGE / RUSH tag shows at 1 % or more. Browser test: #p=buy_sharp&km=970
@@ -95,6 +96,7 @@ html,body{margin:0;height:100%;background:#000;overflow:hidden}
 <script src="live/kiosk_pages.js"></script>
 <script src="live/life_ui.js"></script>
 <script src="live/used_pages.js"></script>
+<script src="live/stock_pages.js"></script>
 <script src="live/guild_pages.js"></script>
 <script src="live/slots_ui.js"></script>
 <script src="live/market_link.js"></script>
@@ -183,7 +185,7 @@ function pageAttract(f) {
     star(960, 300, 95, 'var(--accent)', .24, 'fade') +
     '<div class="abs ctr brand hi fade" style="top:440px;font-size:116px">GLINTLINE</div>' +
     '<div class="abs ctr fade" style="top:600px;font-size:56px">Step on the glowing square</div>' +
-    '<div class="abs ctr soft fade" style="top:676px;font-size:40px">then touch START to choose your car or bike</div>' + buttons('START', false, null) + garageBtn(f || {}) + zoneBtn('USED MARKET') + slotsLine(f);
+    '<div class="abs ctr soft fade" style="top:676px;font-size:40px">then touch START to choose your car or bike</div>' + buttons('START', false, null) + garageBtn(f || {}) + zoneBtn('GUILD MARKET') + slotsLine(f);
 }
 function pageCar(kind, vid, f) {       // own_ / buy_ / drive_ / browse_ / rent_ <car or plane>; planes (kind 'plane') only switch titles, texts, bar names, dots and buttons
   var v = CAT.vehicles[vid], plane = v.kind === 'plane' || v.kind === 'ship', ord = v.kind === 'ship' ? CAT.ship_order : plane ? CAT.air_order : CAT.order, k = ord.indexOf(vid), C = CARD, own = kind === 'own';

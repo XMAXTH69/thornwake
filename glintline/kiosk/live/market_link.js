@@ -13,10 +13,10 @@ function mkAdj(b, kind) {                 // kind m = market, p = parts (M x P),
 }
 function mkVeh(vid) { var v = CAT.vehicles[vid]; return !!v && v.price > 0 && !v.broker && !MK_ENTRY[vid] && !MK_TOP[vid]; }
 function mkBegin(f) {                     // before a page is drawn: read the factors, decide which price family the page shows
-  MK.m = +f.km || 0; MK.p = +f.kp || 0; MK.s = +f.ks || 0; MKX.used = {};
+  MK.m = +f.km || 0; MK.p = +f.kp || 0; MK.s = +f.ks || 0; MKX.used = {}; MKX.pg = f.p || '';
   var p = f.p || '', a = p.split('_'), k = a[0];
   MKX.kind = (k === 'browse' || k === 'buy') ? (a.length === 2 && mkVeh(a[1]) ? 'm' : '')
-    : (k === 'paint' || k === 'rims' || k === 'rimd' || k === 'tyre' || k === 'ug' || k === 'full' || p.indexOf('twin_buy_') === 0) ? 'm'
+    : (k === 'paint' || k === 'rims' || k === 'rimd' || k === 'tyre' || k === 'ug' || k === 'full' || p === 'used_g' || p.indexOf('twin_buy_') === 0) ? 'm'
     : k === 'upg' ? 'p' : p === 'shield' ? 's' : '';
 }
 function mkFmt(n, sep) { var s = String(n); return sep === ',' ? s.replace(/\B(?=(\d{3})+(?!\d))/g, ',') : s.replace(/\B(?=(\d{3})+(?!\d))/g, ' '); }
@@ -37,7 +37,7 @@ function mkHeads(m, p, s) {               // [{k: 'm'|'p'|'s', up: bool, text}] 
 }
 function mkEnd(r) {                       // after a page is drawn: the tag(s) of the factors that were really applied to a price on it
   if (!r || !r.html) return r;
-  var heads = mkHeads(MK.m, MK.p, MK.s).filter(function (h) { return MKX.used[h.k] || (h.k === 'm' && MKX.used.p); }), x = CARD[0] + 30, y = CARD[1] + 30, h = '';
+  var heads = mkHeads(MK.m, MK.p, MK.s).filter(function (h) { return MKX.used[h.k] || (h.k === 'm' && MKX.used.p); }), x = CARD[0] + 30, y = MKX.pg === 'used_g' ? CARD[3] - 100 : CARD[1] + 30, h = '';   // GUILD STOCK page: the tab row sits at the top, so the tag goes bottom left
   heads.forEach(function (q, i) {
     h += '<div class="abs tag fade" style="left:' + x + 'px;top:' + (y + i * 66) + 'px;height:56px;line-height:50px;font-size:32px;padding:0 20px;border-radius:28px' + (q.up ? ';color:#FFB02E;border-color:#FFB02E' : '') + '">' + esc(q.tag) + '</div>';
   });
