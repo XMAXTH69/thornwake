@@ -67,14 +67,14 @@ function pageUsedChoice(f) {
     h += '<div class="abs tile' + (on ? ' on' : '') + ' fade" style="' + box(x, C[1] + 190, x + tw, C[1] + 360) + ';border-radius:22px;flex-direction:column;font-size:40px;letter-spacing:.1em;color:' + (on ? 'var(--text)' : 'var(--soft)') + '"><div>' + NM[c][0] + '</div><div>' + NM[c][1] + '</div></div>';
   });
   var c0 = os[o], txt = c0 === 'p' ? 'The Paddock pays ' + money(f.pad) + ' ◆ at once (half of its value today)' : c0 === 's' ? 'Scrap pays ' + money(f.pad) + ' ◆ (10 %). You keep its paints, rims and parts for your next one' : c0 === 'l' ? 'You pick the price: 70 to 100 % of ' + money(val) + ' ◆. 15 % comes off as a fee when it sells.' : 'Take it off the market and get it back in your garage';
-  h += lifeChips(C[0] + 560, C[1] + 22, f, true);
-  h += TC(C[1] + 410, esc(txt), 38, 'soft', 960);
-  if (arm) h += TC(C[1] + 490, (c0 === 's' ? 'Scrap for ' : 'Sell for ') + money(f.pad) + ' ◆?  Touch CONFIRM', 46, 'hi', 960);
+  h += lifeChips(960 - (+f.ed > 0 ? 220 : 125), C[1] + 374, f, true);   // under the option tiles (the tab row uses the top)
+  h += TC(C[1] + 444, esc(txt), 38, 'soft', 960);
+  if (arm) h += TC(C[1] + 514, (c0 === 's' ? 'Scrap for ' : 'Sell for ') + money(f.pad) + ' ◆?  Touch CONFIRM', 46, 'hi', 960);
   return h + buttons(null, os.length > 1, 'BACK') + selBtn(work ? 'WORKING' : arm ? 'CONFIRM' : c0 === 'p' ? 'PADDOCK' : c0 === 's' ? 'SCRAP IT' : c0 === 'l' ? 'SET PRICE' : 'CANCEL');
 }
 function pageUsedPrice(f) {
   var C = CARD, pct = +f.pct, h = base('GUILD MARKET', null) + card() + uTabs(1) + TC(C[1] + 100, esc(uVeh(f.k).name), 54, 'brand', 900);
-  h += lifeChips(C[0] + 560, C[1] + 22, f, true);
+  h += lifeChips(C[0] + 40, C[1] + 200, f, true);                       // left of the big percent (the tab row uses the top)
   h += TC(C[1] + 160, pct + '%', 130, 'brand hi tight', 600) + TC(C[1] + 310, 'ASKING PRICE  ' + money(f.pr) + ' ◆   (value today ' + money(f.val) + ' ◆)', 42, '', 1040);
   h += TC(C[1] + 372, 'YOU GET  ' + money(f.you) + ' ◆   (after the 15 % fee)', 40, 'hi', 960);
   h += TC(C[1] + 430, 'RECOMMENDED  ' + REC_PCT + ' %  =  ' + money(recPrice(f.val)) + ' ◆' + (pct === REC_PCT ? '   ·   picked' : ''), 40, pct === REC_PCT ? 'hi' : 'soft', 960);

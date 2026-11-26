@@ -67,10 +67,10 @@ function bWho(f) {
 function bAmt(f) {
   var C = CARD, am = String(f.am || '').split(',').map(Number), o = +f.o || 0, c = +f.c || 0, mn = +f.mn || 0, mx = +f.mx || 0, work = c === 3;
   var h = base('BOUNTY OFFICE', null) + card() + TC(C[1] + 24, 'PRICE ON', 36, 'soft', 960) + TC(C[1] + 70, esc(String(f.nm || '').toUpperCase()), 76, 'brand hi', 960);
-  var tt = +f.tt || 0;
-  h += TC(C[1] + 176, tt > 0 ? 'already ' + money(tt) + ' ◆ on this rider  ·  yours adds to it' : (f.fl === 'R' ? 'REVENGE  ·  the rider who crashed you' : 'no bounty on this rider yet'), 32, tt > 0 ? '' : 'soft', 960);
+  var tt = +f.tt || 0, fee0 = +f.fe || 0;
+  h += TC(C[1] + (fee0 > 0 ? 164 : 176), tt > 0 ? 'already ' + money(tt) + ' ◆ on this rider  ·  yours adds to it' : (f.fl === 'R' ? 'REVENGE  ·  the rider who crashed you' : 'no bounty on this rider yet'), fee0 > 0 ? 28 : 32, tt > 0 ? '' : 'soft', 960);
   var fee = +f.fe || 0, rh = +f.rh || 0;
-  if (fee > 0) h += TC(C[1] + 208, 'Another bounty on ' + esc(String(f.nm || '').toUpperCase()) + ' today costs ' + money(fee) + ' ◆ extra (normal again in ' + rh + ' h)', 30, 'hi', 1000);
+  if (fee > 0) h += TC(C[1] + 200, 'Another bounty on ' + esc(String(f.nm || '').toUpperCase()) + ' today costs ' + money(fee) + ' ◆ extra (normal again in ' + rh + ' h)', 26, 'hi', 1000);
   for (var j = 0; j < 5; j++) {
     var x = C[0] + 40 + j * 200, v = am[j] || 0, ok = v >= Math.max(1, mn) && v <= mx, on = j === o;
     h += '<div class="abs tile' + (on ? ' on' : '') + ' fade" style="' + box(x, C[1] + 240, x + 184, C[1] + 380) + ';border-radius:20px;flex-direction:column;gap:6px' + (ok ? '' : ';opacity:.35') + (on ? ';border:3px solid var(--accent)' : '') + '">' +
