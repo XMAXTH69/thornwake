@@ -17,7 +17,7 @@
 var OPT = (function () {
   'use strict';
   // owner 26 Nov (P1): AURUM, NULL WAKE, ECHOES, GLINTLINE options trade like every other stock (old sell-only ban removed)
-  var EXP = ['1 DAY', '3 DAYS', '1 WEEK', '4 WEEKS'], EXPD = [1, 3, 7, 28], ROWS = 21, ATM = 10, VIS = 11;
+  var EXP = ['1 DAY', '3 DAYS', '1 WEEK', '4 WEEKS'], EXPD = [1, 3, 7, 28], ROWS = 21, ATM = 10, VIS = 10;
   var MODE = { cov: 'COVERED', cash: 'CASH-SECURED', naked: 'NAKED' };
   var R = { CALM: .20, BUMPY: .30, WILD: .40 };                      // initial margin rate r by band (sec 15)
   var REPSIG = { 'DEFENSIVE INCOME': 2, 'VALUE': 3, 'CORE': 3, 'DYNAMIC VALUE': 4, 'GROWTH': 5, 'DYNAMIC GROWTH': 8, 'TURNAROUND': 10, 'SPECULATIVE': 12 };
@@ -94,27 +94,28 @@ var OPT = (function () {
     return h + T(1120, y - 4, 26, 'lab', endText(o.end)) + T(1120, y + 30, 20, 'dim', 'selling without cover: 1 DAY and 3 DAYS only');
   }
   function pChain(S) {
+    // 27 Nov owner: 'make options strikes clickable individually like stocks and remove the trade button' - the strike lines sit EXACTLY on
+    // the market's 10 touch rows (rect top 235 + n*63, 59 px = 'Glint broker touch row0..9', broker_row_planes.py); touching a line opens its
+    // ticket. Window of 10 of the 21 strikes: top = clamp(orow - 5, 0, 11) - GlintBroker ChainTop() uses the same formula.
     var o = parseO(S), k = S.k, spot = S.px[k], h = head(S, o, 'OPTIONS');
-    h += tabs(o, 150);
-    var yH = 252, C = { cOI: 300, cB: 520, cA: 720, kx: 830, kw: 260, pB: 1300, pA: 1500, pOI: 1720 };
-    h += T(120, yH - 32, 24, 'up', 'CALLS') + TR(1780, yH - 32, 24, 'dn', 'PUTS');
-    h += TR(C.cOI, yH, 22, 'dim', 'OPEN INT.') + TR(C.cB, yH, 22, 'dim', 'BID (you sell)') + TR(C.cA, yH, 22, 'dim', 'ASK (you buy)') + A(C.kx, yH, C.kw, 0, 'c dim', 'STRIKE', 'font-size:22px');
-    h += TR(C.pB, yH, 22, 'dim', 'BID (you sell)') + TR(C.pA, yH, 22, 'dim', 'ASK (you buy)') + TR(C.pOI, yH, 22, 'dim', 'OPEN INT.') + A(100, yH + 32, 1720, 2, '', '', 'background:var(--line)');
-    var top = Math.max(0, Math.min(ROWS - VIS, o.row - 5)), y0 = yH + 44, P = 44, spotDrawn = false;
+    h += tabs(o, 146);
+    var yH = 210, C = { cOI: 300, cB: 520, cA: 720, kx: 830, kw: 260, pB: 1300, pA: 1500, pOI: 1720 };
+    h += TR(C.cOI, yH, 19, 'up', 'CALL OPEN INT.') + TR(C.cB, yH, 19, 'up', 'CALL BID (sell)') + TR(C.cA, yH, 19, 'up', 'CALL ASK (buy)') + A(C.kx, yH, C.kw, 0, 'c dim', 'STRIKE · touch a line', 'font-size:19px');
+    h += TR(C.pB, yH, 19, 'dn', 'PUT BID (sell)') + TR(C.pA, yH, 19, 'dn', 'PUT ASK (buy)') + TR(C.pOI, yH, 19, 'dn', 'PUT OPEN INT.');
+    var top = Math.max(0, Math.min(ROWS - VIS, o.row - 5)), R0 = 235, P = 63, RH = 59, spotDrawn = false;
     for (var i = top; i < top + VIS; i++) {
-      var y = y0 + (i - top) * P, K = strike(o, i), sel = i === o.row, cI = itm('c', K, spot), pI = itm('p', K, spot);
-      if (!spotDrawn && K > spot) { spotDrawn = true; h += A(100, y - 3, 1720, 2, '', '', 'background:var(--acc)') + A(C.kx - 112, y - 14, 104, 24, 'c', 'spot ' + f2(spot), 'font-size:18px;line-height:24px;background:var(--acc);color:#04070F;border-radius:12px'); }
-      if (cI) h += A(100, y, 680, P - 4, '', '', 'background:#ffffff08');
-      if (pI) h += A(1140, y, 680, P - 4, '', '', 'background:#ffffff08');
-      if (sel) h += A(84, y - 3, 1752, P + 2, '', '', 'border:3px solid var(--acc);border-radius:8px;box-sizing:border-box;background:#7FD4FF22');
+      var n = i - top, r = R0 + n * P, y = r + 12, K = strike(o, i), sel = i === o.row, cI = itm('c', K, spot), pI = itm('p', K, spot);
+      h += '<div class="rowt" data-slot="row' + n + '" style="position:absolute;left:80px;top:' + r + 'px;width:1760px;height:' + RH + 'px;z-index:3;cursor:pointer;--i:' + n + '"></div>';
+      if (!spotDrawn && K > spot) { spotDrawn = true; h += A(100, r - 3, 1720, 2, '', '', 'background:var(--acc)') + A(C.kx - 112, r - 14, 104, 24, 'c', 'spot ' + f2(spot), 'font-size:18px;line-height:24px;background:var(--acc);color:#04070F;border-radius:12px'); }
+      if (cI) h += A(100, r + 2, 680, RH - 4, '', '', 'background:#ffffff08');
+      if (pI) h += A(1140, r + 2, 680, RH - 4, '', '', 'background:#ffffff08');
+      if (sel) h += A(80, r, 1760, RH, '', '', 'background:#7FD4FF33;border-left:8px solid var(--acc);box-sizing:border-box');
       var cbid = o.cb[i], pbid = o.pb[i];
-      h += TR(C.cOI, y + 6, 26, 'dim', fmt(o.co[i])) + TR(C.cB, y + 4, 30, cI ? 'dim' : 'up', cbid ? f2(cbid) : '–') + TR(C.cA, y + 4, 30, 'lab', o.ca[i] ? f2(o.ca[i]) : '–');
-      h += A(C.kx, y + 2, C.kw, P - 8, 'c', f2(K), 'font-size:32px;line-height:' + (P - 8) + 'px;border-radius:6px;' + (i === ATM ? 'background:#16264A;color:var(--acc)' : 'color:#fff'));
-      h += TR(C.pB, y + 4, 30, pI ? 'dim' : 'dn', pbid ? f2(pbid) : '–') + TR(C.pA, y + 4, 30, 'lab', o.pa[i] ? f2(o.pa[i]) : '–') + TR(C.pOI, y + 6, 26, 'dim', fmt(o.po[i]));
+      h += TR(C.cOI, y + 4, 26, 'dim', fmt(o.co[i])) + TR(C.cB, y, 32, cI ? 'dim' : 'up', cbid ? f2(cbid) : '–') + TR(C.cA, y, 32, 'lab', o.ca[i] ? f2(o.ca[i]) : '–');
+      h += A(C.kx, r + 6, C.kw, RH - 12, 'c', f2(K), 'font-size:34px;line-height:' + (RH - 12) + 'px;border-radius:6px;' + (i === ATM ? 'background:#16264A;color:var(--acc)' : 'color:#fff'));
+      h += TR(C.pB, y, 32, pI ? 'dim' : 'dn', pbid ? f2(pbid) : '–') + TR(C.pA, y, 32, 'lab', o.pa[i] ? f2(o.pa[i]) : '–') + TR(C.pOI, y + 4, 26, 'dim', fmt(o.po[i]));
     }
-    h += A(100, y0 + VIS * P + 6, 1720, 2, '', '', 'background:var(--line)');
-    h += T(100, 800, 24, 'dim', 'Prices are glint per SHARE · 1 contract = 100 shares · fee ' + o.fee + ' ◆ a contract each way') + TR(1820, 800, 24, 'dim', 'strike ' + (o.row + 1) + ' of ' + ROWS);
-    h += T(100, 836, 24, 'lab', 'Grey side = already worth money: BUY only. SELL only on the other side.');
+    h += T(100, 872, 21, 'dim', 'Glint per SHARE · 1 contract = 100 shares · fee ' + o.fee + ' ◆ a contract each way · grey side = already worth money: BUY only') + TR(1820, 872, 21, 'dim', 'strikes ' + (top + 1) + '–' + (top + VIS) + ' of ' + ROWS + ' · ▲▼ scroll');
     return h;
   }
   function pill(x, y, w, on, label, sub, col) {
@@ -190,7 +191,7 @@ var OPT = (function () {
   // ---------------- register pages + bars
   PAGES.chain = pChain; PAGES.ticket = pTicket; PAGES.oreview = pReview; PAGES.oclose = pClose;
   BARS.stock = ['BACK', 'BUY', 'SELL', 'MY PORTFOLIO', 'OPTIONS', ''];
-  BARS.chain = ['BACK', '▲', '▼', '◀ EXPIRY', 'EXPIRY ▶', 'TRADE'];
+  BARS.chain = ['BACK', '▲', '▼', '◀ EXPIRY', 'EXPIRY ▶', ''];   // 27 Nov owner: no TRADE - touch a strike line
   BARS.ticket = ['BACK', 'CALL / PUT', 'BUY / SELL', '−1', '+1', 'REVIEW'];
   BARS.oreview = ['BACK', '', '', '−1', 'MODE ▸', 'CONFIRM'];
   BARS.oclose = ['BACK', '', '', '', '', 'CLOSE NOW'];
@@ -260,7 +261,7 @@ var OPT = (function () {
     if (p === 'chain') {
       if (id === 'back') D.p = 'stock'; else if (id === 'up') D.orow = Math.max(0, D.orow - 1); else if (id === 'down') D.orow = Math.min(ROWS - 1, D.orow + 1);
       else if (id === 'minus') D.oe = (D.oe + 3) % 4; else if (id === 'plus') D.oe = (D.oe + 1) % 4;
-      else if (id === 'select') { var spot = D.px[D.k], c = demoChain(), K = c.oatm + (D.orow - ATM) * c.ost; D.ocp = K >= spot ? 'c' : 'p'; D.obs = 's'; D.oq = 1; D.om = ''; D.p = 'ticket'; }
+      else if (/^row\d$/.test(id)) { D.orow = Math.max(0, Math.min(ROWS - VIS, D.orow - 5)) + (+id.slice(3)); var spot = D.px[D.k], c = demoChain(), K = c.oatm + (D.orow - ATM) * c.ost; D.ocp = K >= spot ? 'c' : 'p'; D.obs = 's'; D.oq = 1; D.om = ''; D.p = 'ticket'; }
       return demoWrite();
     }
     if (p === 'ticket') {
