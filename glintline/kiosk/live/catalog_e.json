@@ -252,6 +252,20 @@
     "EASY LANDING",
     "RAM POWER"
    ]
+  },
+  "monster": {
+   "name": "MONSTER",
+   "kind": "car",
+   "line": "Never slides. Pulls hard. Wide in turns.",
+   "price": 12000,
+   "stats": [
+    3,
+    5,
+    1,
+    4,
+    5
+   ],
+   "render": "car_monster"
   }
  },
  "air_order": [
@@ -395,7 +409,7 @@
   ],
   [
    "UPGRADES",
-   "Speed · grip"
+   "Speed · grip · brakes · turning · line time"
   ],
   [
    "LIGHT LINE",
