@@ -221,6 +221,7 @@ function parse() {
   o.px = lst('px', STOCKS, 0).map(function (v, i) { return v > 0 ? v : BASE[i]; });
   o.pv = lst('pv', STOCKS, 0).map(function (v, i) { return v > 0 ? v : o.px[i]; });
   o.h = lst('h', STOCKS, 0); o.cb = lst('cb', STOCKS, 0);
+  o.cq = dec(S.cq || ''); o.cy = dec(S.cy || ''); o.cw = parseInt(S.cw) || 0;   // 27 Nov owner: on-screen CONFIRM page (no Sansar dialog): question, YES label, seconds before YES works
   o.ch = S.ch ? S.ch.split(',').map(Number).filter(function (v) { return v > 0; }) : [];
   NEWS = (S.nw ? dec(S.nw) : (DEMO ? DEMO_NEWS() : '')).split(';').filter(Boolean).map(function (x) { var a = x.split(':').map(Number); return { s: a[0], t: a[1], j: a[2] }; }).filter(function (n) { return n.s >= 0 && n.s < STOCKS; });
   LIVE_SP = S.sp ? S.sp.split(',').map(Number) : null; LIVE_SW = S.sw ? S.sw.split(',').map(Number) : null;
@@ -235,17 +236,19 @@ function barX(i) { return Math.round(GAP * (i + 1) + 260 * i); }
 var BARS = {
   market: ['CLOSE', '▲ PAGE', '▼ PAGE', 'SORT', '', ''], stock: ['BACK', 'BUY', 'SELL', '', 'OPTIONS (soon)', ''],
   amount: ['BACK', '+10', '−10', '−1', '+1', 'NEXT'], total: ['BACK', '', '', '', '', 'BUY NOW'], result: ['MARKET', '', '', 'MY PORTFOLIO', '', 'BACK TO STOCK'],
-  move: ['BACK', 'IN 1,000', 'OUT 1,000', 'IN ALL', 'OUT ALL', ''], attract: ['', '', '', '', '', 'START'], wait: ['', '', '', '', '', '']
+  move: ['BACK', 'IN 1,000', 'OUT 1,000', 'IN ALL', 'OUT ALL', ''], confirm: ['NO', '', '', '', '', 'YES'], attract: ['', '', '', '', '', 'START'], wait: ['', '', '', '', '', '']
 };
 function bar(S) {
   var L = (BARS[S.p] || BARS.wait).slice();
   if (S.p === 'total' && S.side === 'sell') L[5] = 'SELL NOW';
   if (S.p === 'market') L[3] = SORTNEXT[S.mf];   // 26 Nov owner layout A: key says what it switches TO; MY PORTFOLIO + MOVE GLINT live in the YOUR ACCOUNT box
   if (S.p === 'result' && S.r && (S.r.kind === 'in' || S.r.kind === 'out')) L[5] = 'BACK TO MOVE';
+  if (S.p === 'confirm') { if (S.cy) L[5] = S.cy; if (S.cw > 0) L[5] = 'WAIT ' + S.cw + ' s'; }
   var h = '';
   for (var i = 0; i < 6; i++) {
     var cl = 'btn' + (L[i] === '' ? ' off' : '') + (/soon/.test(L[i]) ? ' soon' : '');
     if (S.p === 'total' && i === 5) cl += S.side === 'sell' ? ' rd' : ' g';
+    else if (S.p === 'confirm' && i === 5) cl += S.cw > 0 ? ' off' : ' g';
     else if (i === 5 && L[i] !== '' && !/soon/.test(L[i])) cl += ' main';                 // 26 Nov: right slot = the page's main action
     h += '<div class="' + cl + '" data-slot="' + SLOTS[i] + '" style="left:' + barX(i) + 'px">' + esc(L[i]) + '</div>';
   }
@@ -416,6 +419,16 @@ function pTotal(S) {
   h += TC(800, 30, 'lab', 'Press SELECT, then Yes in the box');
   return h;
 }
+// 27 Nov owner: every yes/no of the Exchange is THIS page (no Sansar dialog box): the question big in the middle, YES = right slot, NO = BACK slot
+function pConfirm(S) {
+  var h = frame(S, ''), L = (S.cq || 'Are you sure?').split('|');
+  h += A(360, 190, 1200, 560, '', '', 'background:#04070FCC;border:3px solid var(--acc);border-radius:22px;box-sizing:border-box');
+  h += TC(230, 26, 'acc', 'PLEASE CONFIRM', 'letter-spacing:.3em');
+  var y = 330 - (L.length - 1) * 30;
+  L.forEach(function (l, i) { h += TC(y + i * 72, i === 0 ? 50 : 34, i === 0 ? '' : 'lab', esc(l)); });
+  h += TC(660, 26, 'dim', S.cw > 0 ? 'read this first - YES works in ' + S.cw + ' s' : 'YES = right button  ·  NO = BACK');
+  return h;
+}
 function pWait(S) {
   if (S.ld && !S.pz) return '<div style="position:absolute;inset:0;background:#04070F"></div>';   // 26 Nov owner: loading data = plain screen; the in-world loading plane spins in front (GlintKioskSpinner)
   if (S.pz) return frame(S, '') + A(905, 300, 110, 110, 'spin', '') + TC(470, 70, 'amb', 'MARKET PAUSED') + TC(570, 32, 'lab', 'The broker is waiting for the race office numbers.') + TC(620, 32, 'dim', 'Prices come back on their own.');
@@ -455,7 +468,7 @@ function pMove(S) {
   h += T(100, 480, 36, 'lab', 'Only free glint can buy shares. Banked glint is safe in the vault.') + T(100, 540, 30, 'dim', 'IN = vault → Exchange   ·   OUT = Exchange → vault') + T(100, 640, 30, 'dim', 'Shares are not moved: only glint.');
   return h;
 }
-var PAGES = { attract: pAttract, market: pMarket, stock: pStock, amount: pAmount, total: pTotal, wait: pWait, result: pResult, move: pMove };      // MY PORTFOLIO (+ old p=shares / p=myopt) = exchange_portfolio.js
+var PAGES = { confirm: pConfirm, attract: pAttract, market: pMarket, stock: pStock, amount: pAmount, total: pTotal, wait: pWait, result: pResult, move: pMove };      // MY PORTFOLIO (+ old p=shares / p=myopt) = exchange_portfolio.js
 
 // ---------- renderer (fragment only)
 var lastS = null, lastKey = null, lastSel = -1, entT = 0, PREV = null;
