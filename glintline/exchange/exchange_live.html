@@ -311,19 +311,20 @@ function pMarket(S) {
   h += T(640, 122, 26, 'lab', 'your shares worth <span class="acc">' + fmt(shares) + ' ◆</span>') + T(640, 156, 26, 'lab', 'total <span style="color:#fff">' + fmt(S.c + shares) + ' ◆</span>');
   h += '<div class="btn" data-slot="portfolio" style="left:1170px;top:116px;width:320px;height:68px;font-size:30px;border-radius:14px">MY PORTFOLIO</div>';
   h += '<div class="btn" data-slot="move" style="left:1510px;top:116px;width:320px;height:68px;font-size:30px;border-radius:14px">MOVE GLINT</div>';
-  var y0 = 240, PG = 10, pages = Math.ceil(STOCKS / PG), pg = Math.floor(pos / PG), end = Math.min(STOCKS, pg * PG + PG);
+  var y0 = 240, RP = 63, RH = 59, PG = 10,   // 27 Nov owner: taller rows fill the space above the bar (rect top 235 + n*63, 59 px) = broker_row_planes.py
+   pages = Math.ceil(STOCKS / PG), pg = Math.floor(pos / PG), end = Math.min(STOCKS, pg * PG + PG);
   var tabs = SORTNAME.map(function (t, i) { return '<span style="padding:2px 10px;margin-left:6px;border-radius:6px;' + (i === m ? 'background:var(--acc);color:#04070F' : 'color:var(--dim)') + '">' + t + '</span>'; }).join('');
   h += T(100, 200, 24, 'lab', 'ALL STOCKS <span class="dim">· touch one to open it</span>', 0, 'letter-spacing:.06em') + T(640, 201, 20, 'dim', 'sorted by' + tabs);
   h += TR(1820, 201, 20, 'lab', 'page ' + (pg + 1) + '/' + pages + ' <span class="dim">· ' + clockHtml() + '</span>');
   for (var r = pg * PG; r < end; r++) {
-    var i = ord[r], y = y0 + (r - pg * PG) * 58, ch = pct(S, i), up = S.px[i] >= S.pv[i], sel = i === S.sel, n = r - pg * PG, ri = '--i:' + n + ';';
-    if (m && r > pg * PG && sortRank(m, i) !== sortRank(m, ord[r - 1])) h += A(100, y - 7, 1720, 2, 'rw', '', 'background:var(--acc);opacity:.45;' + ri);   // new group starts
-    h += '<div class="rowt" data-slot="row' + n + '" style="position:absolute;left:80px;top:' + (y - 5) + 'px;width:1760px;height:54px;z-index:3;cursor:pointer;--i:' + n + '"></div>';   // 27 Nov owner: touch row (in-world: 'Glint broker touch rowN' planes, same rectangles)
-    if (sel) h += A(80, y - 5, 1760, 54, 'rw selb' + (S.selMoved ? ' mv' : ''), '', 'background:#7FD4FF33;border-left:8px solid var(--acc);box-sizing:border-box;' + ri);
-    h += A(120, y + 1, 40, 40, 'rw', logo(i, 40), ri) + T(176, y, 28, 'row rw', esc(NAMES[i]), 0, 'color:#fff;' + ri) + T(560, y + 4, 22, 'row dim rw', TICKS[i], 0, 'height:36px;line-height:36px;letter-spacing:.08em;' + ri);
+    var i = ord[r], y = y0 + 2 + (r - pg * PG) * RP, ch = pct(S, i), up = S.px[i] >= S.pv[i], sel = i === S.sel, n = r - pg * PG, ri = '--i:' + n + ';';
+    if (m && r > pg * PG && sortRank(m, i) !== sortRank(m, ord[r - 1])) h += A(100, y - 9, 1720, 2, 'rw', '', 'background:var(--acc);opacity:.45;' + ri);   // new group starts
+    h += '<div class="rowt" data-slot="row' + n + '" style="position:absolute;left:80px;top:' + (y - 7) + 'px;width:1760px;height:' + RH + 'px;z-index:3;cursor:pointer;--i:' + n + '"></div>';   // 27 Nov owner: touch row (in-world: 'Glint broker touch rowN' planes, same rectangles)
+    if (sel) h += A(80, y - 7, 1760, RH, 'rw selb' + (S.selMoved ? ' mv' : ''), '', 'background:#7FD4FF33;border-left:8px solid var(--acc);box-sizing:border-box;' + ri);
+    h += A(120, y + 1, 40, 40, 'rw', logo(i, 40), ri) + T(176, y + 4, 28, 'row rw', esc(NAMES[i]), 0, 'color:#fff;' + ri) + T(560, y + 4, 22, 'row dim rw', TICKS[i], 0, 'height:36px;line-height:36px;letter-spacing:.08em;' + ri);
     h += T(660, y, 19, 'rw', esc(sortTag(m, i)), 300, 'height:44px;line-height:44px;overflow:hidden;text-overflow:ellipsis;letter-spacing:.06em;color:var(--' + (m ? 'acc' : 'dim') + ');' + ri);
-    h += TR(1090, y, 26, 'row rw ' + (up ? 'up' : 'dn'), sg(ch, 2) + ' %', ri) + T(1120, y, 28, 'row rw ' + (up ? 'up' : 'dn'), up ? '▲' : '▼', 0, ri);
-    h += TR(1500, y, 22, 'row rw ' + (spreadWhy(i) ? 'amb' : 'dim'), 'spread ' + pctBp(spreadBp(i)) + ' %' + (spreadWhy(i) ? ' ▲' : ''), ri);   // amber = raised right now
+    h += TR(1090, y + 4, 26, 'row rw ' + (up ? 'up' : 'dn'), sg(ch, 2) + ' %', ri) + T(1120, y + 4, 28, 'row rw ' + (up ? 'up' : 'dn'), up ? '▲' : '▼', 0, ri);
+    h += TR(1500, y + 4, 22, 'row rw ' + (spreadWhy(i) ? 'amb' : 'dim'), 'spread ' + pctBp(spreadBp(i)) + ' %' + (spreadWhy(i) ? ' ▲' : ''), ri);   // amber = raised right now
     h += A(1560, y + 3, 230, 38, 'chip rw' + (S.chg && S.chg[i] ? (S.chg[i] > 0 ? ' fu' : ' fd') : ''), '<span class="chv">' + f2(S.px[i]) + ' ◆</span>', 'background:var(--' + (up ? 'up' : 'dn') + ');' + ri);
   }
   h += tapeHtml(S);
