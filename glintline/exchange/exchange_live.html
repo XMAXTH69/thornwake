@@ -26,7 +26,10 @@ html,body{margin:0;width:100%;height:100%;background:#04070F;overflow:hidden;pos
 .row{height:44px;line-height:44px;font-size:28px}
 .chip{height:38px;line-height:38px;border-radius:6px;color:#04070F;text-align:center;font-size:28px}
 .btn{width:260px;height:110px;top:940px;box-sizing:border-box;border-radius:20px;background:var(--bg2);border:3px solid var(--acc);color:var(--acc);font-size:38px;display:flex;align-items:center;justify-content:center;white-space:nowrap;position:absolute;padding:0 16px}
-.btn.off{visibility:hidden}   /* 26 Nov owner: no outline of empty slots */
+.btn.off{visibility:hidden}
+/* 27 Nov owner: every stock line is a touch button - soft pulsing outline, staggered per row */
+.rowt{border-radius:10px;box-shadow:inset 0 0 0 2px #7FD4FF33;animation:rowp 2.4s ease-in-out infinite;animation-delay:calc(var(--i)*0.12s)}
+@keyframes rowp{0%,100%{box-shadow:inset 0 0 0 2px #7FD4FF22;background:transparent}50%{box-shadow:inset 0 0 0 2px #7FD4FF99;background:#7FD4FF12}}   /* 26 Nov owner: no outline of empty slots */
 .btn.soon{opacity:.45;border-color:var(--line);color:var(--dim)}
 /* 26 Nov owner: touchable = PULSING glow (no sweeping lines). MAIN action (right slot) = filled accent; off / soon = still. Selected row = colour highlight only, no motion. */
 .btn{overflow:hidden}
@@ -230,7 +233,7 @@ function parse() {
 var SLOTS = ['back', 'up', 'down', 'minus', 'plus', 'select'], GAP = (W - 6 * 260) / 7;
 function barX(i) { return Math.round(GAP * (i + 1) + 260 * i); }
 var BARS = {
-  market: ['CLOSE', '▲', '▼', 'SORT', '', 'OPEN'], stock: ['BACK', 'BUY', 'SELL', '', 'OPTIONS (soon)', ''],
+  market: ['CLOSE', '▲ PAGE', '▼ PAGE', 'SORT', '', ''], stock: ['BACK', 'BUY', 'SELL', '', 'OPTIONS (soon)', ''],
   amount: ['BACK', '+10', '−10', '−1', '+1', 'NEXT'], total: ['BACK', '', '', '', '', 'BUY NOW'], result: ['MARKET', '', '', 'MY PORTFOLIO', '', 'BACK TO STOCK'],
   move: ['BACK', 'IN 1,000', 'OUT 1,000', 'IN ALL', 'OUT ALL', ''], attract: ['', '', '', '', '', 'START'], wait: ['', '', '', '', '', '']
 };
@@ -310,11 +313,12 @@ function pMarket(S) {
   h += '<div class="btn" data-slot="move" style="left:1510px;top:116px;width:320px;height:68px;font-size:30px;border-radius:14px">MOVE GLINT</div>';
   var y0 = 240, PG = 10, pages = Math.ceil(STOCKS / PG), pg = Math.floor(pos / PG), end = Math.min(STOCKS, pg * PG + PG);
   var tabs = SORTNAME.map(function (t, i) { return '<span style="padding:2px 10px;margin-left:6px;border-radius:6px;' + (i === m ? 'background:var(--acc);color:#04070F' : 'color:var(--dim)') + '">' + t + '</span>'; }).join('');
-  h += T(100, 200, 24, 'lab', 'ALL STOCKS <span class="dim">· pick one to look at it</span>', 0, 'letter-spacing:.06em') + T(640, 201, 20, 'dim', 'sorted by' + tabs);
+  h += T(100, 200, 24, 'lab', 'ALL STOCKS <span class="dim">· touch one to open it</span>', 0, 'letter-spacing:.06em') + T(640, 201, 20, 'dim', 'sorted by' + tabs);
   h += TR(1820, 201, 20, 'lab', 'page ' + (pg + 1) + '/' + pages + ' <span class="dim">· ' + clockHtml() + '</span>');
   for (var r = pg * PG; r < end; r++) {
     var i = ord[r], y = y0 + (r - pg * PG) * 58, ch = pct(S, i), up = S.px[i] >= S.pv[i], sel = i === S.sel, n = r - pg * PG, ri = '--i:' + n + ';';
     if (m && r > pg * PG && sortRank(m, i) !== sortRank(m, ord[r - 1])) h += A(100, y - 7, 1720, 2, 'rw', '', 'background:var(--acc);opacity:.45;' + ri);   // new group starts
+    h += '<div class="rowt" data-slot="row' + n + '" style="position:absolute;left:80px;top:' + (y - 5) + 'px;width:1760px;height:54px;z-index:3;cursor:pointer;--i:' + n + '"></div>';   // 27 Nov owner: touch row (in-world: 'Glint broker touch rowN' planes, same rectangles)
     if (sel) h += A(80, y - 5, 1760, 54, 'rw selb' + (S.selMoved ? ' mv' : ''), '', 'background:#7FD4FF33;border-left:8px solid var(--acc);box-sizing:border-box;' + ri);
     h += A(120, y + 1, 40, 40, 'rw', logo(i, 40), ri) + T(176, y, 28, 'row rw', esc(NAMES[i]), 0, 'color:#fff;' + ri) + T(560, y + 4, 22, 'row dim rw', TICKS[i], 0, 'height:36px;line-height:36px;letter-spacing:.08em;' + ri);
     h += T(660, y, 19, 'rw', esc(sortTag(m, i)), 300, 'height:44px;line-height:44px;overflow:hidden;text-overflow:ellipsis;letter-spacing:.06em;color:var(--' + (m ? 'acc' : 'dim') + ');' + ri);
@@ -506,8 +510,9 @@ function press(id) {
   if (p === 'attract') { go('market'); }
   else if (p === 'market') {
     var od = ORDER[D.mf || 0], ps = od.indexOf(D.sel);   // 26 Nov: ▲▼ / page keys walk the SORTED list; key 3 = next sort
-    if (id === 'back') go('attract'); else if (id === 'up') D.sel = od[(ps + STOCKS - 1) % STOCKS]; else if (id === 'down') D.sel = od[(ps + 1) % STOCKS]; else if (id === 'pgup') { var pp = Math.floor(ps / 10) - 1; D.sel = od[(pp < 0 ? Math.floor((STOCKS - 1) / 10) : pp) * 10]; } else if (id === 'pgdn') D.sel = od[(Math.floor(ps / 10) + 1) * 10 >= STOCKS ? 0 : (Math.floor(ps / 10) + 1) * 10]; else if (id === 'minus') D.mf = ((D.mf || 0) + 1) % 4;
-    else if (id === 'portfolio') { D.sel = 0; go('portfolio'); } else if (id === 'move') go('move'); else if (id === 'select') { D.k = D.sel; go('stock'); }
+    if (/^row\d$/.test(id)) { var ri = Math.floor(ps / 10) * 10 + (+id.slice(3)); if (ri < STOCKS) { D.sel = od[ri]; D.k = D.sel; go('stock'); } }   // 27 Nov owner: touch a row = open it (no OPEN button)
+    else if (id === 'back') go('attract'); else if (id === 'up' || id === 'pgup') { var pp = Math.floor(ps / 10) - 1; D.sel = od[(pp < 0 ? Math.floor((STOCKS - 1) / 10) : pp) * 10]; } else if (id === 'down' || id === 'pgdn') D.sel = od[(Math.floor(ps / 10) + 1) * 10 >= STOCKS ? 0 : (Math.floor(ps / 10) + 1) * 10]; else if (id === 'minus') D.mf = ((D.mf || 0) + 1) % 4;
+    else if (id === 'portfolio') { D.sel = 0; go('portfolio'); } else if (id === 'move') go('move'); 
   } else if (p === 'stock') {
     if (id === 'back') go('market');
     else if (id === 'up') { D.side = 'buy'; D.q = Math.min(1, maxBuy()) || 1; go('amount'); }
@@ -563,7 +568,7 @@ if (DEMO) {
   demoInit();
   stage.addEventListener('click', function (e) {
     var t = e.target; var yn = t.getAttribute && t.getAttribute('data-yn'); if (yn) { answer(yn === 'y'); return; }
-    var b = t.closest ? t.closest('.btn') : null; if (b && !b.classList.contains('off') && !b.classList.contains('soon')) press(b.getAttribute('data-slot'));
+    var b = t.closest ? t.closest('.btn, .rowt') : null; if (b && !b.classList.contains('off') && !b.classList.contains('soon')) press(b.getAttribute('data-slot'));
   });
   var cb = document.createElement('input'); cb.id = 'chatbox'; cb.placeholder = 'chat: /buy 50 · /sell all · /in 500 · /out all  (Enter)'; cb.autocomplete = 'off';
   cb.style.cssText = 'position:fixed;left:50%;bottom:6px;transform:translateX(-50%);width:min(520px,90vw);z-index:20;font:16px sans-serif;padding:6px 10px;background:#101A33;color:#fff;border:1px solid #7FD4FF;border-radius:6px';
