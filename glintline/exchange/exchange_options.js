@@ -115,7 +115,7 @@ var OPT = (function () {
       h += A(C.kx, r + 6, C.kw, RH - 12, 'c', f2(K), 'font-size:34px;line-height:' + (RH - 12) + 'px;border-radius:6px;' + (i === ATM ? 'background:#16264A;color:var(--acc)' : 'color:#fff'));
       h += TR(C.pB, y, 32, pI ? 'dim' : 'dn', pbid ? f2(pbid) : '–') + TR(C.pA, y, 32, 'lab', o.pa[i] ? f2(o.pa[i]) : '–') + TR(C.pOI, y + 4, 26, 'dim', fmt(o.po[i]));
     }
-    h += T(100, 872, 21, 'dim', 'Glint per SHARE · 1 contract = 100 shares · fee ' + o.fee + ' ◆ a contract each way · grey side = already worth money: BUY only') + TR(1820, 872, 21, 'dim', 'strikes ' + (top + 1) + '–' + (top + VIS) + ' of ' + ROWS + ' · ▲▼ scroll');
+    h += T(100, 872, 21, 'dim', 'Glint per SHARE · 1 contract = 100 shares · fee ' + o.fee + ' ◆ a contract each way · grey side = already worth money: BUY only') + TR(1820, 872, 21, 'dim', 'strikes ' + (top + 1) + '–' + (top + VIS) + ' of ' + ROWS);
     return h;
   }
   function pill(x, y, w, on, label, sub, col) {
@@ -191,7 +191,7 @@ var OPT = (function () {
   // ---------------- register pages + bars
   PAGES.chain = pChain; PAGES.ticket = pTicket; PAGES.oreview = pReview; PAGES.oclose = pClose;
   BARS.stock = ['BACK', 'BUY', 'SELL', 'MY PORTFOLIO', 'OPTIONS', ''];
-  BARS.chain = ['BACK', '▲', '▼', '◀ EXPIRY', 'EXPIRY ▶', ''];   // 27 Nov owner: no TRADE - touch a strike line
+  BARS.chain = ['BACK', '▲ PAGE', '▼ PAGE', '◀ EXPIRY', 'EXPIRY ▶', ''];   // 27 Nov owner: no TRADE - touch a strike line
   BARS.ticket = ['BACK', 'CALL / PUT', 'BUY / SELL', '−1', '+1', 'REVIEW'];
   BARS.oreview = ['BACK', '', '', '−1', 'MODE ▸', 'CONFIRM'];
   BARS.oclose = ['BACK', '', '', '', '', 'CLOSE NOW'];
@@ -259,7 +259,7 @@ var OPT = (function () {
     if (p === 'stock' && id === 'plus') { D.p = 'chain'; D.orow = ATM; return demoWrite(); }
     if (p === 'stock' && id === 'minus') { D.p = 'myopt'; D.sel = 0; return demoWrite(); }
     if (p === 'chain') {
-      if (id === 'back') D.p = 'stock'; else if (id === 'up') D.orow = Math.max(0, D.orow - 1); else if (id === 'down') D.orow = Math.min(ROWS - 1, D.orow + 1);
+      if (id === 'back') D.p = 'stock'; else if (id === 'up' || id === 'down') { var t0 = Math.max(0, Math.min(ROWS - VIS, D.orow - 5)), t1 = Math.max(0, Math.min(ROWS - VIS, t0 + (id === 'up' ? -VIS : VIS))); D.orow = t1 + 5; }   // 27 Nov owner: PAGE like the stock list
       else if (id === 'minus') D.oe = (D.oe + 3) % 4; else if (id === 'plus') D.oe = (D.oe + 1) % 4;
       else if (/^row\d$/.test(id)) { D.orow = Math.max(0, Math.min(ROWS - VIS, D.orow - 5)) + (+id.slice(3)); var spot = D.px[D.k], c = demoChain(), K = c.oatm + (D.orow - ATM) * c.ost; D.ocp = K >= spot ? 'c' : 'p'; D.obs = 's'; D.oq = 1; D.om = ''; D.p = 'ticket'; }
       return demoWrite();
