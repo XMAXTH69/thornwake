@@ -931,6 +931,36 @@
     "PRISM CHASE",
     "Colours chase round and back",
     25000
+   ],
+   [
+    "brakerear",
+    "BRAKE REAR",
+    "Only the rear lights flare when you brake",
+    3500
+   ],
+   [
+    "swap",
+    "FRONT / REAR SWAP",
+    "Front and rear lights take turns",
+    5000
+   ],
+   [
+    "turn",
+    "TURN SIGNAL",
+    "The side you steer toward glows brighter",
+    6000
+   ],
+   [
+    "splittone",
+    "SPLIT TONE",
+    "Front one tone, rear another tone",
+    9000
+   ],
+   [
+    "chase",
+    "CHASE AROUND",
+    "One light at a time runs round the car",
+    12000
    ]
   ],
   "tones": [

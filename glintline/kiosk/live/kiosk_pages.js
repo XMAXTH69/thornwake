@@ -193,13 +193,18 @@ function pageUg(spec, f) {
   if (kind === 'p') { var q = G.pats.find(function (z) { return z[0] === k; }); nm = q[1]; line = q[2]; price = q[3]; }
   else { var z = G.tones.find(function (e) { return e[0] === k; }); nm = z[1]; tone = z[2]; line = k === 'none' ? 'Your rider colour' : 'A steady tone for the glow'; price = k === 'none' ? 0 : G.tone_price; }
   var free = price === 0;
-  var h = base('UNDERGLOW', null, { vonly: 1 }) + card() + ugGlyph(k, kind, tone, [C[0] + 40, C[1] + 80, C[0] + 520, C[1] + 450]);
+  var h = base('UNDERGLOW', null, { vonly: 1 }) + card() + ugGlyph(k, kind, tone, [C[0] + 40, C[1] + 80, C[0] + 520, C[1] + ((f && f.uc === 'monster') ? 420 : 450)]);
   h += T(x, C[1] + 96, esc(nm), 70, 'brand', mw) + T(x, C[1] + 196, esc(line), 38, 'hi', mw);
   // 25 Nov owner: small info lines removed (name, effect, price only)
   h += tag(C[2] - 30, C[1] + 30, free ? 'FREE' : own ? 'YOURS' : money(price) + ' glint', !free && !own);
-  var cw = 118, gap = 10, y = C[3] - 200, n = G.pats.length, x0 = C[0] + (C[2] - C[0] - n * cw - (n - 1) * gap) / 2;
-  G.pats.forEach(function (p, j) { var on = kind === 'p' && p[0] === k; h += chip(x0 + j * (cw + gap), y, cw, 64, on, '<span style="font-size:26px;white-space:nowrap;color:' + (on ? 'var(--text)' : 'var(--soft)') + '" data-fit="' + (cw - 12) + '">' + esc(p[1]) + '</span>', 14); });
-  var y2 = C[3] - 112, tw = 58, m = G.tones.length; x0 = C[0] + (C[2] - C[0] - (m * tw + (m - 1) * 10)) / 2;
+  // 28 Nov owner: the last 5 patterns (index 8-12) need 4 corner lights - only the MONSTER lists them (GlintKiosk UgNP / UgCornerCars); page gets &uc=<car> from LiveUrl. Chip index == in-world list index.
+  var np = f && f.uc === 'monster' ? G.pats.length : Math.min(8, G.pats.length), two = np > 8, per = two ? Math.ceil(np / 2) : np, gap = 10, cw = two ? Math.floor((C[2] - C[0] - 80 - (per - 1) * gap) / per) : 118, ch = two ? 52 : 64, fs = two ? 23 : 26;
+  for (var r = 0; r * per < np; r++) {
+    var cnt = Math.min(per, np - r * per), rx = C[0] + (C[2] - C[0] - cnt * cw - (cnt - 1) * gap) / 2, ry = two ? C[3] - 218 + r * (ch + 6) : C[3] - 200;
+    for (var j = r * per; j < r * per + cnt; j++) { var p = G.pats[j], on = kind === 'p' && p[0] === k;
+      h += chip(rx + (j - r * per) * (cw + gap), ry, cw, ch, on, '<span style="font-size:' + fs + 'px;white-space:nowrap;color:' + (on ? 'var(--text)' : 'var(--soft)') + '" data-fit="' + (cw - 12) + '">' + esc(p[1].replace(' / ', '/')) + '</span>', 14); }
+  }
+  var y2 = C[3] - (two ? 98 : 112), tw = 58, m = G.tones.length, x0; x0 = C[0] + (C[2] - C[0] - (m * tw + (m - 1) * 10)) / 2;
   G.tones.forEach(function (e, j) { var on = kind === 't' && e[0] === k;
     h += chip(x0 + j * (tw + 10), y2, tw, tw, on, e[2] ? '<i style="width:34px;height:34px;border-radius:50%;background:' + ugRgb(e[2], on ? 1 : .75) + '"></i>' : '<span style="font-size:30px;color:' + (on ? 'var(--text)' : 'var(--soft)') + '">A</span>', 14); });
   return h + buttons(own || free ? 'CHOOSE' : 'BUY', true, 'BACK', true);
